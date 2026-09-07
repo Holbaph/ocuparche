@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Ocuparche</title>
+<meta name="theme-color" content="#fbf3ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ocuparche">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- ============ Supabase no configurado ============ -->
+<div id="authConfigError" class="auth-overlay hidden">
+  <div class="auth-box">
+    <div class="auth-icon">🛠️</div>
+    <h2>Falta configurar Supabase</h2>
+    <p class="muted">Abre <code>js/supabase-config.js</code>, reemplaza <code>SUPABASE_URL</code> y
+      <code>SUPABASE_ANON_KEY</code> con los de tu proyecto, y vuelve a publicar. El
+      <a href="README.md">README</a> trae el paso a paso.</p>
+  </div>
+</div>
+
+<!-- ============ Cargando ============ -->
+<div id="authLoading" class="auth-overlay hidden">
+  <div class="auth-box">
+    <div class="auth-icon">🩹</div>
+    <p class="muted">Cargando…</p>
+  </div>
+</div>
+
+<!-- ============ Login ============ -->
+<div id="authLogin" class="auth-overlay hidden">
+  <div class="auth-box">
+    <div class="auth-icon">🩹</div>
+    <h2>Ocuparche</h2>
+    <p class="muted">Inicia sesión para seguir con el tratamiento</p>
+    <p class="auth-error hidden" id="loginError"></p>
+    <div class="field">
+      <label for="loginEmail">Correo</label>
+      <input type="email" id="loginEmail" autocomplete="username" autocapitalize="off" placeholder="tucorreo@ejemplo.com">
+    </div>
+    <div class="field">
+      <label for="loginPassword">Contraseña</label>
+      <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" id="btnLogin">Iniciar sesión</button>
+    <button class="btn-link" id="btnIrOlvide">¿Olvidaste tu contraseña?</button>
+    <p class="auth-note">¿No tienes cuenta? <a href="#" id="btnIrSignup" style="color:var(--brand-dark);font-weight:700;text-decoration:none">Crea una gratis</a></p>
+  </div>
+</div>
+
+<!-- ============ Alta libre ============ -->
+<div id="authSignup" class="auth-overlay hidden">
+  <div class="auth-box">
+    <div class="auth-icon">🩹</div>
+    <h2>Crea tu cuenta</h2>
+    <p class="muted">Gratis para empezar — sin tarjeta</p>
+    <p class="auth-error hidden" id="signupError"></p>
+    <div class="field">
+      <label for="signupNombre">Tu nombre</label>
+      <input type="text" id="signupNombre" autocomplete="name" placeholder="Cómo te van a ver los demás">
+    </div>
+    <div class="field">
+      <label for="signupEmail">Correo</label>
+      <input type="email" id="signupEmail" autocomplete="username" autocapitalize="off" placeholder="tucorreo@ejemplo.com">
+    </div>
+    <div class="field">
+      <label for="signupPassword">Contraseña</label>
+      <input type="password" id="signupPassword" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+    </div>
+    <button class="btn-primary" id="btnSignup">Crear cuenta gratis</button>
+    <button class="btn-link" id="btnVolverLoginDesdeSignup">Ya tengo cuenta</button>
+  </div>
+</div>
+
+<!-- ============ Revisa tu correo ============ -->
+<div id="authVerify" class="auth-overlay hidden">
+  <div class="auth-box">
+    <div class="auth-icon">✉️</div>
+    <h2>Revisa tu correo</h2>
+    <p class="muted" id="verifyMuted">Te enviamos un enlace para confirmar tu cuenta.</p>
+    <button class="btn-link" id="btnVolverLoginDesdeVerify">Volver a iniciar sesión</button>
+  </div>
+</div>
+
+<!-- ============ Olvidé mi contraseña ============ -->
+<div id="authForgot" class="auth-overlay hidden">
+  <div class="auth-box">
+    <div class="auth-icon">✉️</div>
+    <h2>Recuperar acceso</h2>
+    <p class="muted">Te enviaremos un enlace para elegir una contraseña nueva</p>
+    <p class="auth-error hidden" id="forgotError"></p>
+    <div class="field">
+      <label for="forgotEmail">Correo</label>
+      <input type="email" id="forgotEmail" autocomplete="username" autocapitalize="off" placeholder="tucorreo@ejemplo.com">
+    </div>
+    <button class="btn-primary" id="btnEnviarRecuperacion">Enviar enlace</button>
+    <button class="btn-link" id="btnVolverLogin">Volver a iniciar sesión</button>
+  </div>
+</div>
+
+<!-- ============ Fijar contraseña (invitación / recuperación) ============ -->
+<div id="authSetPassword" class="auth-overlay hidden">
+  <div class="auth-box">
+    <div class="auth-icon">🔑</div>
+    <h2>Elige tu contraseña</h2>
+    <p class="muted" id="setPasswordMuted">Ya casi — solo falta fijar tu contraseña</p>
+    <p class="auth-error hidden" id="setPasswordError"></p>
+    <div class="field">
+      <label for="newPassword">Contraseña nueva</label>
+      <input type="password" id="newPassword" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+    </div>
+    <div class="field">
+      <label for="newPassword2">Repite la contraseña</label>
+      <input type="password" id="newPassword2" autocomplete="new-password" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" id="btnGuardarPassword">Guardar y entrar</button>
+  </div>
+</div>
+
+<!-- ============ App ============ -->
+<div class="app hidden" id="app">
+
+  <header class="top">
+    <div class="eyebrow-label">Tratamiento de parche ocular</div>
+    <h1>Ocuparche</h1>
+  </header>
+
+  <div class="account-row">
+    <div class="account-who">
+      <div class="avatar" id="avatarIniciales">?</div>
+      <div>
+        <div class="account-name" id="accountName">—</div>
+        <div class="account-role" id="accountRole">—</div>
+      </div>
+    </div>
+    <button class="icon-btn" id="btnLogout" title="Cerrar sesión" aria-label="Cerrar sesión">⎋</button>
+  </div>
+
+  <div class="plan-badge" id="planBadge">—</div>
+  <div class="sync-badge" id="syncBadge"><span class="sync-dot"></span><span id="syncText">Conectando…</span></div>
+
+  <div id="noPacientes" class="card hidden" style="text-align:center">
+    <p style="font-size:15px;color:var(--ink-soft);margin-bottom:14px">Aún no agregas a tu hij@ 🩹</p>
+    <button class="history-btn" id="btnPrimerPaciente" style="display:inline-flex">+ Agregar mi primer hij@</button>
+  </div>
+
+  <div id="conPacientes" class="hidden" style="display:flex;flex-direction:column;gap:18px">
+    <div class="patient-tabs" id="patientTabs"></div>
+    <div class="addform" id="addPacienteForm">
+      <div>
+        <label for="pacienteNombreInput">Nombre de tu hij@</label>
+        <input type="text" id="pacienteNombreInput" placeholder="Ej: Sofía">
+      </div>
+      <div class="row-btns">
+        <button class="btn-save" id="pacienteSave">Guardar</button>
+        <button class="btn-cancel" id="pacienteCancel">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="orientation-hint">Mirándol@ de frente: su ojo derecho queda a tu izquierda 👀</p>
+      <div class="face-wrap">
+        <svg class="face" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="160" cy="168" r="118" fill="var(--skin)" stroke="var(--skin-line)" stroke-width="2"/>
+          <ellipse cx="94" cy="204" rx="19" ry="11" fill="var(--blush)" opacity=".55"/>
+          <ellipse cx="226" cy="204" rx="19" ry="11" fill="var(--blush)" opacity=".55"/>
+          <path d="M92 122 q20 -14 40 -2" fill="none" stroke="var(--ink-soft)" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+          <path d="M188 120 q20 -12 40 2" fill="none" stroke="var(--ink-soft)" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+          <path d="M158 160 q-4 20 -10 26 q6 6 14 2" fill="none" stroke="var(--skin-line)" stroke-width="3" stroke-linecap="round"/>
+          <path d="M136 224 q24 22 48 0" fill="none" stroke="var(--mouth)" stroke-width="6" stroke-linecap="round"/>
+
+          <g class="eye" data-side="derecho" id="eyeDerecho" role="button" tabindex="0" aria-label="Ojo derecho">
+            <circle class="hit" cx="112" cy="160" r="46"/>
+            <circle class="ring" cx="112" cy="160" r="42"/>
+            <g class="eye-visual">
+              <circle cx="112" cy="160" r="27" fill="#fff"/>
+              <circle cx="112" cy="160" r="13" fill="var(--iris)"/>
+              <circle cx="112" cy="160" r="5.5" fill="var(--ink)"/>
+              <circle cx="107" cy="155" r="3" fill="#fff"/>
+            </g>
+            <g class="eye-patch">
+              <ellipse cx="112" cy="160" rx="33" ry="24" transform="rotate(-8 112 160)" fill="var(--patch)"/>
+              <ellipse cx="112" cy="160" rx="27" ry="18" transform="rotate(-8 112 160)" fill="none" stroke="var(--patch-edge)" stroke-width="1.5" stroke-dasharray="3 4"/>
+              <path d="M84 142 q-14 -30 6 -58" fill="none" stroke="var(--patch)" stroke-width="7" stroke-linecap="round"/>
+            </g>
+          </g>
+
+          <g class="eye" data-side="izquierdo" id="eyeIzquierdo" role="button" tabindex="0" aria-label="Ojo izquierdo">
+            <circle class="hit" cx="208" cy="160" r="46"/>
+            <circle class="ring" cx="208" cy="160" r="42"/>
+            <g class="eye-visual">
+              <circle cx="208" cy="160" r="27" fill="#fff"/>
+              <circle cx="208" cy="160" r="13" fill="var(--iris)"/>
+              <circle cx="208" cy="160" r="5.5" fill="var(--ink)"/>
+              <circle cx="203" cy="155" r="3" fill="#fff"/>
+            </g>
+            <g class="eye-patch">
+              <ellipse cx="208" cy="160" rx="33" ry="24" transform="rotate(8 208 160)" fill="var(--patch)"/>
+              <ellipse cx="208" cy="160" rx="27" ry="18" transform="rotate(8 208 160)" fill="none" stroke="var(--patch-edge)" stroke-width="1.5" stroke-dasharray="3 4"/>
+              <path d="M236 142 q14 -30 -6 -58" fill="none" stroke="var(--patch)" stroke-width="7" stroke-linecap="round"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="face-labels">
+        <span>Ojo derecho</span>
+        <span>Ojo izquierdo</span>
+      </div>
+
+      <div class="status">
+        <div class="status-date" id="statusDate">—</div>
+        <div id="statusLine"></div>
+        <div id="hintChip"></div>
+        <button class="undo-link hidden" id="undoBtn">Deshacer registro de hoy</button>
+      </div>
+    </div>
+
+    <div class="card timer-card" id="timerCard">
+      <div class="hourglass-wrap" id="hourglassWrap">
+        <svg class="hourglass" viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="clipTop"><polygon points="52,26 148,26 100,136"/></clipPath>
+            <clipPath id="clipBottom"><polygon points="100,144 152,254 48,254"/></clipPath>
+          </defs>
+          <rect x="30" y="10" width="140" height="14" rx="6" fill="var(--wood)"/>
+          <rect x="30" y="256" width="140" height="14" rx="6" fill="var(--wood)"/>
+          <rect x="40" y="26" width="120" height="228" fill="var(--glass-fill)" clip-path="url(#clipTop)"/>
+          <rect x="40" y="26" width="120" height="228" fill="var(--glass-fill)" clip-path="url(#clipBottom)"/>
+          <rect id="sandTop" class="sand-rect" x="40" y="26" width="120" height="0" fill="var(--sand)" clip-path="url(#clipTop)"/>
+          <rect id="sandBottom" class="sand-rect" x="40" y="254" width="120" height="0" fill="var(--sand)" clip-path="url(#clipBottom)"/>
+          <circle class="sand-grain" cx="100" cy="139" r="1.6"/>
+          <circle class="sand-grain sand-grain-2" cx="100" cy="139" r="1.6"/>
+          <path d="M50,24 L150,24 L104,138 L104,142 L150,256 L50,256 L96,142 L96,138 Z"
+                fill="none" stroke="var(--glass-edge)" stroke-width="3" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <p class="timer-text" id="timerText">Cuando registres el parche, aquí vas a ver cuánto falta ⏳</p>
+      <p class="timer-locked-note hidden" id="timerLockedNote">
+        ⏳ y 🔔 son parte del plan completo — <a href="#" id="irAPrecios">actívalo desde $3.500 CLP</a>
+      </p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat"><div class="num" id="statRacha">0</div><div class="lbl">días seguidos</div></div>
+      <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">días registrados</div></div>
+      <div class="stat"><div class="num" id="statConst">0%</div><div class="lbl">constancia</div></div>
+    </div>
+
+    <div class="action-row">
+      <button class="history-btn" id="openHistory">📋 Ver historial</button>
+    </div>
+  </div>
+
+  <footer class="note">Ocuparche — hecho desde la experiencia real de un tratamiento 🩹</footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-label="Historial">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h2>Historial</h2>
+    <button class="icon-btn" id="closeHistory" aria-label="Cerrar">✕</button>
+  </div>
+
+  <section class="block">
+    <p class="block-title">Balance de lados</p>
+    <div class="balance-bar" id="balanceBar"><div style="background:var(--brand);width:50%"></div><div style="background:var(--teal);width:50%"></div></div>
+    <div class="balance-legend"><span id="balDerechoLbl">Derecho 0</span><span id="balIzquierdoLbl">Izquierdo 0</span></div>
+  </section>
+
+  <section class="block">
+    <p class="block-title">Últimos 28 días</p>
+    <div class="cal-grid cal-heads">
+      <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <span><span class="dot" style="background:var(--brand)"></span>Derecho</span>
+      <span><span class="dot" style="background:var(--teal)"></span>Izquierdo</span>
+      <span><span class="dot" style="background:var(--surface-2);border:1px solid var(--line)"></span>Sin registro</span>
+    </div>
+  </section>
+
+  <section class="block">
+    <p class="block-title">Registros</p>
+    <div class="list" id="list"></div>
+    <button class="add-toggle" id="addToggle">+ Agregar o corregir un registro</button>
+    <div class="addform" id="addForm">
+      <div>
+        <label for="addDate">Fecha</label>
+        <input type="date" id="addDate">
+      </div>
+      <div>
+        <label>Ojo</label>
+        <div class="seg">
+          <button type="button" data-side="derecho" class="active">Derecho</button>
+          <button type="button" data-side="izquierdo">Izquierdo</button>
+        </div>
+      </div>
+      <div>
+        <label for="addTime">Hora</label>
+        <input type="time" id="addTime">
+      </div>
+      <div class="row-btns">
+        <button class="btn-save" id="addSave">Guardar</button>
+        <button class="btn-cancel" id="addCancel">Cancelar</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <p class="block-title">Duración del parche y avisos</p>
+    <div id="duracionBloque">
+      <label for="duracionInput" style="font-size:12.5px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px">Cuánto tiempo dura el parche puesto</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="number" id="duracionInput" min="1" step="1" inputmode="numeric" style="width:80px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:14px">
+        <span style="font-size:13px;color:var(--ink-soft)">minutos</span>
+        <button class="btn-save small" id="duracionSave">Guardar</button>
+      </div>
+      <p style="font-size:12px;color:var(--ink-faint);margin:8px 0 0" id="duracionHint"></p>
+      <button class="history-btn ghost" id="pushToggle" style="margin-top:14px">🔔 Activar avisos en este dispositivo</button>
+      <p style="font-size:12px;color:var(--ink-faint);margin:8px 0 0" id="pushHint"></p>
+    </div>
+    <div id="duracionUpsell" class="upsell-box hidden">
+      <p>El temporizador y los avisos automáticos son parte del <b>plan completo</b>.</p>
+      <a href="index.html#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+    </div>
+  </section>
+
+  <section class="block">
+    <p class="block-title">Personas con acceso</p>
+    <div class="people-list" id="peopleList"></div>
+    <div class="addform show hidden" id="inviteForm">
+      <p style="margin:0 0 2px;font-size:12.5px;color:var(--ink-soft)">
+        Invita a alguien más de la familia — le llega un correo para elegir su
+        contraseña y queda con acceso de inmediato.
+      </p>
+      <p class="auth-error hidden" id="inviteError" style="margin:0"></p>
+      <div>
+        <label for="inviteEmail">Correo</label>
+        <input type="email" id="inviteEmail" placeholder="correo@ejemplo.com" autocapitalize="off">
+      </div>
+      <div>
+        <label for="inviteNombre">Nombre (opcional)</label>
+        <input type="text" id="inviteNombre" placeholder="Cómo se le mostrará a los demás">
+      </div>
+      <div class="row-btns">
+        <button class="btn-save" id="inviteSend">Enviar invitación</button>
+      </div>
+    </div>
+    <div id="inviteUpsell" class="upsell-box hidden">
+      <p>Invitar a más personas es parte del <b>plan completo</b>.</p>
+      <a href="index.html#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+    </div>
+  </section>
+
+  <section class="block">
+    <p class="block-title">Tu cuenta</p>
+    <div id="cuentaFreeBloque" class="hidden">
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 10px">
+        Estás en el <b>plan gratis</b> (1 hij@, sin temporizador ni avisos). Si ya
+        tienes un código de activación, ponlo aquí:
+      </p>
+      <div class="redeem-row">
+        <input type="text" id="codigoInput" placeholder="CÓDIGO" maxlength="12">
+        <button class="btn-save" id="codigoSend">Activar</button>
+      </div>
+      <p class="auth-error hidden" id="codigoError" style="margin:8px 0 0"></p>
+    </div>
+    <div id="cuentaCompletoBloque" class="hidden">
+      <p style="font-size:13.5px;color:var(--success)">✓ Tienes el plan completo — gracias por tu apoyo 🩹</p>
+    </div>
+  </section>
+
+  <section class="block hidden" id="panelDueño">
+    <p class="block-title">Generar códigos de activación</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input type="text" id="notaCodigoInput" placeholder="Nota (ej: Mach - Juan Pérez)" style="flex:1;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px">
+      <button class="btn-save" id="generarCodigoBtn">Generar</button>
+    </div>
+    <div class="list" id="codigosList"></div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/core.js"></script>
+<script src="js/app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
+</body>
+</html>

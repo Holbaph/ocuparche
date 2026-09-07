@@ -1,0 +1,17 @@
+{
+  "name": "Ocuparche",
+  "short_name": "Ocuparche",
+  "description": "Registro diario, temporizador y constancia del tratamiento de parche ocular.",
+  "start_url": "./app.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbf3ec",
+  "theme_color": "#fbf3ec",
+  "lang": "es",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
