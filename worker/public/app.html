@@ -429,6 +429,20 @@
   </section>
 
   <section class="block hidden" id="panelDueño">
+    <p class="block-title">📊 Panel de control</p>
+    <div id="statsGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px">
+      <div class="stat-tile"><span class="stat-num" id="statClientes">–</span><span class="stat-label">Clientes</span></div>
+      <div class="stat-tile"><span class="stat-num" id="statCompleto">–</span><span class="stat-label">Plan completo</span></div>
+      <div class="stat-tile"><span class="stat-num" id="statAdmins">–</span><span class="stat-label">Admins</span></div>
+      <div class="stat-tile"><span class="stat-num" id="statUsers">–</span><span class="stat-label">Users</span></div>
+      <div class="stat-tile"><span class="stat-num" id="statPacientes">–</span><span class="stat-label">Pacientes</span></div>
+      <div class="stat-tile"><span class="stat-num" id="statRegistros">–</span><span class="stat-label">Registros</span></div>
+      <div class="stat-tile" style="grid-column:1 / -1"><span class="stat-num" id="statCodigosLibres">–</span><span class="stat-label">Códigos libres sin usar</span></div>
+    </div>
+
+    <p class="block-title">Clientes</p>
+    <div class="list" id="clientesList" style="margin-bottom:16px"></div>
+
     <p class="block-title">Generar códigos de activación</p>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <input type="text" id="notaCodigoInput" placeholder="Nota (ej: Mach - Juan Pérez)" style="flex:1;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px">

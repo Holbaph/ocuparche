@@ -12,6 +12,7 @@ import { APP_URL } from './constants';
 import type { Env } from './types';
 import * as pacientes from './routes-pacientes';
 import * as cuenta from './routes-cuenta';
+import * as admin from './routes-admin';
 import { revisarYAvisar } from './reminders';
 
 export type { Env };
@@ -207,6 +208,9 @@ export default {
 
       'POST /api/push-subscriptions': cuenta.guardarPushSubscription,
       'DELETE /api/push-subscriptions': cuenta.eliminarPushSubscription,
+
+      'GET /api/admin/stats': admin.estadisticas,
+      'GET /api/admin/clientes': admin.listarClientes,
     };
 
     const key = `${request.method} ${url.pathname}`;

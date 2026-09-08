@@ -418,7 +418,7 @@
     document.getElementById('cuentaCompletoBloque').classList.toggle('hidden', !completo);
 
     document.getElementById('panelDueño').classList.toggle('hidden', !perfil.es_dueño);
-    if (perfil.es_dueño) cargarCodigos();
+    if (perfil.es_dueño) { cargarCodigos(); cargarPanelNegocio(); }
 
     renderTimer();
   }
@@ -744,6 +744,40 @@
       err.classList.remove('hidden');
     }
   });
+
+  // ================= PANEL DUEÑO: ESTADÍSTICAS Y CLIENTES =================
+  async function cargarPanelNegocio() {
+    try {
+      const stats = await Admin.estadisticas();
+      if (stats) {
+        document.getElementById('statClientes').textContent = stats.total_cuentas ?? '–';
+        document.getElementById('statCompleto').textContent = stats.cuentas_completo ?? '–';
+        document.getElementById('statAdmins').textContent = stats.total_admins ?? '–';
+        document.getElementById('statUsers').textContent = stats.total_users ?? '–';
+        document.getElementById('statPacientes').textContent = stats.total_pacientes ?? '–';
+        document.getElementById('statRegistros').textContent = stats.total_registros ?? '–';
+        document.getElementById('statCodigosLibres').textContent = stats.codigos_libres ?? '–';
+      }
+    } catch (e) { console.error('No se pudieron cargar las estadísticas', e); }
+
+    try {
+      const clientes = await Admin.listarClientes();
+      const list = document.getElementById('clientesList');
+      if (!clientes.length) { list.innerHTML = '<div class="empty-state">Todavía no hay clientes registrados.</div>'; return; }
+      list.innerHTML = clientes.map(c => {
+        const fecha = c.created_at ? new Date(c.created_at).toLocaleDateString('es-CL') : '–';
+        const plan = c.plan === 'completo' ? 'completo' : 'free';
+        return '<div class="cliente-item">' +
+          '<div class="c-top">' +
+            '<span class="c-nombre">' + (c.admin_nombre || 'Sin nombre') + '</span>' +
+            '<span class="c-plan ' + plan + '">' + plan + '</span>' +
+          '</div>' +
+          '<span class="c-meta">' + (c.admin_email || '') + '</span>' +
+          '<span class="c-meta">' + c.num_personas + ' persona(s) · ' + c.num_pacientes + ' paciente(s) · alta ' + fecha + '</span>' +
+        '</div>';
+      }).join('');
+    } catch (e) { console.error('No se pudo cargar la lista de clientes', e); }
+  }
 
   // ================= PANEL DUEÑO: GENERAR CÓDIGOS =================
   async function cargarCodigos() {

@@ -71,3 +71,15 @@ const Auth = {
     return data?.ok ? data.codigos : [];
   },
 };
+
+// ================= PANEL DUEÑO: negocio =================
+const Admin = {
+  async estadisticas() {
+    const { data } = await api('/admin/stats');
+    return data?.ok ? data.stats : null;
+  },
+  async listarClientes() {
+    const { data } = await api('/admin/clientes');
+    return data?.ok ? data.clientes : [];
+  },
+};
