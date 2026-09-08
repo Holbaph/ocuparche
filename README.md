@@ -1,99 +1,103 @@
 # Ocuparche
 
 App web (PWA) para que familias registren y sigan la constancia del tratamiento
-de parche ocular de sus hij@s — multi-cuenta y freemium. Basada en el mismo
-enfoque probado en [Ojitos de Mili](https://github.com/Holbaph/ojitos-de-mili):
-HTML/CSS/JS puro + Supabase (Postgres + Auth + RLS + Edge Functions) + GitHub
-Pages, sin costos de tienda ni mensualidades de infraestructura.
+de parche ocular de sus hij@s — multi-cuenta y freemium.
 
-Publicada en: **https://holbaph.github.io/ocuparche/** (landing) y
-**https://holbaph.github.io/ocuparche/app.html** (la app)
+**Arquitectura 100% Cloudflare** (Workers + D1 + Durable Objects + Cron
+Triggers), gratis, con un backend propio (nada de Supabase — se migró después
+de toparse con el límite de proyectos gratis y decidir no pagar por un
+servicio que todavía no genera ingresos). El único servicio externo a
+Cloudflare es **Resend**, para los correos de invitación y recuperar
+contraseña (Cloudflare no ofrece envío de correo de propósito general).
+
+- **Landing** (marketing, precios, legales): **https://holbaph.github.io/ocuparche/**
+  — sigue en GitHub Pages, no necesita sesión ni cookies.
+- **App** (login + dashboard): **https://ocuparche-api.pablo-hernandez003.workers.dev/app.html**
+  — la sirve el mismo Worker que la API, a propósito: si la app y la API
+  vivieran en dominios distintos, Safari (iOS) bloquea la cookie de sesión
+  por ser "de otro sitio".
 
 ## Estado del proyecto
 
-- [x] Landing page, Privacidad, Términos — con precio ($3.500 CLP) y correo
+Completo y probado de punta a punta (con clientes reales — WebSocket, fetch,
+firma criptográfica de verdad — no solo con curl):
+
+- [x] Landing, Privacidad, Términos — precio ($3.500 CLP) y correo
       (`ocuparche@gmail.com`) reales.
-- [x] Esquema de base de datos multi-cuenta (`supabase/schema.sql`).
-- [x] App completa (`app.html` + `js/`): login, alta libre, multi-paciente,
-      carita interactiva, temporizador, historial, invitar personas, canjear
-      código, panel de generar códigos (solo para ti).
-- [x] Edge Functions: `invite-user`, `redimir-codigo`, `send-patch-reminders`.
-- [x] PWA (manifest, service worker, íconos).
-- [ ] **Falta que tú conectes tu propio proyecto de Supabase** (ver abajo) —
-      hasta entonces la app muestra "Falta configurar Supabase".
-
-## 1. Configurar Supabase (una sola vez)
-
-1. Crea un proyecto nuevo en **https://supabase.com** — uno **separado** del
-   de Ojitos de Mili (son negocios y datos distintos).
-2. **SQL Editor → New query**, pega [`supabase/schema.sql`](supabase/schema.sql)
-   completo y **Run**.
-3. **Authentication → Sign In / Providers → Email**: confirma que **"Allow
-   new users to sign up"** (o "Enable email signups") esté **activado** — a
-   diferencia de Ojitos de Mili, aquí cualquier familia se registra sola.
-4. **Authentication → URL Configuration**: Site URL y Redirect URLs apuntando
-   a `https://holbaph.github.io/ocuparche/app.html`.
-5. **Project Settings → API**: copia la **Project URL** y la **anon public**
-   key.
-6. Abre [`js/supabase-config.js`](js/supabase-config.js) y reemplaza
-   `SUPABASE_URL` y `SUPABASE_ANON_KEY`. Guarda y `git push`.
-7. Regístrate tú primero en la app, con **tu correo real**
-   (`phernandez@softcorp.cl`) — el esquema te deja marcado automáticamente
-   como dueño del negocio (`es_dueño`), la única cuenta que ve el panel para
-   generar códigos de activación.
-
-## 2. Activar las invitaciones (Edge Function)
-
-Igual que en Ojitos de Mili — necesitas la CLI de Supabase instalada
-(`scoop install supabase` en Windows) y logueada (`supabase login`).
-
-```
-supabase link --project-ref TU-PROJECT-REF
-supabase functions deploy invite-user
-supabase functions deploy redimir-codigo
-```
-
-## 3. Activar el temporizador y los avisos automáticos
-
-1. Genera tus propias llaves VAPID (no reutilices las de Ojitos de Mili):
-   ```
-   npx web-push generate-vapid-keys
-   ```
-2. Copia la **pública** a [`js/supabase-config.js`](js/supabase-config.js)
-   (`VAPID_PUBLIC_KEY`) y sube el cambio.
-3. Guarda ambas como secretos de tus Edge Functions:
-   ```
-   supabase secrets set VAPID_PUBLIC_KEY=tu-llave-publica
-   supabase secrets set VAPID_PRIVATE_KEY=tu-llave-privada
-   ```
-4. Despliega la función que manda los avisos:
-   ```
-   supabase functions deploy send-patch-reminders
-   ```
-5. Abre [`supabase/schema_cron.sql`](supabase/schema_cron.sql), reemplaza
-   `TU-PROJECT-REF` y `TU-ANON-KEY`, y corre ese SQL en el SQL Editor —
-   programa la revisión automática cada minuto.
-
-## 4. Publicar en GitHub Pages
-
-**Settings → Pages → Deploy from a branch**, rama `main`, carpeta `/ (root)`.
+- [x] Base de datos D1 multi-cuenta, sin RLS (cada ruta comprueba a mano la
+      pertenencia a la cuenta — probado que una cuenta no puede tocar los
+      datos de otra).
+- [x] Auth propia: contraseñas con PBKDF2, sesiones por cookie, recuperar
+      contraseña e invitaciones por correo (Resend).
+- [x] Multi-paciente, freemium (1 hij@ gratis; ilimitados + temporizador +
+      avisos + hasta 3 personas invitadas con el plan completo).
+- [x] Códigos de activación de un solo uso (panel para generarlos, solo
+      visible para el dueño del negocio).
+- [x] Sincronización en vivo entre dispositivos (Durable Objects + WebSocket).
+- [x] Aviso automático por push cuando se cumple el tiempo del parche (Cron
+      Triggers, cada minuto).
+- [x] App conectada de verdad a esta API (ya no a Supabase) y desplegada en
+      producción.
 
 ## Cómo generar y entregar un código de activación
 
 1. Alguien te escribe (botón "Solicitar acceso completo" en la landing) con
    su nombre, correo y el comprobante de la transferencia.
 2. Verificas el pago.
-3. Entras a la app con tu cuenta (`es_dueño`) → **Historial → Generar
-   códigos de activación** → escribe una nota (ej. el nombre de la persona) →
-   **Generar**.
+3. Entras a la app con tu cuenta (el correo marcado como dueño) →
+   **Historial → Generar códigos de activación** → escribe una nota (ej. el
+   nombre de la persona) → **Generar**.
 4. Le mandas ese código por correo — lo pone en **Historial → Tu cuenta →
    Activar**, y su cuenta queda con el plan completo para siempre.
+
+## Desarrollo
+
+Todo el backend vive en `worker/` (es su propio proyecto de Node/TypeScript).
+
+```powershell
+cd worker
+npm install
+npx wrangler dev              # local, con D1 emulado
+npx wrangler dev --test-scheduled   # además permite probar el cron a mano:
+# curl "http://localhost:8787/__scheduled?cron=*+*+*+*+*"
+```
+
+### Desplegar cambios
+
+```powershell
+cd worker
+npx wrangler deploy
+```
+
+Eso publica tanto la API (`/api/*`) como la app estática (`public/`) — son el
+mismo Worker. Un `git push` normal actualiza la landing en GitHub Pages, pero
+**la app y la API solo se actualizan con `wrangler deploy`**.
+
+### Configurar desde cero (otro proyecto, u otra cuenta de Cloudflare)
+
+1. `npx wrangler login`
+2. `npx wrangler d1 create ocuparche` → copia el `database_id` a
+   [`worker/wrangler.jsonc`](worker/wrangler.jsonc).
+3. `npx wrangler d1 migrations apply ocuparche --remote`
+4. Genera llaves VAPID propias: `npx @pushforge/builder vapid` — la pública
+   va en [`worker/public/js/config.js`](worker/public/js/config.js)
+   (`VAPID_PUBLIC_KEY`), la privada como secreto:
+   `echo '<jwk>' | npx wrangler secret put VAPID_PRIVATE_KEY_JWK`
+5. Crea una cuenta en [resend.com](https://resend.com), copia tu API key:
+   `echo '<key>' | npx wrangler secret put RESEND_API_KEY`
+6. `npx wrangler deploy`
+7. Regístrate tú primero en la app, con **tu correo real**
+   (`phernandez@softcorp.cl`) — el trigger de alta te deja marcado
+   automáticamente como dueño del negocio, la única cuenta que ve el panel
+   para generar códigos.
 
 ## Modelo de datos (resumen)
 
 ```
 cuentas             — una por cada admin que se registra solo (plan free/completo)
 profiles            — personas (admin o invitadas), ligadas a una cuenta
+sessions            — sesiones activas (solo el hash del token, nunca el token real)
+password_reset_tokens, invite_tokens — igual, solo hashes
 pacientes           — hij@s en tratamiento, uno o varios por cuenta
 registros           — un registro por paciente y día (qué ojo, hora)
 configuracion       — duración del parche, por paciente
@@ -108,22 +112,24 @@ avisos, hasta 3 personas invitadas por cuenta.
 ## Estructura del proyecto
 
 ```
-index.html                  landing page
-privacidad.html, terminos.html   legales
-app.html                     la app (login + dashboard)
-css/tokens.css               paleta y tipografía compartidas
-css/landing.css              estilos de la landing
-css/app.css                  estilos de la app
-js/supabase-config.js        credenciales de tu proyecto Supabase
-js/auth.js                   sesión, alta libre, invitar, códigos
-js/core.js                   fechas, pacientes, registros, temporizador, push
-js/app.js                    toda la interacción de la app
-supabase/schema.sql          tablas y RLS multi-cuenta
-supabase/schema_cron.sql     programa el aviso automático
-supabase/functions/          invite-user, redimir-codigo, send-patch-reminders
-manifest.json, sw.js         PWA de la app
-icons/                       íconos de marca
+index.html, privacidad.html, terminos.html   landing + legales (GitHub Pages)
+css/tokens.css, css/landing.css              estilos de la landing
+icons/                                        íconos de marca
+
+worker/                          la app (API + frontend), Cloudflare
+  wrangler.jsonc                  config: D1, Durable Object, cron
+  migrations/                     esquema de la base de datos
+  src/
+    index.ts                      router HTTP + cron
+    auth.ts, crypto.ts             sesiones, hash de contraseñas, tokens
+    routes-cuenta.ts               personas, invitar, códigos
+    routes-pacientes.ts            pacientes, registros, temporizador, WS
+    PacienteRoom.ts                Durable Object (tiempo real)
+    reminders.ts                   lógica del aviso automático
+    email.ts                       correos vía Resend
+  public/                         lo que sirve la app en sí
+    app.html, css/, js/, manifest.json, sw.js, icons/
 ```
 
 ---
-Hecho con la experiencia real de Ojitos de Mili 🩹
+🩹

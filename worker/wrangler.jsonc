@@ -3,6 +3,11 @@
   "name": "ocuparche-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
   "d1_databases": [
     {
       "binding": "DB",

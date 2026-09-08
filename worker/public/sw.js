@@ -1,12 +1,13 @@
 // Service worker de la app (app.html) — cachea el cascarón estático y maneja
 // los avisos push del temporizador. La landing (index.html) no lo usa.
-const CACHE_NAME = 'ocuparche-v1';
+const CACHE_NAME = 'ocuparche-v2';
 const ASSETS = [
   './app.html',
   './manifest.json',
   './css/tokens.css',
   './css/app.css',
-  './js/supabase-config.js',
+  './js/config.js',
+  './js/api.js',
   './js/auth.js',
   './js/core.js',
   './js/app.js',

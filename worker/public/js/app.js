@@ -1,5 +1,5 @@
 // app.js — arranque, pantallas de acceso, multi-paciente y toda la
-// interacción de la app.
+// interacción de la app. Habla con la API propia (worker/), ya no Supabase.
 (function () {
   "use strict";
 
@@ -11,19 +11,23 @@
   let entries = {};          // fecha -> registro (del paciente actual)
   let personasCache = {};
   let pendingDelete = null;
-  let realtimeChannel = null;
+  let realtimeConn = null;   // { cerrar() }
   let duracionMinutos = 120;
   let timerTick = null;
-  let pendingAuthScreen = null;
 
-  if (location.hash.includes('type=invite') || location.hash.includes('type=recovery') ||
-      location.search.includes('type=invite') || location.search.includes('type=recovery')) {
-    pendingAuthScreen = 'setpassword';
+  // El correo de recuperación/invitación trae #reset=TOKEN o #invite=TOKEN.
+  let authTokenMode = null;  // 'reset' | 'invite' | null
+  let authToken = null;
+  {
+    const hash = location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    if (params.has('reset')) { authTokenMode = 'reset'; authToken = params.get('reset'); }
+    else if (params.has('invite')) { authTokenMode = 'invite'; authToken = params.get('invite'); }
   }
-  if (location.search.includes('signup=1')) pendingAuthScreen = pendingAuthScreen || 'signup';
+  let irSignupAlAbrir = location.search.includes('signup=1');
 
   // ---------- overlays de acceso ----------
-  const OVERLAYS = ['authConfigError', 'authLoading', 'authLogin', 'authSignup', 'authVerify', 'authForgot', 'authSetPassword'];
+  const OVERLAYS = ['authLoading', 'authLogin', 'authSignup', 'authForgot', 'authSetPassword'];
   function showOverlay(id) {
     OVERLAYS.forEach(o => document.getElementById(o).classList.toggle('hidden', o !== id));
     document.getElementById('app').classList.add('hidden');
@@ -61,7 +65,7 @@
         await Auth.login(email, password);
         await arrancarSesion();
       } catch (e) {
-        err.textContent = 'Correo o contraseña incorrectos.';
+        err.textContent = e.message || 'Correo o contraseña incorrectos.';
         err.classList.remove('hidden');
       }
     });
@@ -70,7 +74,6 @@
     document.getElementById('btnVolverLogin').addEventListener('click', () => showOverlay('authLogin'));
     document.getElementById('btnIrSignup').addEventListener('click', (e) => { e.preventDefault(); showOverlay('authSignup'); });
     document.getElementById('btnVolverLoginDesdeSignup').addEventListener('click', () => showOverlay('authLogin'));
-    document.getElementById('btnVolverLoginDesdeVerify').addEventListener('click', () => showOverlay('authLogin'));
 
     document.getElementById('btnSignup').addEventListener('click', async () => {
       const nombre = document.getElementById('signupNombre').value.trim();
@@ -81,17 +84,10 @@
       if (!nombre || !email || !password) { err.textContent = 'Completa todos los campos.'; err.classList.remove('hidden'); return; }
       if (password.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres.'; err.classList.remove('hidden'); return; }
       try {
-        const data = await Auth.registrarse(email, password, nombre);
-        if (data.session) {
-          // confirmación de correo desactivada en el proyecto: entra directo
-          await arrancarSesion();
-        } else {
-          document.getElementById('verifyMuted').textContent = 'Te enviamos un enlace a ' + email + ' para confirmar tu cuenta.';
-          showOverlay('authVerify');
-        }
+        await Auth.registrarse(email, password, nombre);
+        await arrancarSesion();
       } catch (e) {
-        err.textContent = e.message && e.message.includes('already registered')
-          ? 'Ese correo ya tiene una cuenta.' : (e.message || 'No se pudo crear la cuenta.');
+        err.textContent = (e.message || '').includes('ya tiene una cuenta') ? 'Ese correo ya tiene una cuenta.' : (e.message || 'No se pudo crear la cuenta.');
         err.classList.remove('hidden');
       }
     });
@@ -119,12 +115,13 @@
       if (p1.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres.'; err.classList.remove('hidden'); return; }
       if (p1 !== p2) { err.textContent = 'Las contraseñas no coinciden.'; err.classList.remove('hidden'); return; }
       try {
-        await Auth.fijarContrasena(p1);
+        if (authTokenMode === 'invite') await Auth.aceptarInvitacion(authToken, p1);
+        else await Auth.fijarContrasenaConToken(authToken, p1);
         history.replaceState(null, '', location.pathname);
-        pendingAuthScreen = null;
+        authTokenMode = null; authToken = null;
         await arrancarSesion();
       } catch (e) {
-        err.textContent = 'No se pudo guardar la contraseña. Intenta de nuevo.';
+        err.textContent = e.message || 'No se pudo guardar la contraseña. Intenta de nuevo.';
         err.classList.remove('hidden');
       }
     });
@@ -141,33 +138,28 @@
   // ================= SESIÓN =================
   async function arrancarSesion() {
     showOverlay('authLoading');
-    const session = await Auth.getSession();
-    if (!session) {
-      if (pendingAuthScreen === 'signup') { showOverlay('authSignup'); pendingAuthScreen = null; }
-      else showOverlay('authLogin');
-      return;
-    }
 
-    if (pendingAuthScreen === 'setpassword') {
-      document.getElementById('setPasswordMuted').textContent = '¡Bienvenid@! Elige tu contraseña para empezar.';
+    if (authTokenMode) {
+      document.getElementById('setPasswordMuted').textContent = authTokenMode === 'invite'
+        ? '¡Bienvenid@! Elige tu contraseña para empezar.'
+        : 'Elige una contraseña nueva para tu cuenta.';
       showOverlay('authSetPassword');
       return;
     }
 
-    perfil = await Auth.getPerfil(session.user.id);
-    if (!perfil) {
-      await new Promise(r => setTimeout(r, 900));
-      perfil = await Auth.getPerfil(session.user.id);
+    const sesion = await Auth.getSesionYPerfil();
+    if (!sesion) {
+      showOverlay(irSignupAlAbrir ? 'authSignup' : 'authLogin');
+      irSignupAlAbrir = false;
+      return;
     }
-    if (!perfil) { showToast('No se pudo cargar tu perfil, intenta recargar la página'); showOverlay('authLogin'); return; }
+    perfil = sesion.perfil;
+    cuenta = sesion.cuenta;
 
-    cuenta = await Auth.getCuenta(perfil.cuenta_id);
     renderCuenta();
     showApp();
 
-    try {
-      pacientes = await Pacientes.listar(perfil.cuenta_id);
-    } catch (e) { pacientes = []; }
+    try { pacientes = await Pacientes.listar(); } catch (e) { pacientes = []; }
 
     if (!pacientes.length) {
       document.getElementById('noPacientes').classList.remove('hidden');
@@ -236,7 +228,7 @@
     const nombre = document.getElementById('pacienteNombreInput').value.trim();
     if (!nombre) { showToast('Escribe un nombre'); return; }
     try {
-      const nuevo = await Pacientes.crear(perfil.cuenta_id, nombre);
+      const nuevo = await Pacientes.crear(nombre);
       pacientes.push(nuevo);
       document.getElementById('addPacienteForm').classList.remove('show');
       document.getElementById('noPacientes').classList.add('hidden');
@@ -245,11 +237,9 @@
       await cambiarPaciente(nuevo.id);
       showToast('¡Agregad@!');
     } catch (e) {
-      if (e.message && e.message.includes('plan_gratis_limite_pacientes')) {
-        showToast('El plan gratis permite 1 solo hij@ — activa el plan completo para agregar más');
-      } else {
-        showToast('No se pudo agregar, intenta de nuevo');
-      }
+      showToast((e.message || '').includes('plan_gratis_limite_pacientes')
+        ? 'El plan gratis permite 1 solo hij@ — activa el plan completo para agregar más'
+        : 'No se pudo agregar, intenta de nuevo');
     }
   });
 
@@ -278,10 +268,10 @@
   }
 
   function pararRealtime() {
-    if (realtimeChannel) { supabaseClient.removeChannel(realtimeChannel); realtimeChannel = null; }
+    if (realtimeConn) { realtimeConn.cerrar(); realtimeConn = null; }
   }
   function suscribirRealtime(pacienteId) {
-    realtimeChannel = DB.suscribirRegistros(pacienteId, async () => {
+    realtimeConn = DB.suscribirRegistros(pacienteId, async () => {
       try { entries = await DB.cargarRegistros(pacienteId); renderAll(); setBadge('ok'); }
       catch (e) { setBadge('down'); }
     });
@@ -308,8 +298,6 @@
     renderTimer();
   }
 
-  document.getElementById('irAPrecios').addEventListener('click', (e) => { /* deja el link normal, se abre en pestaña nueva */ });
-
   // ================= TOQUE DE OJOS =================
   function wireEye(el, side) {
     function act() { onEyeTap(side); }
@@ -326,7 +314,7 @@
     }
     const horaISO = new Date().toISOString();
     try {
-      await DB.guardarRegistro(pacienteActualId, id, side, horaISO, perfil.id);
+      await DB.guardarRegistro(pacienteActualId, id, side, horaISO);
       entries[id] = { fecha: id, ojo: side, hora: horaISO, registradoPor: perfil.id };
       renderAll();
       showToast('Registrado: ojo ' + Utils.label(side).toLowerCase() + ' a las ' + Utils.fmtTime(horaISO));
@@ -567,7 +555,7 @@
     btn.disabled = true;
     try {
       if (btn.classList.contains('active')) { await Push.desactivar(); showToast('Avisos desactivados en este dispositivo'); }
-      else { await Push.activar(perfil.id); showToast('¡Avisos activados!'); }
+      else { await Push.activar(); showToast('¡Avisos activados!'); }
     } catch (e) {
       showToast(e.message || 'No se pudo cambiar los avisos');
     } finally {
@@ -578,7 +566,7 @@
 
   // ================= PERSONAS / INVITAR =================
   async function cargarPersonas() {
-    const personas = await Auth.listarPersonas(perfil.cuenta_id);
+    const personas = await Auth.listarPersonas();
     personasCache = {};
     personas.forEach(p => { personasCache[p.id] = p; });
     const list = document.getElementById('peopleList');
@@ -620,7 +608,8 @@
     if (!codigo) { err.textContent = 'Escribe el código.'; err.classList.remove('hidden'); return; }
     try {
       await Auth.canjearCodigo(codigo);
-      cuenta = await Auth.getCuenta(perfil.cuenta_id);
+      const sesion = await Auth.getSesionYPerfil();
+      if (sesion) cuenta = sesion.cuenta;
       renderCuenta();
       renderGatingPlan();
       showToast('¡Plan completo activado! 🎉');
@@ -708,7 +697,7 @@
     if (!dateVal) { showToast('Elige una fecha'); return; }
     const iso = new Date(dateVal + 'T' + timeVal + ':00').toISOString();
     try {
-      await DB.guardarRegistro(pacienteActualId, dateVal, chosenSide, iso, perfil.id);
+      await DB.guardarRegistro(pacienteActualId, dateVal, chosenSide, iso);
       entries[dateVal] = { fecha: dateVal, ojo: chosenSide, hora: iso, registradoPor: perfil.id };
       renderAll();
       addForm.classList.remove('show');
@@ -721,16 +710,6 @@
     wireLogin();
     wireEye(document.getElementById('eyeDerecho'), 'derecho');
     wireEye(document.getElementById('eyeIzquierdo'), 'izquierdo');
-
-    if (!SUPABASE_CONFIGURADO) { showOverlay('authConfigError'); return; }
-
-    supabaseClient.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        document.getElementById('setPasswordMuted').textContent = 'Elige una contraseña nueva para tu cuenta.';
-        showOverlay('authSetPassword');
-      }
-    });
-
     await arrancarSesion();
   }
 

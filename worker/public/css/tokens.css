@@ -1,0 +1,83 @@
+/* Ocuparche — sistema de diseño compartido (marca + app) */
+:root{
+  --bg:#fbf3ec;
+  --surface:#ffffff;
+  --surface-2:#fef8f3;
+  --ink:#2e2620;
+  --ink-soft:#6b5b4e;
+  --ink-faint:#a3907f;
+  --line:#ecdfd2;
+
+  --brand:#e1673f;
+  --brand-dark:#b84f2e;
+  --brand-soft:#fbe0d2;
+  --teal:#2f6e73;
+  --teal-dark:#20303a;
+  --teal-soft:#dceeef;
+
+  --success:#5f8a63;
+  --success-soft:#dcebdd;
+  --warn:#c88a3b;
+  --danger:#c85a4a;
+
+  --skin:#f6e0c8;
+  --skin-line:#e8c9a3;
+  --blush:#f3a993;
+  --iris:#8b5e3c;
+  --mouth:#c9607a;
+  --patch:#4b3b36;
+  --patch-edge:#6d5a53;
+  --wood:#a9764f;
+  --glass-fill:#f1e9de;
+  --glass-edge:#c9b8a6;
+  --sand:#e8ac4d;
+
+  --shadow: 0 24px 55px -30px rgba(46,38,32,.35);
+  --shadow-sm: 0 10px 24px -16px rgba(46,38,32,.4);
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#211b17; --surface:#2b241f; --surface-2:#332b24;
+    --ink:#f6ece2; --ink-soft:#d3bfae; --ink-faint:#93816f; --line:#453a30;
+    --brand:#ef7c53; --brand-dark:#c9633c; --brand-soft:#4a3226;
+    --teal:#4f9aa0; --teal-dark:#dff2f3; --teal-soft:#233c3e;
+    --success:#7fb083; --success-soft:#28402c; --warn:#e0a458; --danger:#e07a68;
+    --skin:#d9ac83; --skin-line:#c69268; --blush:#e08e78; --iris:#6e4a30;
+    --mouth:#dd7e93; --patch:#171215; --patch-edge:#3a3033;
+    --wood:#8a6142; --glass-fill:#2b2743; --glass-edge:#4a4368; --sand:#e8ac4d;
+    --shadow: 0 24px 55px -30px rgba(0,0,0,.6);
+    --shadow-sm: 0 10px 24px -16px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#211b17; --surface:#2b241f; --surface-2:#332b24;
+  --ink:#f6ece2; --ink-soft:#d3bfae; --ink-faint:#93816f; --line:#453a30;
+  --brand:#ef7c53; --brand-dark:#c9633c; --brand-soft:#4a3226;
+  --teal:#4f9aa0; --teal-dark:#dff2f3; --teal-soft:#233c3e;
+  --success:#7fb083; --success-soft:#28402c; --warn:#e0a458; --danger:#e07a68;
+  --skin:#d9ac83; --skin-line:#c69268; --blush:#e08e78; --iris:#6e4a30;
+  --mouth:#dd7e93; --patch:#171215; --patch-edge:#3a3033;
+  --wood:#8a6142; --glass-fill:#2b2743; --glass-edge:#4a4368; --sand:#e8ac4d;
+  --shadow: 0 24px 55px -30px rgba(0,0,0,.6);
+  --shadow-sm: 0 10px 24px -16px rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Figtree',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{ font-family:'Baloo 2',system-ui,sans-serif; text-wrap:balance; margin:0; }
+p{ margin:0; }
+a{ color:inherit; }
+button{ font-family:inherit; }
+img{ max-width:100%; display:block; }
+.hidden{ display:none !important; }

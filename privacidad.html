@@ -55,14 +55,15 @@
   rastreadores de terceros ni anuncios dentro de la app.</p>
 
   <h2>3. Dónde viven tus datos</h2>
-  <p>Se guardan en un proyecto de <strong>Supabase</strong> (infraestructura sobre AWS),
-  protegidos por reglas de acceso (Row Level Security) que hacen que solo tu cuenta
-  y las personas que invites puedan ver los datos de tu tratamiento — ni siquiera
-  el equipo de Ocuparche los ve en el uso normal del servicio.</p>
+  <p>Se guardan en la infraestructura de <strong>Cloudflare</strong> (base de datos D1
+  y Workers), protegidos por reglas de acceso que hacen que solo tu cuenta y las
+  personas que invites puedan ver los datos de tu tratamiento — ni siquiera el
+  equipo de Ocuparche los ve en el uso normal del servicio.</p>
 
   <h2>4. Con quién compartimos datos</h2>
   <p>Con nadie, salvo los proveedores estrictamente necesarios para que la app
-  funcione (hosting de Supabase, y el servicio de notificaciones push del
+  funcione (la infraestructura de Cloudflare, el servicio de correo para
+  invitaciones y recuperar contraseña, y el servicio de notificaciones push del
   navegador/celular). Ninguno de ellos puede usar tus datos para otro fin.</p>
 
   <h2>5. Tus derechos</h2>

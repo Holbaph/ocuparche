@@ -19,17 +19,6 @@
 </head>
 <body>
 
-<!-- ============ Supabase no configurado ============ -->
-<div id="authConfigError" class="auth-overlay hidden">
-  <div class="auth-box">
-    <div class="auth-icon">🛠️</div>
-    <h2>Falta configurar Supabase</h2>
-    <p class="muted">Abre <code>js/supabase-config.js</code>, reemplaza <code>SUPABASE_URL</code> y
-      <code>SUPABASE_ANON_KEY</code> con los de tu proyecto, y vuelve a publicar. El
-      <a href="README.md">README</a> trae el paso a paso.</p>
-  </div>
-</div>
-
 <!-- ============ Cargando ============ -->
 <div id="authLoading" class="auth-overlay hidden">
   <div class="auth-box">
@@ -80,16 +69,6 @@
     </div>
     <button class="btn-primary" id="btnSignup">Crear cuenta gratis</button>
     <button class="btn-link" id="btnVolverLoginDesdeSignup">Ya tengo cuenta</button>
-  </div>
-</div>
-
-<!-- ============ Revisa tu correo ============ -->
-<div id="authVerify" class="auth-overlay hidden">
-  <div class="auth-box">
-    <div class="auth-icon">✉️</div>
-    <h2>Revisa tu correo</h2>
-    <p class="muted" id="verifyMuted">Te enviamos un enlace para confirmar tu cuenta.</p>
-    <button class="btn-link" id="btnVolverLoginDesdeVerify">Volver a iniciar sesión</button>
   </div>
 </div>
 
@@ -334,7 +313,7 @@
     </div>
     <div id="duracionUpsell" class="upsell-box hidden">
       <p>El temporizador y los avisos automáticos son parte del <b>plan completo</b>.</p>
-      <a href="index.html#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
     </div>
   </section>
 
@@ -361,7 +340,7 @@
     </div>
     <div id="inviteUpsell" class="upsell-box hidden">
       <p>Invitar a más personas es parte del <b>plan completo</b>.</p>
-      <a href="index.html#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
     </div>
   </section>
 
@@ -395,8 +374,8 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabase-config.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/core.js"></script>
 <script src="js/app.js"></script>
