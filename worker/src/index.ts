@@ -12,6 +12,7 @@ import { APP_URL } from './constants';
 import type { Env } from './types';
 import * as pacientes from './routes-pacientes';
 import * as cuenta from './routes-cuenta';
+import { revisarYAvisar } from './reminders';
 
 export type { Env };
 export { PacienteRoom } from './PacienteRoom';
@@ -160,6 +161,15 @@ export default {
 
     if (request.method === 'OPTIONS') return preflight(origin);
 
+    // Cloudflare documenta que /__scheduled (el atajo para probar el cron a
+    // mano) queda accesible en producción para cualquiera si no se bloquea
+    // — acá lo hacemos siempre. Para probar el cron en desarrollo se usa
+    // "wrangler dev --test-scheduled", que lo intercepta ANTES de que
+    // llegue hasta acá, así que este bloqueo no estorba las pruebas locales.
+    if (url.pathname === '/__scheduled') {
+      return new Response('Not found', { status: 404 });
+    }
+
     // Conexión en vivo — no es una ruta JSON normal, se detecta por el
     // header Upgrade y se maneja aparte (ver routes-pacientes.ts).
     if (url.pathname === '/api/realtime' && request.headers.get('Upgrade') === 'websocket') {
@@ -209,5 +219,15 @@ export default {
       console.error(e);
       return json({ ok: false, error: 'Error interno' }, origin, { status: 500 });
     }
+  },
+
+  // Lo dispara el cron de wrangler.jsonc cada minuto — revisa si algún
+  // paciente ya cumplió su tiempo de parche y avisa por push.
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      revisarYAvisar(env)
+        .then((r) => console.log('[cron] avisos enviados:', r.avisos))
+        .catch((e) => console.error('[cron] error', e))
+    );
   },
 };
