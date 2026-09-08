@@ -86,7 +86,7 @@ export async function revisarYAvisar(env: Env): Promise<{ avisos: number }> {
                 title: '¡Ya se puede sacar el parche! 🎉',
                 body: nombres.length === 1 ? `Se cumplió el tiempo de hoy para ${nombres[0]}.` : `Se cumplió el tiempo de hoy para: ${nombres.join(', ')}.`,
               },
-              adminContact: 'mailto:ocuparche@gmail.com',
+              adminContact: 'mailto:pablo.hernandez@outlook.cl',
             },
           });
 
