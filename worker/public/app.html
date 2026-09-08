@@ -295,6 +295,19 @@
     <button class="btn-save" id="avatarGuardar">Guardar</button>
     <button class="btn-cancel" id="avatarCancelar">Cancelar</button>
   </div>
+
+  <section class="block" style="margin-top:8px">
+    <button class="add-toggle" id="eliminarPacienteToggle" style="color:var(--danger);border-color:var(--danger)">🗑️ Eliminar a este hij@</button>
+    <div id="eliminarPacienteConfirm" class="hidden" style="margin-top:10px;background:var(--brand-soft);border-radius:14px;padding:14px">
+      <p style="font-size:13px;color:var(--brand-dark);margin:0 0 10px">
+        Esto borra <b id="eliminarPacienteNombre"></b> y <b>todo su historial de registros</b>, sin poder deshacerlo. ¿Seguro?
+      </p>
+      <div class="row-btns">
+        <button id="eliminarPacienteSi" style="flex:1;padding:10px;border-radius:10px;border:none;font-weight:700;cursor:pointer;background:var(--danger);color:#fff">Sí, eliminar</button>
+        <button id="eliminarPacienteNo" class="btn-cancel">Cancelar</button>
+      </div>
+    </div>
+  </section>
 </div>
 
 <div class="scrim" id="scrim"></div>

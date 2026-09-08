@@ -159,7 +159,16 @@
     renderCuenta();
     showApp();
 
-    try { pacientes = await Pacientes.listar(); } catch (e) { pacientes = []; }
+    // Antes, si cualquiera de estos pasos fallaba (por ejemplo cargarPaciente),
+    // la excepción quedaba sin capturar y la app se veía "pegada" a medio
+    // cargar, sin decir nada — ahora cada paso avisa con un toast y los
+    // siguientes pasos igual se intentan.
+    try {
+      pacientes = await Pacientes.listar();
+    } catch (e) {
+      pacientes = [];
+      showToast('No se pudieron cargar tus hij@s. Revisa tu conexión y recarga la página.');
+    }
 
     if (!pacientes.length) {
       document.getElementById('noPacientes').classList.remove('hidden');
@@ -170,10 +179,19 @@
       const recordado = localStorage.getItem('ocuparche_paciente_' + perfil.cuenta_id);
       pacienteActualId = pacientes.find(p => p.id === recordado) ? recordado : pacientes[0].id;
       renderPatientTabs();
-      await cargarPaciente(pacienteActualId);
+      try {
+        await cargarPaciente(pacienteActualId);
+      } catch (e) {
+        console.error('cargarPaciente falló', e);
+        showToast('Algo falló al cargar el historial. Recarga la página.');
+      }
     }
 
-    await cargarPersonas();
+    try {
+      await cargarPersonas();
+    } catch (e) {
+      console.error('cargarPersonas falló', e);
+    }
     renderGatingPlan();
   }
 
@@ -282,6 +300,8 @@
     avatarBorrador = { ...avatarPorDefecto(p.avatar?.genero || 'niña'), ...(p.avatar || {}) };
     renderPickersAvatar();
     aplicarAvatar(avatarBorrador);
+    document.getElementById('eliminarPacienteNombre').textContent = p.nombre;
+    document.getElementById('eliminarPacienteConfirm').classList.add('hidden');
     abrirAvatarSheet();
   });
   document.querySelectorAll('#peinadoSeg button').forEach(b => {
@@ -307,6 +327,41 @@
       cerrarAvatarSheet();
     } catch (e) {
       showToast('No se pudo guardar, intenta de nuevo');
+    }
+  });
+
+  document.getElementById('eliminarPacienteToggle').addEventListener('click', () => {
+    document.getElementById('eliminarPacienteConfirm').classList.remove('hidden');
+  });
+  document.getElementById('eliminarPacienteNo').addEventListener('click', () => {
+    document.getElementById('eliminarPacienteConfirm').classList.add('hidden');
+  });
+  document.getElementById('eliminarPacienteSi').addEventListener('click', async () => {
+    const p = pacienteActual();
+    if (!p) return;
+    const btn = document.getElementById('eliminarPacienteSi');
+    btn.disabled = true; btn.textContent = 'Eliminando…';
+    try {
+      await Pacientes.eliminar(p.id);
+      pacientes = pacientes.filter(x => x.id !== p.id);
+      cerrarAvatarSheet();
+      showToast(p.nombre + ' fue eliminad@');
+
+      if (!pacientes.length) {
+        pararRealtime();
+        if (timerTick) { clearInterval(timerTick); timerTick = null; }
+        pacienteActualId = null;
+        document.getElementById('noPacientes').classList.remove('hidden');
+        document.getElementById('conPacientes').classList.add('hidden');
+      } else if (pacienteActualId === p.id) {
+        await cambiarPaciente(pacientes[0].id);
+      } else {
+        renderPatientTabs();
+      }
+    } catch (e) {
+      showToast('No se pudo eliminar, intenta de nuevo');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Sí, eliminar';
     }
   });
 
@@ -776,11 +831,28 @@
   });
 
   // ================= arranque =================
+  // Red de seguridad: cualquier error que se nos haya escapado de un try/catch
+  // ya no queda mudo — al menos avisa con un toast, en vez de dejar la app
+  // "pegada" sin ninguna pista de qué pasó.
+  window.addEventListener('unhandledrejection', (e) => {
+    console.error('Promesa sin capturar:', e.reason);
+    showToast('Ocurrió un error. Si la app se ve pegada, recarga la página.');
+  });
+  window.addEventListener('error', (e) => {
+    console.error('Error sin capturar:', e.error || e.message);
+  });
+
   async function boot() {
     wireLogin();
     wireEye(document.getElementById('eyeDerecho'), 'derecho');
     wireEye(document.getElementById('eyeIzquierdo'), 'izquierdo');
-    await arrancarSesion();
+    try {
+      await arrancarSesion();
+    } catch (e) {
+      console.error('arrancarSesion falló', e);
+      showToast('No se pudo cargar la app. Recarga la página.');
+      showOverlay('authLogin');
+    }
   }
 
   document.addEventListener('DOMContentLoaded', boot);
