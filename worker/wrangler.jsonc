@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ocuparche-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ocuparche",
+      "database_id": "6f51d95d-9e59-4dbd-9cea-43e6e10ccfe1"
+    }
+  ]
+}
