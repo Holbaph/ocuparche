@@ -23,19 +23,25 @@ async function avisarCambio(env: Env, pacienteId: string) {
   }
 }
 
+function parseAvatar(row: { avatar_json?: string | null }): unknown {
+  if (!row.avatar_json) return null;
+  try { return JSON.parse(row.avatar_json); } catch { return null; }
+}
+
 export const listarPacientes: Handler = async (request, env, origin) => {
   const perfil = await perfilDesdeSesion(request, env);
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
   const { results } = await env.DB.prepare(
-    'SELECT id, nombre, created_at FROM pacientes WHERE cuenta_id = ? ORDER BY created_at ASC'
-  ).bind(perfil.cuenta_id).all();
-  return json({ ok: true, pacientes: results }, origin);
+    'SELECT id, nombre, avatar_json, created_at FROM pacientes WHERE cuenta_id = ? ORDER BY created_at ASC'
+  ).bind(perfil.cuenta_id).all<{ id: string; nombre: string; avatar_json: string | null; created_at: string }>();
+  const pacientes = (results ?? []).map((r) => ({ id: r.id, nombre: r.nombre, avatar: parseAvatar(r), created_at: r.created_at }));
+  return json({ ok: true, pacientes }, origin);
 };
 
 export const crearPaciente: Handler = async (request, env, origin) => {
   const perfil = await perfilDesdeSesion(request, env);
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
-  const body = await readJson<{ nombre?: string }>(request);
+  const body = await readJson<{ nombre?: string; avatar?: unknown }>(request);
   const nombre = (body?.nombre || '').trim();
   if (!nombre) return json({ ok: false, error: 'Escribe un nombre' }, origin, { status: 400 });
 
@@ -46,18 +52,33 @@ export const crearPaciente: Handler = async (request, env, origin) => {
   }
 
   const id = uuid();
-  await env.DB.prepare('INSERT INTO pacientes (id, cuenta_id, nombre) VALUES (?, ?, ?)').bind(id, perfil.cuenta_id, nombre).run();
-  return json({ ok: true, paciente: { id, nombre } }, origin);
+  const avatarJson = body?.avatar ? JSON.stringify(body.avatar) : null;
+  await env.DB.prepare('INSERT INTO pacientes (id, cuenta_id, nombre, avatar_json) VALUES (?, ?, ?, ?)')
+    .bind(id, perfil.cuenta_id, nombre, avatarJson).run();
+  return json({ ok: true, paciente: { id, nombre, avatar: body?.avatar ?? null } }, origin);
 };
 
-export const renombrarPaciente: Handler = async (request, env, origin) => {
+// Actualiza nombre y/o apariencia de un paciente — ambos opcionales, se
+// mandan solo los campos que cambiaron.
+export const actualizarPaciente: Handler = async (request, env, origin) => {
   const perfil = await perfilDesdeSesion(request, env);
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
-  const body = await readJson<{ id?: string; nombre?: string }>(request);
-  const id = body?.id, nombre = (body?.nombre || '').trim();
-  if (!id || !nombre) return json({ ok: false, error: 'Faltan datos' }, origin, { status: 400 });
+  const body = await readJson<{ id?: string; nombre?: string; avatar?: unknown }>(request);
+  const id = body?.id;
+  if (!id) return json({ ok: false, error: 'Faltan datos' }, origin, { status: 400 });
   if (!(await pacienteDeLaCuenta(env, id, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
-  await env.DB.prepare('UPDATE pacientes SET nombre = ? WHERE id = ?').bind(nombre, id).run();
+
+  const nombre = body?.nombre !== undefined ? body.nombre.trim() : undefined;
+  if (nombre !== undefined && !nombre) return json({ ok: false, error: 'El nombre no puede quedar vacío' }, origin, { status: 400 });
+
+  if (nombre !== undefined && body?.avatar !== undefined) {
+    await env.DB.prepare('UPDATE pacientes SET nombre = ?, avatar_json = ? WHERE id = ?')
+      .bind(nombre, JSON.stringify(body.avatar), id).run();
+  } else if (nombre !== undefined) {
+    await env.DB.prepare('UPDATE pacientes SET nombre = ? WHERE id = ?').bind(nombre, id).run();
+  } else if (body?.avatar !== undefined) {
+    await env.DB.prepare('UPDATE pacientes SET avatar_json = ? WHERE id = ?').bind(JSON.stringify(body.avatar), id).run();
+  }
   return json({ ok: true }, origin);
 };
 

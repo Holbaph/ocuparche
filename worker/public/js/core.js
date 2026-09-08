@@ -37,14 +37,18 @@ const Pacientes = {
     const { data } = await api('/pacientes');
     return data?.ok ? data.pacientes : [];
   },
-  async crear(nombre) {
-    const { data } = await api('/pacientes', { method: 'POST', body: { nombre } });
+  async crear(nombre, avatar) {
+    const { data } = await api('/pacientes', { method: 'POST', body: { nombre, avatar } });
     if (!data?.ok) throw new Error(data?.error || 'No se pudo agregar');
     return data.paciente;
   },
   async renombrar(id, nombre) {
     const { data } = await api('/pacientes', { method: 'PATCH', body: { id, nombre } });
     if (!data?.ok) throw new Error(data?.error || 'No se pudo renombrar');
+  },
+  async actualizarAvatar(id, avatar) {
+    const { data } = await api('/pacientes', { method: 'PATCH', body: { id, avatar } });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo guardar la apariencia');
   },
   async eliminar(id) {
     const { data } = await api(`/pacientes?id=${encodeURIComponent(id)}`, { method: 'DELETE' });

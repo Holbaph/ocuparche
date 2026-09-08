@@ -224,11 +224,20 @@
   document.getElementById('pacienteCancel').addEventListener('click', () => {
     document.getElementById('addPacienteForm').classList.remove('show');
   });
+
+  let nuevoGenero = 'niña';
+  document.querySelectorAll('#generoSeg button').forEach(b => {
+    b.addEventListener('click', () => {
+      nuevoGenero = b.dataset.val;
+      document.querySelectorAll('#generoSeg button').forEach(x => x.classList.toggle('active', x === b));
+    });
+  });
+
   document.getElementById('pacienteSave').addEventListener('click', async () => {
     const nombre = document.getElementById('pacienteNombreInput').value.trim();
     if (!nombre) { showToast('Escribe un nombre'); return; }
     try {
-      const nuevo = await Pacientes.crear(nombre);
+      const nuevo = await Pacientes.crear(nombre, avatarPorDefecto(nuevoGenero));
       pacientes.push(nuevo);
       document.getElementById('addPacienteForm').classList.remove('show');
       document.getElementById('noPacientes').classList.add('hidden');
@@ -243,6 +252,64 @@
     }
   });
 
+  // ================= PERSONALIZAR APARIENCIA =================
+  // La misma carita de la pantalla principal sirve de vista previa en vivo:
+  // cada toque en el panel llama aplicarAvatar() de una y listo se ve el
+  // cambio, sin necesitar una segunda carita solo para "probar".
+  let avatarBorrador = null;
+  const avatarScrim = document.getElementById('avatarScrim'), avatarSheet = document.getElementById('avatarSheet');
+  function abrirAvatarSheet() {
+    avatarSheet.classList.add('show'); avatarScrim.classList.add('show');
+  }
+  function cerrarAvatarSheet() {
+    avatarSheet.classList.remove('show'); avatarScrim.classList.remove('show');
+  }
+
+  function renderPickersAvatar() {
+    document.querySelectorAll('#peinadoSeg button').forEach(b => b.classList.toggle('active', b.dataset.val === avatarBorrador.peinado));
+    document.getElementById('monoOn').classList.toggle('active', avatarBorrador.moño);
+    document.getElementById('monoOff').classList.toggle('active', !avatarBorrador.moño);
+    document.getElementById('colorMonoSwatches').style.opacity = avatarBorrador.moño ? '1' : '.4';
+    document.getElementById('colorMonoSwatches').style.pointerEvents = avatarBorrador.moño ? 'auto' : 'none';
+    crearSwatches(document.getElementById('colorPeloSwatches'), PALETA_PELO, avatarBorrador.colorPelo, (c) => { avatarBorrador.colorPelo = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+    crearSwatches(document.getElementById('colorMonoSwatches'), PALETA_MONO, avatarBorrador.colorMoño, (c) => { avatarBorrador.colorMoño = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+    crearSwatches(document.getElementById('colorOjosSwatches'), PALETA_OJOS, avatarBorrador.colorOjos, (c) => { avatarBorrador.colorOjos = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+  }
+
+  document.getElementById('btnPersonalizar').addEventListener('click', () => {
+    const p = pacienteActual();
+    if (!p) return;
+    avatarBorrador = { ...avatarPorDefecto(p.avatar?.genero || 'niña'), ...(p.avatar || {}) };
+    renderPickersAvatar();
+    aplicarAvatar(avatarBorrador);
+    abrirAvatarSheet();
+  });
+  document.querySelectorAll('#peinadoSeg button').forEach(b => {
+    b.addEventListener('click', () => { avatarBorrador.peinado = b.dataset.val; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+  });
+  document.getElementById('monoOn').addEventListener('click', () => { avatarBorrador.moño = true; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+  document.getElementById('monoOff').addEventListener('click', () => { avatarBorrador.moño = false; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+
+  function cancelarAvatar() {
+    aplicarAvatar((pacienteActual() || {}).avatar);
+    cerrarAvatarSheet();
+  }
+  document.getElementById('closeAvatar').addEventListener('click', cancelarAvatar);
+  document.getElementById('avatarCancelar').addEventListener('click', cancelarAvatar);
+  avatarScrim.addEventListener('click', cancelarAvatar);
+  document.getElementById('avatarGuardar').addEventListener('click', async () => {
+    const p = pacienteActual();
+    if (!p) return;
+    try {
+      await Pacientes.actualizarAvatar(p.id, avatarBorrador);
+      p.avatar = avatarBorrador;
+      showToast('¡Apariencia guardada!');
+      cerrarAvatarSheet();
+    } catch (e) {
+      showToast('No se pudo guardar, intenta de nuevo');
+    }
+  });
+
   async function cambiarPaciente(id) {
     pacienteActualId = id;
     localStorage.setItem('ocuparche_paciente_' + perfil.cuenta_id, id);
@@ -250,8 +317,11 @@
     await cargarPaciente(id);
   }
 
+  function pacienteActual() { return pacientes.find(p => p.id === pacienteActualId) || null; }
+
   async function cargarPaciente(id) {
     pararRealtime();
+    aplicarAvatar((pacienteActual() || {}).avatar);
     try {
       entries = await DB.cargarRegistros(id);
       setBadge('ok');

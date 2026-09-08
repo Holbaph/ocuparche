@@ -187,7 +187,7 @@ export default {
 
       'GET /api/pacientes': pacientes.listarPacientes,
       'POST /api/pacientes': pacientes.crearPaciente,
-      'PATCH /api/pacientes': pacientes.renombrarPaciente,
+      'PATCH /api/pacientes': pacientes.actualizarPaciente,
       'DELETE /api/pacientes': pacientes.eliminarPaciente,
 
       'GET /api/registros': pacientes.listarRegistros,

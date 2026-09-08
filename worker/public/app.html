@@ -141,6 +141,13 @@
         <label for="pacienteNombreInput">Nombre de tu hij@</label>
         <input type="text" id="pacienteNombreInput" placeholder="Ej: Sofía">
       </div>
+      <div>
+        <label>¿Niña o niño? (puedes personalizar todo después)</label>
+        <div class="seg" id="generoSeg">
+          <button type="button" data-val="niña" class="active">👧 Niña</button>
+          <button type="button" data-val="niño">👦 Niño</button>
+        </div>
+      </div>
       <div class="row-btns">
         <button class="btn-save" id="pacienteSave">Guardar</button>
         <button class="btn-cancel" id="pacienteCancel">Cancelar</button>
@@ -151,6 +158,7 @@
       <p class="orientation-hint">Mirándol@ de frente: su ojo derecho queda a tu izquierda 👀</p>
       <div class="face-wrap">
         <svg class="face" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+          <g id="hairBack"></g>
           <circle cx="160" cy="168" r="118" fill="var(--skin)" stroke="var(--skin-line)" stroke-width="2"/>
           <ellipse cx="94" cy="204" rx="19" ry="11" fill="var(--blush)" opacity=".55"/>
           <ellipse cx="226" cy="204" rx="19" ry="11" fill="var(--blush)" opacity=".55"/>
@@ -164,7 +172,7 @@
             <circle class="ring" cx="112" cy="160" r="42"/>
             <g class="eye-visual">
               <circle cx="112" cy="160" r="27" fill="#fff"/>
-              <circle cx="112" cy="160" r="13" fill="var(--iris)"/>
+              <circle class="iris-circle" cx="112" cy="160" r="13" fill="var(--iris)"/>
               <circle cx="112" cy="160" r="5.5" fill="var(--ink)"/>
               <circle cx="107" cy="155" r="3" fill="#fff"/>
             </g>
@@ -180,7 +188,7 @@
             <circle class="ring" cx="208" cy="160" r="42"/>
             <g class="eye-visual">
               <circle cx="208" cy="160" r="27" fill="#fff"/>
-              <circle cx="208" cy="160" r="13" fill="var(--iris)"/>
+              <circle class="iris-circle" cx="208" cy="160" r="13" fill="var(--iris)"/>
               <circle cx="208" cy="160" r="5.5" fill="var(--ink)"/>
               <circle cx="203" cy="155" r="3" fill="#fff"/>
             </g>
@@ -190,12 +198,14 @@
               <path d="M236 142 q14 -30 -6 -58" fill="none" stroke="var(--patch)" stroke-width="7" stroke-linecap="round"/>
             </g>
           </g>
+          <g id="bowLayer"></g>
         </svg>
       </div>
       <div class="face-labels">
         <span>Ojo derecho</span>
         <span>Ojo izquierdo</span>
       </div>
+      <button class="add-toggle" id="btnPersonalizar" style="max-width:220px;margin:12px auto 0">🎨 Personalizar apariencia</button>
 
       <div class="status">
         <div class="status-date" id="statusDate">—</div>
@@ -242,6 +252,49 @@
   </div>
 
   <footer class="note">Ocuparche — hecho desde la experiencia real de un tratamiento 🩹</footer>
+</div>
+
+<div class="scrim" id="avatarScrim"></div>
+<div class="sheet" id="avatarSheet" role="dialog" aria-label="Personalizar apariencia">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h2>Personalizar apariencia</h2>
+    <button class="icon-btn" id="closeAvatar" aria-label="Cerrar">✕</button>
+  </div>
+
+  <section class="block">
+    <p class="block-title">Peinado</p>
+    <div class="seg wrap" id="peinadoSeg">
+      <button type="button" data-val="corto">Corto</button>
+      <button type="button" data-val="largo">Largo</button>
+      <button type="button" data-val="rizado">Rizado</button>
+      <button type="button" data-val="coleta">Coleta</button>
+    </div>
+  </section>
+
+  <section class="block">
+    <p class="block-title">Color de pelo</p>
+    <div class="swatch-row" id="colorPeloSwatches"></div>
+  </section>
+
+  <section class="block">
+    <p class="block-title">Moño</p>
+    <div class="seg">
+      <button type="button" id="monoOn">Con moño</button>
+      <button type="button" id="monoOff">Sin moño</button>
+    </div>
+    <div class="swatch-row" id="colorMonoSwatches" style="margin-top:12px"></div>
+  </section>
+
+  <section class="block">
+    <p class="block-title">Color de ojos</p>
+    <div class="swatch-row" id="colorOjosSwatches"></div>
+  </section>
+
+  <div class="row-btns">
+    <button class="btn-save" id="avatarGuardar">Guardar</button>
+    <button class="btn-cancel" id="avatarCancelar">Cancelar</button>
+  </div>
 </div>
 
 <div class="scrim" id="scrim"></div>
@@ -378,6 +431,7 @@
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/core.js"></script>
+<script src="js/avatar.js"></script>
 <script src="js/app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {

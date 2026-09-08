@@ -189,9 +189,19 @@ section.block{ margin-bottom:20px; }
   background:var(--surface); color:var(--ink); font-size:13.5px;
 }
 .seg{ display:flex; gap:8px; }
+.seg.wrap{ flex-wrap:wrap; }
 .seg button{ flex:1; padding:9px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); font-weight:700; font-size:13px; cursor:pointer; }
+.seg.wrap button{ flex:1 1 calc(50% - 4px); }
 .seg button.active[data-side="derecho"]{ background:var(--brand-soft); color:var(--brand-dark); border-color:var(--brand); }
 .seg button.active[data-side="izquierdo"]{ background:var(--teal-soft); color:var(--teal-dark); border-color:var(--teal); }
+.seg button.active{ background:var(--brand-soft); color:var(--brand-dark); border-color:var(--brand); }
+
+.swatch-row{ display:flex; gap:10px; flex-wrap:wrap; }
+.swatch{
+  width:36px; height:36px; border-radius:50%; border:3px solid transparent;
+  cursor:pointer; box-shadow:0 0 0 1px var(--line) inset; padding:0;
+}
+.swatch.active{ border-color:var(--ink); }
 .addform .row-btns{ display:flex; gap:8px; margin-top:2px; }
 .addform .row-btns button{ flex:1; padding:10px; border-radius:10px; border:none; font-weight:700; cursor:pointer; font-size:13px; }
 .btn-save{ background:var(--ink); color:var(--bg); }
