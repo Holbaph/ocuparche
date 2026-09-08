@@ -9,6 +9,20 @@ import type { Env } from './types';
 
 type Handler = (request: Request, env: Env, origin: string | null) => Promise<Response>;
 
+// Avisa al Durable Object del paciente que algo cambió, para que reenvíe el
+// aviso a todos los dispositivos conectados en vivo. Si falla (nadie
+// conectado, DO recién creándose, etc.) no aborta la operación principal —
+// el dato ya quedó guardado en D1, el peor caso es que el otro dispositivo
+// se entere al refrescar en vez de al instante.
+async function avisarCambio(env: Env, pacienteId: string) {
+  try {
+    const id = env.PACIENTE_ROOM.idFromName(pacienteId);
+    await env.PACIENTE_ROOM.get(id).broadcast(JSON.stringify({ type: 'registros_cambiaron' }));
+  } catch (e) {
+    console.error('No se pudo avisar al Durable Object', e);
+  }
+}
+
 export const listarPacientes: Handler = async (request, env, origin) => {
   const perfil = await perfilDesdeSesion(request, env);
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
@@ -95,6 +109,7 @@ export const guardarRegistro: Handler = async (request, env, origin) => {
        ojo = excluded.ojo, hora = excluded.hora, registrado_por = excluded.registrado_por, notificado = 0`
   ).bind(uuid(), pacienteId, fecha, ojo, hora, perfil.id).run();
 
+  await avisarCambio(env, pacienteId);
   return json({ ok: true }, origin);
 };
 
@@ -107,8 +122,25 @@ export const eliminarRegistro: Handler = async (request, env, origin) => {
   if (!pacienteId || !fecha) return json({ ok: false, error: 'Faltan datos' }, origin, { status: 400 });
   if (!(await pacienteDeLaCuenta(env, pacienteId, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
   await env.DB.prepare('DELETE FROM registros WHERE paciente_id = ? AND fecha = ?').bind(pacienteId, fecha).run();
+  await avisarCambio(env, pacienteId);
   return json({ ok: true }, origin);
 };
+
+// ---------- conexión en vivo (WebSocket) ----------
+// No pasa por el router de rutas exactas de index.ts porque una conexión
+// WebSocket no es una petición JSON normal — index.ts la detecta por el
+// header Upgrade y la manda directo para acá.
+export async function conectarRealtime(request: Request, env: Env): Promise<Response> {
+  const perfil = await perfilDesdeSesion(request, env);
+  if (!perfil) return new Response('No autenticado', { status: 401 });
+
+  const pacienteId = new URL(request.url).searchParams.get('paciente_id');
+  if (!pacienteId) return new Response('Falta paciente_id', { status: 400 });
+  if (!(await pacienteDeLaCuenta(env, pacienteId, perfil.cuenta_id))) return new Response('No encontrado', { status: 404 });
+
+  const id = env.PACIENTE_ROOM.idFromName(pacienteId);
+  return env.PACIENTE_ROOM.get(id).fetch(request);
+}
 
 // ---------- configuración (duración del temporizador) ----------
 

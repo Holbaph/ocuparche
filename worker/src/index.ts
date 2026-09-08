@@ -14,6 +14,7 @@ import * as pacientes from './routes-pacientes';
 import * as cuenta from './routes-cuenta';
 
 export type { Env };
+export { PacienteRoom } from './PacienteRoom';
 
 // ---------- rutas ----------
 
@@ -158,6 +159,12 @@ export default {
     const origin = request.headers.get('Origin');
 
     if (request.method === 'OPTIONS') return preflight(origin);
+
+    // Conexión en vivo — no es una ruta JSON normal, se detecta por el
+    // header Upgrade y se maneja aparte (ver routes-pacientes.ts).
+    if (url.pathname === '/api/realtime' && request.headers.get('Upgrade') === 'websocket') {
+      return pacientes.conectarRealtime(request, env);
+    }
 
     const routes: Record<string, (req: Request, env: Env, origin: string | null) => Promise<Response>> = {
       'POST /api/signup': handleSignup,

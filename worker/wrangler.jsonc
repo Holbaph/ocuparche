@@ -9,5 +9,13 @@
       "database_name": "ocuparche",
       "database_id": "6f51d95d-9e59-4dbd-9cea-43e6e10ccfe1"
     }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "PACIENTE_ROOM", "class_name": "PacienteRoom" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["PacienteRoom"] }
   ]
 }
