@@ -13,6 +13,7 @@ import type { Env } from './types';
 import * as pacientes from './routes-pacientes';
 import * as cuenta from './routes-cuenta';
 import * as admin from './routes-admin';
+import * as juego from './routes-juego';
 import { revisarYAvisar } from './reminders';
 
 export type { Env };
@@ -197,6 +198,10 @@ export default {
 
       'GET /api/config': pacientes.obtenerConfig,
       'PUT /api/config': pacientes.guardarConfig,
+
+      'GET /api/juego': juego.obtenerJuego,
+      'PUT /api/juego': juego.guardarJuego,
+      'PUT /api/juego-minutos': juego.guardarJuegoMinutos,
 
       'GET /api/personas': cuenta.listarPersonas,
       'PATCH /api/me': cuenta.actualizarMiNombre,

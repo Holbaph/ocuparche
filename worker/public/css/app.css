@@ -297,3 +297,105 @@ footer.note{ text-align:center; font-size:11.5px; color:var(--ink-faint); paddin
 .btn-link{ background:none; border:none; color:var(--ink-faint); font-size:12.5px; text-decoration:underline; cursor:pointer; margin-top:12px; }
 .auth-error{ color:var(--danger); font-size:12.5px; margin:0 0 12px; }
 .auth-note{ color:var(--ink-faint); font-size:11.5px; margin-top:16px; line-height:1.5; }
+
+/* ---------- juego de vestir (plan completo) — portado de Ojitos de Mili ---------- */
+.juego-entrar{
+  display:flex; align-items:center; gap:14px; width:100%; text-align:left; cursor:pointer;
+  padding:14px 16px; border-radius:20px; border:none; color:#fff;
+  background:linear-gradient(120deg,#d0487e,#7e57c2 55%,#4a78c2); box-shadow:var(--shadow-sm);
+  margin-top:10px;
+}
+.juego-entrar .je-emoji{ font-size:30px; }
+.juego-entrar strong{ display:block; font-family:'Baloo 2'; font-size:17px; font-weight:700; }
+.juego-entrar small{ display:block; font-size:12.5px; opacity:.9; }
+.juego-entrar .je-flecha{ margin-left:auto; font-size:26px; opacity:.85; }
+
+body.jugando{ overflow:hidden; }
+.juego{
+  position:fixed; inset:0; z-index:70; display:flex; flex-direction:column;
+  height:100vh; height:100dvh; max-width:560px; margin:0 auto;
+  background:linear-gradient(180deg,var(--teal-soft),var(--bg) 45%);
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+}
+.juego-top{ display:flex; align-items:center; gap:8px; padding:10px 12px 4px; }
+.juego-titulo{ flex:1; min-width:0; line-height:1.1; }
+.juego-titulo strong{ display:block; font-family:'Baloo 2'; font-size:20px; color:var(--ink); }
+.juego-titulo small{ font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); }
+.juego-reloj{
+  font-weight:800; font-size:13px; font-variant-numeric:tabular-nums; color:var(--ink-soft);
+  background:var(--surface); border:1px solid var(--line); padding:5px 10px; border-radius:99px;
+}
+.juego-reloj.poco{ color:var(--danger); border-color:var(--danger); }
+
+.juego-personajes{ display:flex; gap:8px; overflow-x:auto; padding:6px 12px; scrollbar-width:none; flex-shrink:0; }
+.juego-personajes::-webkit-scrollbar{ display:none; }
+.jpersonaje{
+  flex-shrink:0; width:62px; padding:4px 2px 5px; border-radius:16px; cursor:pointer;
+  border:2px solid transparent; background:var(--surface); display:flex; flex-direction:column; align-items:center; gap:1px;
+}
+.jpersonaje svg{ width:46px; height:46px; }
+.jpersonaje span{ font-size:11px; font-weight:700; color:var(--ink-soft); }
+.jpersonaje.activo{ border-color:var(--brand); background:var(--brand-soft); }
+.jpersonaje.activo span{ color:var(--brand-dark); }
+
+.juego-escenario{
+  flex:1; min-height:0; display:flex; justify-content:center; align-items:center; margin:4px 12px;
+  border-radius:24px; border:2px dashed transparent; transition:border-color .15s ease, background .15s ease;
+  position:relative;
+}
+.juego-escenario.sobre{ border-color:var(--brand); background:var(--brand-soft); }
+.juego-escenario svg{ height:100%; max-height:100%; width:auto; max-width:100%; overflow:visible; }
+.juego-escenario svg.pop{ animation:juego-pop .32s ease; }
+@keyframes juego-pop{ 0%{ transform:scale(1); } 40%{ transform:scale(1.04) rotate(-1deg); } 100%{ transform:scale(1); } }
+@media (prefers-reduced-motion: reduce){ .juego-escenario svg.pop{ animation:none; } }
+
+.juego-armario{
+  flex-shrink:0; background:var(--surface); border-radius:24px 24px 0 0; box-shadow:0 -10px 30px -20px rgba(42,39,64,.45);
+  padding:10px 0 8px;
+}
+.juego-cats{ display:flex; gap:6px; overflow-x:auto; padding:0 12px 8px; scrollbar-width:none; }
+.juego-cats::-webkit-scrollbar{ display:none; }
+.juego-cats button{
+  flex-shrink:0; display:flex; align-items:center; gap:5px; padding:7px 11px; border-radius:99px;
+  border:1px solid var(--line); background:var(--surface-2); color:var(--ink-soft); font-weight:700; font-size:12.5px; cursor:pointer;
+}
+.juego-cats button span{ font-size:15px; }
+.juego-cats button.activo{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.juego-items{
+  display:flex; gap:8px; overflow-x:auto; padding:8px 12px 6px; touch-action:pan-x; scrollbar-width:none;
+}
+.juego-items::-webkit-scrollbar{ display:none; }
+.jitem{
+  position:relative; flex-shrink:0; width:76px; height:76px; padding:6px; border-radius:18px; cursor:grab;
+  border:2px solid var(--line); background:var(--surface-2); display:flex; align-items:center; justify-content:center;
+}
+.jitem svg{ width:100%; height:100%; pointer-events:none; }
+.jitem.puesto{ border-color:var(--success); background:var(--success-soft); }
+.jitem.puesto::after{
+  content:'✓'; position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%;
+  background:var(--success); color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;
+}
+.jitem.fantasma{ position:fixed; z-index:90; pointer-events:none; transform:scale(1.15) rotate(-4deg); box-shadow:var(--shadow); opacity:.95; }
+.jcolor{ width:44px; height:44px; border-radius:50%; box-shadow:inset -6px -6px 0 rgba(0,0,0,.15), inset 5px 5px 0 rgba(255,255,255,.25); }
+.juego-ayuda{ text-align:center; font-size:11.5px; color:var(--ink-faint); margin:2px 0 0; }
+
+.juego-fin{
+  position:absolute; inset:0; z-index:95; background:rgba(20,18,35,.55); backdrop-filter:blur(2px);
+  display:flex; align-items:center; justify-content:center; padding:24px;
+}
+.juego-fin-box{ background:var(--surface); border-radius:26px; padding:26px 22px; text-align:center; max-width:320px; box-shadow:var(--shadow); }
+.juego-fin-box .big{ font-size:48px; }
+.juego-fin-box h2{ font-family:'Baloo 2'; margin:6px 0; color:var(--ink); }
+.juego-fin-box p{ color:var(--ink-soft); font-size:14px; line-height:1.5; }
+.juego-fin-box button{ margin-top:8px; width:100%; padding:12px; border:none; border-radius:14px; font-weight:700; font-size:15px; cursor:pointer; }
+
+/* botones sobre el escenario del juego */
+.juego-acciones{ display:flex; gap:8px; padding:2px 12px 0; flex-shrink:0; }
+.juego-acciones button{
+  flex:1; padding:8px 6px; border-radius:14px; border:1px solid var(--line); cursor:pointer;
+  background:var(--surface); color:var(--ink-soft); display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.juego-acciones .ja-ico{ font-size:17px; line-height:1; }
+.juego-acciones .ja-txt{ font-size:12.5px; font-weight:800; }
+.juego-acciones button.confirmar{ background:var(--danger); border-color:var(--danger); color:#fff; }

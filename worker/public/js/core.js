@@ -117,6 +117,24 @@ const Config = {
     const { data } = await api('/config', { method: 'PUT', body: { paciente_id: pacienteId, duracion_minutos: minutos } });
     if (!data?.ok) throw new Error(data?.error || 'No se pudo guardar');
   },
+
+  // ---------- juego de vestir (plan completo) ----------
+  async obtenerJuego(pacienteId) {
+    const { data } = await api('/juego?paciente_id=' + encodeURIComponent(pacienteId));
+    return data?.ok ? data.juego : null;
+  },
+  async guardarJuego(pacienteId, juego) {
+    const { data } = await api('/juego', { method: 'PUT', body: { paciente_id: pacienteId, juego } });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo guardar');
+  },
+  async obtenerJuegoMinutos(pacienteId) {
+    const { data } = await api('/juego?paciente_id=' + encodeURIComponent(pacienteId));
+    return data?.ok ? data.minutosDia : 20;
+  },
+  async guardarJuegoMinutos(pacienteId, minutos) {
+    const { data } = await api('/juego-minutos', { method: 'PUT', body: { paciente_id: pacienteId, minutos } });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo guardar');
+  },
 };
 
 // ---------- avisos push ----------

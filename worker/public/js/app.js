@@ -14,6 +14,7 @@
   let realtimeConn = null;   // { cerrar() }
   let duracionMinutos = 120;
   let timerTick = null;
+  let juegoMinutos = 20;      // minutos de juego por día (0 = sin límite) — del paciente actual
 
   // El correo de recuperación/invitación trae #reset=TOKEN o #invite=TOKEN.
   let authTokenMode = null;  // 'reset' | 'invite' | null
@@ -129,6 +130,7 @@
     document.getElementById('btnLogout').addEventListener('click', async () => {
       pararRealtime();
       if (timerTick) { clearInterval(timerTick); timerTick = null; }
+      Juego.cerrar();
       await Auth.logout();
       perfil = null; cuenta = null; pacientes = []; entries = {};
       showOverlay('authLogin');
@@ -399,6 +401,13 @@
     duracionMinutos = await Config.obtenerDuracionMinutos(id);
     document.getElementById('duracionInput').value = duracionMinutos;
     actualizarDuracionHint(duracionMinutos);
+    if (esPlanCompleto()) {
+      try {
+        juegoMinutos = await Config.obtenerJuegoMinutos(id);
+        document.getElementById('juegoMinutosInput').value = juegoMinutos;
+        renderJuegoHint();
+      } catch (e) { /* se queda con el valor por defecto */ }
+    }
     renderAll();
     suscribirRealtime(id);
     if (!timerTick) timerTick = setInterval(renderTimer, 30000);
@@ -421,6 +430,11 @@
     document.getElementById('timerCard').classList.toggle('locked', !completo);
     document.getElementById('duracionBloque').classList.toggle('hidden', !completo);
     document.getElementById('duracionUpsell').classList.toggle('hidden', completo);
+
+    document.getElementById('juegoBloque').classList.toggle('hidden', !completo);
+    document.getElementById('juegoUpsell').classList.toggle('hidden', completo);
+    document.getElementById('openJuego').classList.toggle('hidden', !completo);
+    document.getElementById('juegoUpsellPrincipal').classList.toggle('hidden', completo);
 
     const puedeInvitar = completo && perfil.role === 'admin';
     document.getElementById('inviteForm').classList.toggle('hidden', !puedeInvitar);
@@ -660,6 +674,58 @@
       showToast('Duración guardada');
     } catch (e) {
       showToast('No se pudo guardar: ' + (e.message || 'intenta de nuevo'));
+    }
+  });
+
+  // ================= JUEGO DE VESTIR (js/juego.js) — plan completo =================
+  document.getElementById('openJuego').addEventListener('click', () => {
+    if (!pacienteActualId) return;
+    Juego.abrir({ pacienteId: pacienteActualId, minutosDia: juegoMinutos, toast: showToast });
+  });
+
+  function renderJuegoHint() {
+    const quedan = Juego.minutosRestantesHoy(juegoMinutos);
+    document.getElementById('juegoMinutosHint').textContent = quedan === Infinity
+      ? 'Sin límite (0 minutos = se puede jugar todo lo que quiera).'
+      : 'Hoy le quedan ' + quedan + ' min de juego en este dispositivo. Al acabarse, el juego se cierra solo hasta mañana. 0 = sin límite.';
+  }
+
+  document.getElementById('juegoMinutosSave').addEventListener('click', async () => {
+    const v = parseInt(document.getElementById('juegoMinutosInput').value, 10);
+    if (isNaN(v) || v < 0) { showToast('Escribe un número de minutos válido (0 = sin límite)'); return; }
+    if (!pacienteActualId) return;
+    try {
+      await Config.guardarJuegoMinutos(pacienteActualId, v);
+      juegoMinutos = v;
+      renderJuegoHint();
+      showToast('Tiempo de juego guardado');
+    } catch (e) {
+      showToast('No se pudo guardar: ' + (e.message || 'intenta de nuevo'));
+    }
+  });
+
+  document.getElementById('juegoMasTiempo').addEventListener('click', () => {
+    Juego.darMasTiempo();
+    renderJuegoHint();
+    showToast('Listo, la cuenta de hoy empieza de nuevo');
+  });
+
+  // Pide un segundo toque para confirmar, igual que dentro del juego.
+  let confirmarResetTodos = null;
+  document.getElementById('juegoResetTodos').addEventListener('click', async () => {
+    const b = document.getElementById('juegoResetTodos');
+    if (!confirmarResetTodos) {
+      b.textContent = '¿Seguro? Toca otra vez para restablecer';
+      confirmarResetTodos = setTimeout(() => { confirmarResetTodos = null; b.textContent = b.dataset.txt; }, 3000);
+      return;
+    }
+    clearTimeout(confirmarResetTodos); confirmarResetTodos = null;
+    b.textContent = b.dataset.txt;
+    try {
+      await Juego.restablecerTodos();
+      showToast('Todos los personajes quedaron en blanco');
+    } catch (e) {
+      showToast('No se pudo restablecer: ' + (e.message || 'intenta de nuevo'));
     }
   });
 

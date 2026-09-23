@@ -265,6 +265,16 @@
     <div class="action-row">
       <button class="history-btn" id="openHistory">📋 Ver historial</button>
     </div>
+
+    <button class="juego-entrar hidden" id="openJuego">
+      <span class="je-emoji">👗</span>
+      <span><strong>Jugar a vestir</strong><small>Princesas, superhéroes y más</small></span>
+      <span class="je-flecha">›</span>
+    </button>
+    <div id="juegoUpsellPrincipal" class="upsell-box hidden">
+      <p>🎮 El juego de vestir es parte del <b>plan completo</b>.</p>
+      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+    </div>
   </div>
 
   <footer class="note">Ocuparche — hecho desde la experiencia real de un tratamiento 🩹</footer>
@@ -410,6 +420,27 @@
   </section>
 
   <section class="block">
+    <p class="block-title">Juego de vestir</p>
+    <div id="juegoBloque">
+      <label for="juegoMinutosInput" style="font-size:12.5px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px">Tiempo de juego por día</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="number" id="juegoMinutosInput" min="0" step="1" inputmode="numeric" style="width:80px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:14px">
+        <span style="font-size:13px;color:var(--ink-soft)">minutos</span>
+        <button class="btn-save small" id="juegoMinutosSave">Guardar</button>
+      </div>
+      <p style="font-size:12px;color:var(--ink-faint);margin:8px 0 0" id="juegoMinutosHint"></p>
+      <button class="history-btn ghost" id="juegoMasTiempo" style="margin-top:14px">⏱ Dar más tiempo hoy</button>
+      <p style="font-size:12px;color:var(--ink-faint);margin:6px 0 0">Vuelve a empezar la cuenta de hoy en este dispositivo.</p>
+      <button class="history-btn ghost" id="juegoResetTodos" data-txt="↺ Restablecer todos los personajes" style="margin-top:10px">↺ Restablecer todos los personajes</button>
+      <p style="font-size:12px;color:var(--ink-faint);margin:6px 0 0">Deja a todos los personajes en blanco: sin ropa ni accesorios, con su peinado original.</p>
+    </div>
+    <div id="juegoUpsell" class="upsell-box hidden">
+      <p>El juego de vestir es parte del <b>plan completo</b>.</p>
+      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+    </div>
+  </section>
+
+  <section class="block">
     <p class="block-title">Personas con acceso</p>
     <div class="people-list" id="peopleList"></div>
     <div class="addform show hidden" id="inviteForm">
@@ -459,6 +490,37 @@
        mezclado con la app familiar. Ver panel.html / panel.js. -->
 </div>
 
+<!-- ============ Juego de vestir (js/juego.js) — plan completo ============ -->
+<div class="juego hidden" id="juego" role="dialog" aria-label="Juego de vestir">
+  <div class="juego-top">
+    <button class="icon-btn" id="juegoSalir" aria-label="Salir del juego">✕</button>
+    <div class="juego-titulo"><strong id="juegoNombre">Rumi</strong><small id="juegoGrupo"></small></div>
+    <div class="juego-reloj hidden" id="juegoReloj">⏱ 20:00</div>
+  </div>
+  <div class="juego-personajes" id="juegoPersonajes"></div>
+  <div class="juego-acciones">
+    <button id="juegoOriginal" data-txt="Original" aria-label="Volver a la ropa original"><span class="ja-ico">👗</span><span class="ja-txt">Original</span></button>
+    <button id="juegoReset" data-txt="En blanco" aria-label="Dejar al personaje en blanco"><span class="ja-ico">↺</span><span class="ja-txt">En blanco</span></button>
+  </div>
+  <div class="juego-escenario" id="juegoEscenario">
+    <svg id="juegoSvg" viewBox="0 0 320 440" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+  </div>
+  <div class="juego-armario">
+    <div class="juego-cats" id="juegoCats"></div>
+    <div class="juego-items" id="juegoItems"></div>
+    <p class="juego-ayuda">Arrastra la ropa hasta el personaje, o tócala 👆</p>
+  </div>
+
+  <div class="juego-fin hidden" id="juegoFin">
+    <div class="juego-fin-box">
+      <div class="big">⏰</div>
+      <h2>¡Se acabó el tiempo de juego!</h2>
+      <p>La ropa quedó guardada. Mañana puedes seguir jugando 💖</p>
+      <button class="btn-save" id="juegoFinOk">Salir</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="js/config.js"></script>
@@ -466,6 +528,8 @@
 <script src="js/auth.js"></script>
 <script src="js/core.js"></script>
 <script src="js/avatar.js"></script>
+<script src="js/juego-piezas.js"></script>
+<script src="js/juego.js"></script>
 <script src="js/app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
