@@ -302,6 +302,16 @@
     aplicarAvatar(avatarBorrador);
     document.getElementById('eliminarPacienteNombre').textContent = p.nombre;
     document.getElementById('eliminarPacienteConfirm').classList.add('hidden');
+
+    // Plan gratis: solo género (se elige al crear) y peinado — el resto de
+    // la personalización es del plan completo, y el servidor también lo
+    // exige (no alcanza con ocultarlo acá).
+    const completo = esPlanCompleto();
+    document.getElementById('colorPeloBlock').classList.toggle('hidden', !completo);
+    document.getElementById('monoBlock').classList.toggle('hidden', !completo);
+    document.getElementById('colorOjosBlock').classList.toggle('hidden', !completo);
+    document.getElementById('avatarUpsell').classList.toggle('hidden', completo);
+
     abrirAvatarSheet();
   });
   document.querySelectorAll('#peinadoSeg button').forEach(b => {

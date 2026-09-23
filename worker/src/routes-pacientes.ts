@@ -28,6 +28,30 @@ function parseAvatar(row: { avatar_json?: string | null }): unknown {
   try { return JSON.parse(row.avatar_json); } catch { return null; }
 }
 
+// Mismos valores por defecto que public/js/avatar.js (AVATAR_POR_DEFECTO) —
+// hace falta una copia acá porque el Worker no comparte runtime con el
+// navegador.
+const AVATAR_POR_DEFECTO: Record<string, Record<string, unknown>> = {
+  niña: { genero: 'niña', peinado: 'largo', colorPelo: '#6b4a34', moño: true, colorMoño: '#c96f8f', colorOjos: '#8b5e3c' },
+  niño: { genero: 'niño', peinado: 'corto', colorPelo: '#2b2420', moño: false, colorMoño: '#c96f8f', colorOjos: '#8b5e3c' },
+};
+const PEINADOS_VALIDOS = new Set(['corto', 'largo', 'rizado', 'coleta']);
+
+// El plan gratis solo deja elegir género y peinado — cualquier otro campo
+// del avatar (color de pelo, moño y su color, color de ojos) se fuerza al
+// valor por defecto de ese género, aunque alguien mande otra cosa a mano
+// pegándole directo a la API. Esto se comprueba acá — no alcanza con
+// ocultar los selectores en el frontend.
+function limitarAvatarSegunPlan(avatar: unknown, plan: string | undefined): unknown {
+  if (!avatar || typeof avatar !== 'object') return avatar;
+  const a = avatar as Record<string, unknown>;
+  const genero = a.genero === 'niño' ? 'niño' : 'niña';
+  const base = AVATAR_POR_DEFECTO[genero];
+  if (plan === 'completo') return { ...base, ...a, genero };
+  const peinado = typeof a.peinado === 'string' && PEINADOS_VALIDOS.has(a.peinado) ? a.peinado : base.peinado;
+  return { ...base, genero, peinado };
+}
+
 export const listarPacientes: Handler = async (request, env, origin) => {
   const perfil = await perfilDesdeSesion(request, env);
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
@@ -52,10 +76,11 @@ export const crearPaciente: Handler = async (request, env, origin) => {
   }
 
   const id = uuid();
-  const avatarJson = body?.avatar ? JSON.stringify(body.avatar) : null;
+  const avatar = body?.avatar ? limitarAvatarSegunPlan(body.avatar, cuenta?.plan) : null;
+  const avatarJson = avatar ? JSON.stringify(avatar) : null;
   await env.DB.prepare('INSERT INTO pacientes (id, cuenta_id, nombre, avatar_json) VALUES (?, ?, ?, ?)')
     .bind(id, perfil.cuenta_id, nombre, avatarJson).run();
-  return json({ ok: true, paciente: { id, nombre, avatar: body?.avatar ?? null } }, origin);
+  return json({ ok: true, paciente: { id, nombre, avatar } }, origin);
 };
 
 // Actualiza nombre y/o apariencia de un paciente — ambos opcionales, se
@@ -71,13 +96,19 @@ export const actualizarPaciente: Handler = async (request, env, origin) => {
   const nombre = body?.nombre !== undefined ? body.nombre.trim() : undefined;
   if (nombre !== undefined && !nombre) return json({ ok: false, error: 'El nombre no puede quedar vacío' }, origin, { status: 400 });
 
-  if (nombre !== undefined && body?.avatar !== undefined) {
+  let avatarJson: string | undefined;
+  if (body?.avatar !== undefined) {
+    const cuenta = await env.DB.prepare('SELECT plan FROM cuentas WHERE id = ?').bind(perfil.cuenta_id).first<{ plan: string }>();
+    avatarJson = JSON.stringify(limitarAvatarSegunPlan(body.avatar, cuenta?.plan));
+  }
+
+  if (nombre !== undefined && avatarJson !== undefined) {
     await env.DB.prepare('UPDATE pacientes SET nombre = ?, avatar_json = ? WHERE id = ?')
-      .bind(nombre, JSON.stringify(body.avatar), id).run();
+      .bind(nombre, avatarJson, id).run();
   } else if (nombre !== undefined) {
     await env.DB.prepare('UPDATE pacientes SET nombre = ? WHERE id = ?').bind(nombre, id).run();
-  } else if (body?.avatar !== undefined) {
-    await env.DB.prepare('UPDATE pacientes SET avatar_json = ? WHERE id = ?').bind(JSON.stringify(body.avatar), id).run();
+  } else if (avatarJson !== undefined) {
+    await env.DB.prepare('UPDATE pacientes SET avatar_json = ? WHERE id = ?').bind(avatarJson, id).run();
   }
   return json({ ok: true }, origin);
 };

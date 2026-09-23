@@ -93,6 +93,10 @@ const Admin = {
     const { data } = await api('/admin/clientes');
     return data?.ok ? data.clientes : [];
   },
+  async eliminarCuenta(id) {
+    const { data } = await api('/admin/cuentas?id=' + encodeURIComponent(id), { method: 'DELETE' });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo eliminar la cuenta');
+  },
   async listarSolicitudes() {
     const { data } = await api('/admin/solicitudes');
     return data?.ok ? data.solicitudes : [];
@@ -109,5 +113,9 @@ const Admin = {
   async rechazarSolicitud(id) {
     const { data } = await api('/admin/solicitudes/rechazar', { method: 'POST', body: { id } });
     if (!data?.ok) throw new Error(data?.error || 'No se pudo rechazar');
+  },
+  async eliminarCodigo(id) {
+    const { data } = await api('/admin/codigos?id=' + encodeURIComponent(id), { method: 'DELETE' });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo eliminar el código');
   },
 };

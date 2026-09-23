@@ -213,10 +213,12 @@ export default {
       'POST /api/admin/verify-otp': admin.loginPaso2,
       'GET /api/admin/stats': admin.estadisticas,
       'GET /api/admin/clientes': admin.listarClientes,
+      'DELETE /api/admin/cuentas': admin.eliminarCuenta,
       'GET /api/admin/solicitudes': admin.listarSolicitudes,
       'POST /api/admin/solicitudes': admin.crearSolicitud,
       'POST /api/admin/solicitudes/atender': admin.atenderSolicitud,
       'POST /api/admin/solicitudes/rechazar': admin.rechazarSolicitud,
+      'DELETE /api/admin/codigos': admin.eliminarCodigo,
     };
 
     const key = `${request.method} ${url.pathname}`;

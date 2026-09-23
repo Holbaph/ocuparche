@@ -115,19 +115,55 @@
       const clientes = await Admin.listarClientes();
       const list = document.getElementById('clientesList');
       if (!clientes.length) { list.innerHTML = '<div class="empty-state">Todavía no hay clientes registrados.</div>'; return; }
-      list.innerHTML = clientes.map(c => {
-        const fecha = c.created_at ? new Date(c.created_at).toLocaleDateString('es-CL') : '–';
-        const plan = c.plan === 'completo' ? 'completo' : 'free';
-        return '<div class="cliente-item">' +
-          '<div class="c-top">' +
-            '<span class="c-nombre">' + escapeHtml(c.admin_nombre || 'Sin nombre') + '</span>' +
-            '<span class="c-plan ' + plan + '">' + plan + '</span>' +
-          '</div>' +
-          '<span class="c-meta">' + escapeHtml(c.admin_email || '') + '</span>' +
-          '<span class="c-meta">' + c.num_personas + ' persona(s) · ' + c.num_pacientes + ' paciente(s) · alta ' + fecha + '</span>' +
-        '</div>';
-      }).join('');
+      list.innerHTML = clientes.map(renderCliente).join('');
     } catch (e) { console.error('No se pudo cargar la lista de clientes', e); }
+  }
+
+  function renderCliente(c) {
+    const fecha = c.created_at ? new Date(c.created_at).toLocaleDateString('es-CL') : '–';
+    const plan = c.plan === 'completo' ? 'completo' : 'free';
+    return '<div class="cliente-item" data-id="' + c.id + '">' +
+      '<div class="c-top">' +
+        '<span class="c-nombre">' + escapeHtml(c.admin_nombre || 'Sin nombre') + '</span>' +
+        '<span class="c-plan ' + plan + '">' + plan + '</span>' +
+      '</div>' +
+      '<span class="c-meta">' + escapeHtml(c.admin_email || '') + '</span>' +
+      '<span class="c-meta">' + c.num_personas + ' persona(s) · ' + c.num_pacientes + ' paciente(s) · alta ' + fecha + '</span>' +
+      '<button class="add-toggle" style="margin-top:8px;color:var(--danger);border-color:var(--danger)" data-act="eliminar-cliente-toggle">🗑️ Eliminar cuenta</button>' +
+      '<div class="c-confirm hidden">' +
+        '<p style="font-size:12.5px;color:var(--brand-dark);margin:8px 0">Esto borra la cuenta de <b>' + escapeHtml(c.admin_nombre || c.admin_email || '') + '</b> — sus hij@s, registros y personas invitadas — sin poder deshacerlo. ¿Seguro?</p>' +
+        '<div class="s-acciones">' +
+          '<button class="s-atender" data-act="eliminar-cliente-si">Sí, eliminar</button>' +
+          '<button class="s-rechazar" data-act="eliminar-cliente-no">Cancelar</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function wireClientes() {
+    document.getElementById('clientesList').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const item = e.target.closest('.cliente-item');
+      const id = item.dataset.id;
+      const act = btn.dataset.act;
+      if (act === 'eliminar-cliente-toggle') {
+        item.querySelector('.c-confirm').classList.toggle('hidden');
+      } else if (act === 'eliminar-cliente-no') {
+        item.querySelector('.c-confirm').classList.add('hidden');
+      } else if (act === 'eliminar-cliente-si') {
+        btn.disabled = true;
+        try {
+          await Admin.eliminarCuenta(id);
+          showToast('Cuenta eliminada');
+          await cargarClientes();
+          await cargarStats();
+        } catch (err) {
+          showToast(err.message || 'No se pudo eliminar');
+          btn.disabled = false;
+        }
+      }
+    });
   }
 
   // ================= SOLICITUDES =================
@@ -232,9 +268,10 @@
     const list = document.getElementById('codigosList');
     if (!codigos.length) { list.innerHTML = '<div class="empty-state">Aún no generas ningún código.</div>'; return; }
     list.innerHTML = codigos.map(c =>
-      '<div class="codigo-item"><code>' + escapeHtml(c.codigo) + '</code>' +
+      '<div class="codigo-item" data-id="' + c.id + '"><code>' + escapeHtml(c.codigo) + '</code>' +
       (c.nota ? '<span style="color:var(--ink-faint)">' + escapeHtml(c.nota) + '</span>' : '') +
-      '<span class="estado ' + (c.usado ? 'usado' : 'libre') + '">' + (c.usado ? 'Usado' : 'Libre') + '</span></div>'
+      '<span class="estado ' + (c.usado ? 'usado' : 'libre') + '">' + (c.usado ? 'Usado' : 'Libre') + '</span>' +
+      '<button class="codigo-del" data-act="del-codigo" title="Eliminar código">🗑️</button></div>'
     ).join('');
   }
 
@@ -248,6 +285,24 @@
         showToast('Código generado: ' + codigo);
       } catch (e) {
         showToast('No se pudo generar el código');
+      }
+    });
+
+    document.getElementById('codigosList').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-act="del-codigo"]');
+      if (!btn) return;
+      const item = e.target.closest('.codigo-item');
+      const id = item.dataset.id;
+      const usado = !!item.querySelector('.estado.usado');
+      const pregunta = usado
+        ? '¿Eliminar este código YA USADO? Se pierde el registro de qué cuenta lo canjeó.'
+        : '¿Eliminar este código sin usar?';
+      if (!confirm(pregunta)) return;
+      try {
+        await Admin.eliminarCodigo(id);
+        await cargarCodigos();
+      } catch (err) {
+        showToast(err.message || 'No se pudo eliminar el código');
       }
     });
   }
@@ -269,6 +324,7 @@
 
   function boot() {
     wireLogin();
+    wireClientes();
     wireSolicitudes();
     wireGenerador();
     arrancar().catch((e) => {

@@ -148,6 +148,42 @@ export const listarClientes: Handler = async (request, env, origin) => {
   return json({ ok: true, clientes: results }, origin);
 };
 
+// Borra una cuenta cliente completa: sus pacientes, registros, personas
+// invitadas, sesiones, todo. D1/SQLite no aplica ON DELETE CASCADE salvo
+// que se active la pragma foreign_keys — se borra a mano en el orden
+// correcto, todo junto en un solo batch. No se puede usar para borrar la
+// cuenta propia del dueño (ni por accidente ni con el panel abierto).
+export const eliminarCuenta: Handler = async (request, env, origin) => {
+  const chequeo = await exigirDueño(request, env);
+  if ('error' in chequeo) return json({ ok: false, error: chequeo.error }, origin, { status: chequeo.status });
+  const perfil = chequeo.perfil;
+
+  const id = new URL(request.url).searchParams.get('id');
+  if (!id) return json({ ok: false, error: 'Falta el id' }, origin, { status: 400 });
+  if (id === perfil.cuenta_id) {
+    return json({ ok: false, error: 'No puedes eliminar tu propia cuenta desde acá' }, origin, { status: 400 });
+  }
+
+  const cuenta = await env.DB.prepare('SELECT id FROM cuentas WHERE id = ?').bind(id).first();
+  if (!cuenta) return json({ ok: false, error: 'No existe esa cuenta' }, origin, { status: 404 });
+
+  await env.DB.batch([
+    env.DB.prepare(`DELETE FROM registros WHERE paciente_id IN (SELECT id FROM pacientes WHERE cuenta_id = ?)`).bind(id),
+    env.DB.prepare(`DELETE FROM configuracion WHERE paciente_id IN (SELECT id FROM pacientes WHERE cuenta_id = ?)`).bind(id),
+    env.DB.prepare('DELETE FROM pacientes WHERE cuenta_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM invite_tokens WHERE cuenta_id = ?').bind(id),
+    env.DB.prepare(`DELETE FROM push_subscriptions WHERE user_id IN (SELECT id FROM profiles WHERE cuenta_id = ?)`).bind(id),
+    env.DB.prepare(`DELETE FROM sessions WHERE user_id IN (SELECT id FROM profiles WHERE cuenta_id = ?)`).bind(id),
+    env.DB.prepare(`DELETE FROM password_reset_tokens WHERE user_id IN (SELECT id FROM profiles WHERE cuenta_id = ?)`).bind(id),
+    env.DB.prepare(`DELETE FROM admin_login_pendiente WHERE user_id IN (SELECT id FROM profiles WHERE cuenta_id = ?)`).bind(id),
+    env.DB.prepare('UPDATE codigos_activacion SET usado_por_cuenta = NULL WHERE usado_por_cuenta = ?').bind(id),
+    env.DB.prepare('DELETE FROM profiles WHERE cuenta_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM cuentas WHERE id = ?').bind(id),
+  ]);
+
+  return json({ ok: true }, origin);
+};
+
 // ---------- cola de solicitudes de activación ----------
 export const listarSolicitudes: Handler = async (request, env, origin) => {
   const chequeo = await exigirDueño(request, env);
@@ -220,5 +256,19 @@ export const rechazarSolicitud: Handler = async (request, env, origin) => {
   await env.DB.prepare(
     `UPDATE solicitudes_codigo SET estado = 'rechazada', atendida_en = datetime('now') WHERE id = ? AND estado = 'pendiente'`
   ).bind(id).run();
+  return json({ ok: true }, origin);
+};
+
+// ---------- limpieza de códigos de activación ----------
+// Para ir borrando los que se generaron de prueba. No tiene nada que
+// dependa de él (nada referencia codigos_activacion), así que es un DELETE
+// directo, usado o no.
+export const eliminarCodigo: Handler = async (request, env, origin) => {
+  const chequeo = await exigirDueño(request, env);
+  if ('error' in chequeo) return json({ ok: false, error: chequeo.error }, origin, { status: chequeo.status });
+
+  const id = new URL(request.url).searchParams.get('id');
+  if (!id) return json({ ok: false, error: 'Falta el id' }, origin, { status: 400 });
+  await env.DB.prepare('DELETE FROM codigos_activacion WHERE id = ?').bind(id).run();
   return json({ ok: true }, origin);
 };

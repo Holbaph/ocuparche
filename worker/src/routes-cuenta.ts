@@ -108,7 +108,7 @@ export const listarCodigos: Handler = async (request, env, origin) => {
   if (!perfil.es_dueño) return json({ ok: false, error: 'No autorizado' }, origin, { status: 403 });
 
   const { results } = await env.DB.prepare(
-    'SELECT codigo, usado, usado_en, nota, creado_en FROM codigos_activacion ORDER BY creado_en DESC LIMIT 200'
+    'SELECT id, codigo, usado, usado_en, nota, creado_en FROM codigos_activacion ORDER BY creado_en DESC LIMIT 200'
   ).all();
   return json({ ok: true, codigos: results }, origin);
 };
