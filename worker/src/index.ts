@@ -214,6 +214,8 @@ export default {
       'GET /api/admin/stats': admin.estadisticas,
       'GET /api/admin/clientes': admin.listarClientes,
       'DELETE /api/admin/cuentas': admin.eliminarCuenta,
+      'GET /api/admin/pacientes': admin.listarPacientesDeCuenta,
+      'PATCH /api/admin/pacientes': admin.actualizarAvatarComoAdmin,
       'GET /api/admin/solicitudes': admin.listarSolicitudes,
       'POST /api/admin/solicitudes': admin.crearSolicitud,
       'POST /api/admin/solicitudes/atender': admin.atenderSolicitud,

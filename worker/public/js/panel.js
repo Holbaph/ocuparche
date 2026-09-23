@@ -129,7 +129,12 @@
       '</div>' +
       '<span class="c-meta">' + escapeHtml(c.admin_email || '') + '</span>' +
       '<span class="c-meta">' + c.num_personas + ' persona(s) · ' + c.num_pacientes + ' paciente(s) · alta ' + fecha + '</span>' +
-      '<button class="add-toggle" style="margin-top:8px;color:var(--danger);border-color:var(--danger)" data-act="eliminar-cliente-toggle">🗑️ Eliminar cuenta</button>' +
+      (c.codigo_usado ? '<span class="c-meta">Código de activación: <code>' + escapeHtml(c.codigo_usado) + '</code></span>' : '') +
+      '<div class="c-botones">' +
+        '<button class="add-toggle" data-act="avatares-toggle">🎨 Avatares</button>' +
+        '<button class="add-toggle" style="color:var(--danger);border-color:var(--danger)" data-act="eliminar-cliente-toggle">🗑️ Eliminar</button>' +
+      '</div>' +
+      '<div class="c-avatares hidden"></div>' +
       '<div class="c-confirm hidden">' +
         '<p style="font-size:12.5px;color:var(--brand-dark);margin:8px 0">Esto borra la cuenta de <b>' + escapeHtml(c.admin_nombre || c.admin_email || '') + '</b> — sus hij@s, registros y personas invitadas — sin poder deshacerlo. ¿Seguro?</p>' +
         '<div class="s-acciones">' +
@@ -162,7 +167,89 @@
           showToast(err.message || 'No se pudo eliminar');
           btn.disabled = false;
         }
+      } else if (act === 'avatares-toggle') {
+        await toggleAvatares(item, id);
       }
+    });
+  }
+
+  // ================= AVATARES (herramienta de soporte) =================
+  // Deja ver y corregir el avatar de cualquier hij@ de cualquier cuenta —
+  // sin vista previa de la carita (esto es una herramienta de soporte, no
+  // la app), pero con los mismos selectores y paletas de siempre.
+  const avatarEditores = {}; // pacienteId -> borrador en memoria
+
+  async function toggleAvatares(item, cuentaId) {
+    const cont = item.querySelector('.c-avatares');
+    if (!cont.classList.contains('hidden')) { cont.classList.add('hidden'); return; }
+    cont.classList.remove('hidden');
+    if (cont.dataset.cargado) return;
+    cont.innerHTML = '<p class="empty-state">Cargando…</p>';
+    try {
+      const pacientes = await Admin.listarPacientesDeCuenta(cuentaId);
+      cont.innerHTML = pacientes.length
+        ? pacientes.map(renderAvatarEditor).join('')
+        : '<div class="empty-state">Esta cuenta no tiene hij@s.</div>';
+      cont.dataset.cargado = '1';
+      wireAvatarEditores(cont);
+    } catch (err) {
+      cont.innerHTML = '<div class="empty-state">No se pudo cargar</div>';
+    }
+  }
+
+  function renderAvatarEditor(p) {
+    const a = { ...avatarPorDefecto(p.avatar?.genero || 'niña'), ...(p.avatar || {}) };
+    avatarEditores[p.id] = a;
+    return '<div class="avatar-editor" data-pid="' + p.id + '">' +
+      '<p class="s-nombre">' + escapeHtml(p.nombre) + '</p>' +
+      '<div class="seg wrap" data-role="peinado">' +
+        ['corto', 'largo', 'rizado', 'coleta'].map(v =>
+          '<button type="button" data-val="' + v + '">' + v.charAt(0).toUpperCase() + v.slice(1) + '</button>'
+        ).join('') +
+      '</div>' +
+      '<div class="swatch-row" data-role="pelo" style="margin-top:8px"></div>' +
+      '<div class="seg" style="margin-top:8px">' +
+        '<button type="button" data-role="mono-on">Con moño</button>' +
+        '<button type="button" data-role="mono-off">Sin moño</button>' +
+      '</div>' +
+      '<div class="swatch-row" data-role="mono-color" style="margin-top:8px"></div>' +
+      '<div class="swatch-row" data-role="ojos" style="margin-top:8px"></div>' +
+      '<button class="btn-save small" style="margin-top:10px;width:100%" data-role="guardar">Guardar avatar</button>' +
+    '</div>';
+  }
+
+  function pintarEditor(el, pid) {
+    const a = avatarEditores[pid];
+    el.querySelectorAll('[data-role="peinado"] button').forEach(b => b.classList.toggle('active', b.dataset.val === a.peinado));
+    el.querySelector('[data-role="mono-on"]').classList.toggle('active', a.moño);
+    el.querySelector('[data-role="mono-off"]').classList.toggle('active', !a.moño);
+    const monoColorRow = el.querySelector('[data-role="mono-color"]');
+    monoColorRow.style.opacity = a.moño ? '1' : '.4';
+    monoColorRow.style.pointerEvents = a.moño ? 'auto' : 'none';
+    crearSwatches(el.querySelector('[data-role="pelo"]'), PALETA_PELO, a.colorPelo, (c) => { a.colorPelo = c; pintarEditor(el, pid); });
+    crearSwatches(monoColorRow, PALETA_MONO, a.colorMoño, (c) => { a.colorMoño = c; pintarEditor(el, pid); });
+    crearSwatches(el.querySelector('[data-role="ojos"]'), PALETA_OJOS, a.colorOjos, (c) => { a.colorOjos = c; pintarEditor(el, pid); });
+  }
+
+  function wireAvatarEditores(container) {
+    container.querySelectorAll('.avatar-editor').forEach((el) => {
+      const pid = el.dataset.pid;
+      pintarEditor(el, pid);
+      el.querySelectorAll('[data-role="peinado"] button').forEach((b) => {
+        b.addEventListener('click', () => { avatarEditores[pid].peinado = b.dataset.val; pintarEditor(el, pid); });
+      });
+      el.querySelector('[data-role="mono-on"]').addEventListener('click', () => { avatarEditores[pid].moño = true; pintarEditor(el, pid); });
+      el.querySelector('[data-role="mono-off"]').addEventListener('click', () => { avatarEditores[pid].moño = false; pintarEditor(el, pid); });
+      el.querySelector('[data-role="guardar"]').addEventListener('click', async () => {
+        try {
+          const guardado = await Admin.actualizarAvatarPaciente(pid, avatarEditores[pid]);
+          avatarEditores[pid] = { ...avatarEditores[pid], ...guardado };
+          pintarEditor(el, pid);
+          showToast('Avatar actualizado');
+        } catch (err) {
+          showToast(err.message || 'No se pudo guardar');
+        }
+      });
     });
   }
 

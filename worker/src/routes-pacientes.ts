@@ -42,7 +42,7 @@ const PEINADOS_VALIDOS = new Set(['corto', 'largo', 'rizado', 'coleta']);
 // valor por defecto de ese género, aunque alguien mande otra cosa a mano
 // pegándole directo a la API. Esto se comprueba acá — no alcanza con
 // ocultar los selectores en el frontend.
-function limitarAvatarSegunPlan(avatar: unknown, plan: string | undefined): unknown {
+export function limitarAvatarSegunPlan(avatar: unknown, plan: string | undefined): unknown {
   if (!avatar || typeof avatar !== 'object') return avatar;
   const a = avatar as Record<string, unknown>;
   const genero = a.genero === 'niño' ? 'niño' : 'niña';

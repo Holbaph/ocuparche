@@ -9,6 +9,7 @@ import { perfilDesdeSesion, crearSesion } from './auth';
 import { verifyPassword, randomCodigoActivacion } from './crypto';
 import { enviarCorreo, correoCodigoActivacion } from './email';
 import { generarSecretoBase32, verificarTotp, otpauthUri } from './totp';
+import { limitarAvatarSegunPlan } from './routes-pacientes';
 import { uuid, readJson } from './helpers';
 import type { Env } from './types';
 
@@ -138,7 +139,8 @@ export const listarClientes: Handler = async (request, env, origin) => {
       c.id, c.plan, c.activado_en, c.created_at,
       p.nombre as admin_nombre, p.email as admin_email,
       (SELECT COUNT(*) FROM pacientes WHERE cuenta_id = c.id) as num_pacientes,
-      (SELECT COUNT(*) FROM profiles WHERE cuenta_id = c.id) as num_personas
+      (SELECT COUNT(*) FROM profiles WHERE cuenta_id = c.id) as num_personas,
+      (SELECT codigo FROM codigos_activacion WHERE usado_por_cuenta = c.id ORDER BY usado_en DESC LIMIT 1) as codigo_usado
     FROM cuentas c
     LEFT JOIN profiles p ON p.id = c.admin_id
     ORDER BY c.created_at DESC
@@ -146,6 +148,47 @@ export const listarClientes: Handler = async (request, env, origin) => {
   `).all();
 
   return json({ ok: true, clientes: results }, origin);
+};
+
+// ---------- avatares de los pacientes de una cuenta (herramienta de soporte) ----------
+// Deja ver y corregir el avatar de cualquier paciente de cualquier cuenta —
+// útil cuando algo no se guardó bien desde la app y hay que arreglarlo a
+// mano. Igual respeta el plan real de la cuenta (limitarAvatarSegunPlan):
+// no se puede usar para colarle personalización completa a una cuenta free.
+export const listarPacientesDeCuenta: Handler = async (request, env, origin) => {
+  const chequeo = await exigirDueño(request, env);
+  if ('error' in chequeo) return json({ ok: false, error: chequeo.error }, origin, { status: chequeo.status });
+
+  const cuentaId = new URL(request.url).searchParams.get('cuenta_id');
+  if (!cuentaId) return json({ ok: false, error: 'Falta cuenta_id' }, origin, { status: 400 });
+
+  const { results } = await env.DB.prepare(
+    'SELECT id, nombre, avatar_json FROM pacientes WHERE cuenta_id = ? ORDER BY created_at ASC'
+  ).bind(cuentaId).all<{ id: string; nombre: string; avatar_json: string | null }>();
+
+  const pacientes = (results ?? []).map((r) => {
+    let avatar: unknown = null;
+    if (r.avatar_json) { try { avatar = JSON.parse(r.avatar_json); } catch { avatar = null; } }
+    return { id: r.id, nombre: r.nombre, avatar };
+  });
+  return json({ ok: true, pacientes }, origin);
+};
+
+export const actualizarAvatarComoAdmin: Handler = async (request, env, origin) => {
+  const chequeo = await exigirDueño(request, env);
+  if ('error' in chequeo) return json({ ok: false, error: chequeo.error }, origin, { status: chequeo.status });
+
+  const body = await readJson<{ id?: string; avatar?: unknown }>(request);
+  const id = (body?.id || '').trim();
+  if (!id || body?.avatar === undefined) return json({ ok: false, error: 'Faltan datos' }, origin, { status: 400 });
+
+  const paciente = await env.DB.prepare('SELECT cuenta_id FROM pacientes WHERE id = ?').bind(id).first<{ cuenta_id: string }>();
+  if (!paciente) return json({ ok: false, error: 'No existe ese paciente' }, origin, { status: 404 });
+
+  const cuenta = await env.DB.prepare('SELECT plan FROM cuentas WHERE id = ?').bind(paciente.cuenta_id).first<{ plan: string }>();
+  const avatar = limitarAvatarSegunPlan(body.avatar, cuenta?.plan);
+  await env.DB.prepare('UPDATE pacientes SET avatar_json = ? WHERE id = ?').bind(JSON.stringify(avatar), id).run();
+  return json({ ok: true, avatar }, origin);
 };
 
 // Borra una cuenta cliente completa: sus pacientes, registros, personas

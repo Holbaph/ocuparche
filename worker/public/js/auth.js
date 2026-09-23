@@ -97,6 +97,15 @@ const Admin = {
     const { data } = await api('/admin/cuentas?id=' + encodeURIComponent(id), { method: 'DELETE' });
     if (!data?.ok) throw new Error(data?.error || 'No se pudo eliminar la cuenta');
   },
+  async listarPacientesDeCuenta(cuentaId) {
+    const { data } = await api('/admin/pacientes?cuenta_id=' + encodeURIComponent(cuentaId));
+    return data?.ok ? data.pacientes : [];
+  },
+  async actualizarAvatarPaciente(id, avatar) {
+    const { data } = await api('/admin/pacientes', { method: 'PATCH', body: { id, avatar } });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo guardar el avatar');
+    return data.avatar;
+  },
   async listarSolicitudes() {
     const { data } = await api('/admin/solicitudes');
     return data?.ok ? data.solicitudes : [];

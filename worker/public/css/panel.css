@@ -50,3 +50,12 @@ body{ background:var(--bg); }
 /* botón de borrar un código suelto */
 .codigo-del{ border:none; background:none; color:var(--ink-faint); cursor:pointer; padding:4px 6px; font-size:14px; border-radius:8px; }
 .codigo-del:hover{ color:var(--danger); }
+
+/* fila de botones de acción de un cliente (avatares / eliminar) */
+.c-botones{ display:flex; gap:8px; margin-top:8px; }
+.c-botones .add-toggle{ width:auto; flex:1; margin-top:0; }
+
+/* editor de avatar de soporte, dentro de .c-avatares */
+.c-avatares{ display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+.avatar-editor{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px; }
+.avatar-editor .s-nombre{ margin:0 0 8px; }
