@@ -292,6 +292,7 @@
     crearSwatches(document.getElementById('colorPeloSwatches'), PALETA_PELO, avatarBorrador.colorPelo, (c) => { avatarBorrador.colorPelo = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
     crearSwatches(document.getElementById('colorMonoSwatches'), PALETA_MONO, avatarBorrador.colorMoño, (c) => { avatarBorrador.colorMoño = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
     crearSwatches(document.getElementById('colorOjosSwatches'), PALETA_OJOS, avatarBorrador.colorOjos, (c) => { avatarBorrador.colorOjos = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+    crearSwatches(document.getElementById('colorRopaSwatches'), PALETA_ROPA, avatarBorrador.colorRopa, (c) => { avatarBorrador.colorRopa = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
   }
 
   document.getElementById('btnPersonalizar').addEventListener('click', () => {
@@ -310,6 +311,7 @@
     document.getElementById('colorPeloBlock').classList.toggle('hidden', !completo);
     document.getElementById('monoBlock').classList.toggle('hidden', !completo);
     document.getElementById('colorOjosBlock').classList.toggle('hidden', !completo);
+    document.getElementById('colorRopaBlock').classList.toggle('hidden', !completo);
     document.getElementById('avatarUpsell').classList.toggle('hidden', completo);
 
     abrirAvatarSheet();

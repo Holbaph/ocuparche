@@ -1,15 +1,17 @@
-// avatar.js — personalización de apariencia por paciente (peinado, color de
-// pelo, moño y su color, color de ojos). El avatar se guarda como JSON junto
-// al paciente; acá vive todo lo visual: las paletas y cómo dibujar cada
-// peinado dentro de la misma carita SVG que ya existe en el HTML.
+// avatar.js — personalización de apariencia por paciente: peinado, color de
+// pelo, moño y su color, color de ojos, y color de ropa (el cuerpo
+// completo, no solo la cara). El avatar se guarda como JSON junto al
+// paciente; acá vive todo lo visual: las paletas y cómo dibujar cada
+// peinado dentro del mismo monito SVG que ya existe en el HTML.
 
 const PALETA_PELO = ['#2b2420', '#6b4a34', '#9c6b3f', '#d9b26a', '#b5532c', '#9a9a9a', '#e29ac2'];
 const PALETA_OJOS = ['#8b5e3c', '#4a3222', '#5c8a5c', '#5b8fae', '#8a94a3', '#a67b4f'];
 const PALETA_MONO = ['#c96f8f', '#5b8fae', '#e0b23c', '#9b6fb0', '#c9525a', '#5c9a72'];
+const PALETA_ROPA = ['#e1673f', '#2f6e73', '#5b8fae', '#e0b23c', '#9b6fb0', '#5c9a72', '#c9525a'];
 
 const AVATAR_POR_DEFECTO = {
-  niña: { genero: 'niña', peinado: 'largo', colorPelo: '#6b4a34', moño: true, colorMoño: '#c96f8f', colorOjos: '#8b5e3c' },
-  niño: { genero: 'niño', peinado: 'corto', colorPelo: '#2b2420', moño: false, colorMoño: '#c96f8f', colorOjos: '#8b5e3c' },
+  niña: { genero: 'niña', peinado: 'largo', colorPelo: '#6b4a34', moño: true, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#c9525a' },
+  niño: { genero: 'niño', peinado: 'corto', colorPelo: '#2b2420', moño: false, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#5b8fae' },
 };
 
 function avatarPorDefecto(genero) {
@@ -45,8 +47,10 @@ function moñoSvg() {
     <circle cx="160" cy="40" r="10"/>`;
 }
 
-// Pinta un avatar dentro de la carita que ya está en el DOM (una sola carita
-// a la vez — la del paciente que se está viendo).
+// Pinta un avatar dentro del monito que ya está en el DOM (uno solo a la
+// vez — el del paciente que se está viendo). El cuerpo (piernas, brazos,
+// torso) ya está dibujado en el HTML; acá solo se le pone color a la ropa,
+// igual que se le pone color al pelo, los ojos y el moño.
 function aplicarAvatar(avatar) {
   const a = { ...avatarPorDefecto('niña'), ...(avatar || {}) };
   const hairBack = document.getElementById('hairBack');
@@ -55,6 +59,7 @@ function aplicarAvatar(avatar) {
   hairBack.innerHTML = `<g fill="${a.colorPelo}">${peinadoFn()}</g>`;
   bowLayer.innerHTML = a.moño ? `<g fill="${a.colorMoño}">${moñoSvg()}</g>` : '';
   document.querySelectorAll('.iris-circle').forEach(el => el.setAttribute('fill', a.colorOjos));
+  document.querySelectorAll('.ropa-fill').forEach(el => el.setAttribute('fill', a.colorRopa));
 }
 
 function crearSwatches(contenedor, paleta, colorActual, onPick) {

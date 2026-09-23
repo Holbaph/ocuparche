@@ -32,16 +32,16 @@ function parseAvatar(row: { avatar_json?: string | null }): unknown {
 // hace falta una copia acá porque el Worker no comparte runtime con el
 // navegador.
 const AVATAR_POR_DEFECTO: Record<string, Record<string, unknown>> = {
-  niña: { genero: 'niña', peinado: 'largo', colorPelo: '#6b4a34', moño: true, colorMoño: '#c96f8f', colorOjos: '#8b5e3c' },
-  niño: { genero: 'niño', peinado: 'corto', colorPelo: '#2b2420', moño: false, colorMoño: '#c96f8f', colorOjos: '#8b5e3c' },
+  niña: { genero: 'niña', peinado: 'largo', colorPelo: '#6b4a34', moño: true, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#c9525a' },
+  niño: { genero: 'niño', peinado: 'corto', colorPelo: '#2b2420', moño: false, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#5b8fae' },
 };
 const PEINADOS_VALIDOS = new Set(['corto', 'largo', 'rizado', 'coleta']);
 
 // El plan gratis solo deja elegir género y peinado — cualquier otro campo
-// del avatar (color de pelo, moño y su color, color de ojos) se fuerza al
-// valor por defecto de ese género, aunque alguien mande otra cosa a mano
-// pegándole directo a la API. Esto se comprueba acá — no alcanza con
-// ocultar los selectores en el frontend.
+// del avatar (color de pelo, moño y su color, color de ojos, color de
+// ropa) se fuerza al valor por defecto de ese género, aunque alguien mande
+// otra cosa a mano pegándole directo a la API. Esto se comprueba acá — no
+// alcanza con ocultar los selectores en el frontend.
 export function limitarAvatarSegunPlan(avatar: unknown, plan: string | undefined): unknown {
   if (!avatar || typeof avatar !== 'object') return avatar;
   const a = avatar as Record<string, unknown>;
