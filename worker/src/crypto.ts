@@ -65,3 +65,13 @@ export function randomCodigoActivacion(): string {
   for (const b of bytes) out += alfabeto[b % alfabeto.length];
   return out;
 }
+
+// Código de un solo uso (segundo factor del login del panel de plataforma)
+// — 6 dígitos, se manda por correo y hay que escribirlo aparte de la
+// contraseña.
+export function randomOtp6(): string {
+  let out = '';
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  for (const b of bytes) out += (b % 10).toString();
+  return out;
+}

@@ -49,3 +49,28 @@ export function correoInvitacion(link: string, cuentaNombre: string): string {
       <p style="color:#888;font-size:12px">Este enlace vence en 3 días.</p>
     </div>`;
 }
+
+// Segundo factor del login del panel de plataforma — el código va aparte de
+// la contraseña, así que aunque alguien la adivine no le alcanza para entrar.
+export function correoOtpAdmin(codigo: string): string {
+  return `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+      <h2>Tu código de acceso al panel</h2>
+      <p>Alguien (con suerte tú) inició sesión en el panel de administrador de Ocuparche. Escribe este código para completar el ingreso:</p>
+      <p style="font-size:32px;font-weight:800;letter-spacing:.15em;text-align:center;background:#fef8f3;border-radius:14px;padding:16px 0">${codigo}</p>
+      <p style="color:#888;font-size:12px">Vence en 10 minutos. Si no fuiste tú, ignora este correo — tu contraseña sigue siendo la única forma de llegar hasta acá.</p>
+    </div>`;
+}
+
+// Se manda al cliente cuando el dueño atiende su solicitud y le genera el
+// código de activación.
+export function correoCodigoActivacion(codigo: string): string {
+  return `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+      <h2>¡Tu Ocuparche completo ya está listo! 🎉</h2>
+      <p>Recibimos tu pago y aquí está tu código de activación. Pégalo en la app, en "Tu cuenta":</p>
+      <p style="font-size:28px;font-weight:800;letter-spacing:.1em;text-align:center;background:#fef8f3;border-radius:14px;padding:16px 0">${codigo}</p>
+      <p>Con esto desbloqueas hij@s ilimitados, el reloj de arena con avisos automáticos, e invitar hasta 3 personas más de tu familia.</p>
+      <p style="color:#888;font-size:12px">¿Algún problema? Responde este correo.</p>
+    </div>`;
+}

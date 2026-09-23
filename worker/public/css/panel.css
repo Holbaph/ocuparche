@@ -1,0 +1,41 @@
+/* panel.css — layout del panel de administrador de plataforma. Reutiliza
+   los componentes de app.css (.card, .field, .btn-primary, .list,
+   .stat-tile, .cliente-item, .codigo-item, .add-toggle) y solo agrega lo
+   que le falta: la estructura de página y las filas de solicitudes. */
+
+body{ background:var(--bg); }
+
+.panel-header{
+  position:sticky; top:0; z-index:10;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px; background:var(--surface); border-bottom:1px solid var(--line);
+}
+.panel-brand{ display:flex; align-items:center; gap:8px; font-family:'Baloo 2'; font-weight:800; font-size:16px; }
+
+.panel-main{
+  max-width:640px; margin:0 auto; padding:18px 16px 60px;
+  display:flex; flex-direction:column; gap:14px;
+}
+
+.stats-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+
+.panel-hint{ font-size:12.5px; color:var(--ink-faint); margin:0 0 10px; line-height:1.5; }
+
+/* filas de la cola de solicitudes */
+.solicitud-item{
+  display:flex; flex-direction:column; gap:6px; padding:10px 12px;
+  border-radius:12px; background:var(--surface-2); border:1px solid var(--line); font-size:12.5px;
+}
+.solicitud-item .s-top{ display:flex; align-items:center; gap:8px; }
+.solicitud-item .s-nombre{ font-weight:700; font-size:13px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.solicitud-item .s-estado{ font-size:10.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; padding:2px 8px; border-radius:99px; flex-shrink:0; }
+.solicitud-item .s-estado.pendiente{ background:var(--warn); color:#fff; }
+.solicitud-item .s-estado.atendida{ background:var(--success-soft); color:var(--success); }
+.solicitud-item .s-estado.rechazada{ background:var(--surface); color:var(--ink-faint); border:1px solid var(--line); }
+.solicitud-item .s-meta{ color:var(--ink-faint); }
+.solicitud-item .s-acciones{ display:flex; gap:8px; margin-top:2px; }
+.solicitud-item .s-acciones button{
+  flex:1; padding:8px; border-radius:10px; border:none; font-weight:700; font-size:12px; cursor:pointer;
+}
+.solicitud-item .s-atender{ background:var(--success); color:#fff; }
+.solicitud-item .s-rechazar{ background:transparent; color:var(--ink-faint); border:1px solid var(--line) !important; }

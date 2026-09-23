@@ -1,5 +1,6 @@
 // auth.js — sesión, alta libre, invitar, códigos. Habla con la API propia
-// (worker/), ya no con Supabase.
+// (worker/), ya no con Supabase. Lo comparten app.html (Auth) y panel.html
+// (Admin, panel de administrador de plataforma).
 
 const Auth = {
   async getSesionYPerfil() {
@@ -72,8 +73,18 @@ const Auth = {
   },
 };
 
-// ================= PANEL DUEÑO: negocio =================
+// ================= PANEL DE PLATAFORMA (dueño) =================
+// Usado por panel.html — completamente aparte de la app familiar.
 const Admin = {
+  async loginPaso1(email, password) {
+    const { data } = await api('/admin/login', { method: 'POST', body: { email, password } });
+    if (!data?.ok) throw new Error(data?.error || 'Correo o contraseña incorrectos');
+    return data.pendiente;
+  },
+  async loginPaso2(pendiente, codigo) {
+    const { data } = await api('/admin/verify-otp', { method: 'POST', body: { pendiente, codigo } });
+    if (!data?.ok) throw new Error(data?.error || 'Código incorrecto');
+  },
   async estadisticas() {
     const { data } = await api('/admin/stats');
     return data?.ok ? data.stats : null;
@@ -81,5 +92,22 @@ const Admin = {
   async listarClientes() {
     const { data } = await api('/admin/clientes');
     return data?.ok ? data.clientes : [];
+  },
+  async listarSolicitudes() {
+    const { data } = await api('/admin/solicitudes');
+    return data?.ok ? data.solicitudes : [];
+  },
+  async crearSolicitud(nombre, email, nota) {
+    const { data } = await api('/admin/solicitudes', { method: 'POST', body: { nombre, email, nota } });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo agregar la solicitud');
+  },
+  async atenderSolicitud(id) {
+    const { data } = await api('/admin/solicitudes/atender', { method: 'POST', body: { id } });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo generar el código');
+    return data.codigo;
+  },
+  async rechazarSolicitud(id) {
+    const { data } = await api('/admin/solicitudes/rechazar', { method: 'POST', body: { id } });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo rechazar');
   },
 };

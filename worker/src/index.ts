@@ -209,8 +209,14 @@ export default {
       'POST /api/push-subscriptions': cuenta.guardarPushSubscription,
       'DELETE /api/push-subscriptions': cuenta.eliminarPushSubscription,
 
+      'POST /api/admin/login': admin.loginPaso1,
+      'POST /api/admin/verify-otp': admin.loginPaso2,
       'GET /api/admin/stats': admin.estadisticas,
       'GET /api/admin/clientes': admin.listarClientes,
+      'GET /api/admin/solicitudes': admin.listarSolicitudes,
+      'POST /api/admin/solicitudes': admin.crearSolicitud,
+      'POST /api/admin/solicitudes/atender': admin.atenderSolicitud,
+      'POST /api/admin/solicitudes/rechazar': admin.rechazarSolicitud,
     };
 
     const key = `${request.method} ${url.pathname}`;

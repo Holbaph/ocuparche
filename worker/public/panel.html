@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Panel administrador — Ocuparche</title>
+<meta name="theme-color" content="#211b17">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/panel.css">
+</head>
+<body>
+
+<!-- Esta página es SOLO para el administrador de la plataforma (el dueño
+     del negocio) — no tiene nada que ver con la app familiar (app.html), y
+     su login es aparte: contraseña + código de un solo uso al correo. -->
+
+<!-- ============ Cargando ============ -->
+<div id="panelLoading" class="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-icon">🔐</div>
+    <p class="muted">Cargando…</p>
+  </div>
+</div>
+
+<!-- ============ Login paso 1: contraseña ============ -->
+<div id="panelLoginPaso1" class="auth-overlay hidden">
+  <div class="auth-box">
+    <div class="auth-icon">🔐</div>
+    <h2>Panel administrador</h2>
+    <p class="muted">Acceso exclusivo para el dueño de la plataforma</p>
+    <p class="auth-error hidden" id="p1Error"></p>
+    <div class="field">
+      <label for="p1Email">Correo</label>
+      <input type="email" id="p1Email" autocomplete="username" autocapitalize="off" placeholder="tucorreo@ejemplo.com">
+    </div>
+    <div class="field">
+      <label for="p1Password">Contraseña</label>
+      <input type="password" id="p1Password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" id="btnP1">Continuar</button>
+    <p class="auth-note">Esta NO es la misma pantalla de acceso de tus clientes.</p>
+  </div>
+</div>
+
+<!-- ============ Login paso 2: código del correo ============ -->
+<div id="panelLoginPaso2" class="auth-overlay hidden">
+  <div class="auth-box">
+    <div class="auth-icon">📩</div>
+    <h2>Revisa tu correo</h2>
+    <p class="muted">Te mandamos un código de 6 dígitos — vence en 10 minutos</p>
+    <p class="auth-error hidden" id="p2Error"></p>
+    <div class="field">
+      <label for="p2Codigo">Código</label>
+      <input type="text" id="p2Codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="letter-spacing:.3em;text-align:center;font-size:20px;font-weight:800">
+    </div>
+    <button class="btn-primary" id="btnP2">Entrar</button>
+    <button class="btn-link" id="btnP2Volver">Usar otro correo</button>
+  </div>
+</div>
+
+<!-- ============ Sin acceso (cuenta válida pero no es el dueño) ============ -->
+<div id="panelSinAcceso" class="auth-overlay hidden">
+  <div class="auth-box">
+    <div class="auth-icon">🚫</div>
+    <h2>Sin acceso</h2>
+    <p class="muted">Esta cuenta no es la administradora de la plataforma.</p>
+    <button class="btn-primary" id="btnSalirSinAcceso">Cerrar sesión</button>
+  </div>
+</div>
+
+<!-- ============ Panel ============ -->
+<div id="panelDashboard" class="panel-wrap hidden">
+  <header class="panel-header">
+    <div class="panel-brand">🔐 <span>Panel administrador</span></div>
+    <button class="btn-link" id="btnLogout" style="margin:0">Cerrar sesión</button>
+  </header>
+
+  <main class="panel-main">
+    <section class="block">
+      <p class="block-title">Estadísticas</p>
+      <div class="stats-grid">
+        <div class="stat-tile"><span class="stat-num" id="statClientes">–</span><span class="stat-label">Clientes</span></div>
+        <div class="stat-tile"><span class="stat-num" id="statCompleto">–</span><span class="stat-label">Plan completo</span></div>
+        <div class="stat-tile"><span class="stat-num" id="statAdmins">–</span><span class="stat-label">Admins</span></div>
+        <div class="stat-tile"><span class="stat-num" id="statUsers">–</span><span class="stat-label">Users</span></div>
+        <div class="stat-tile"><span class="stat-num" id="statPacientes">–</span><span class="stat-label">Pacientes</span></div>
+        <div class="stat-tile"><span class="stat-num" id="statRegistros">–</span><span class="stat-label">Registros</span></div>
+        <div class="stat-tile" style="grid-column:1 / -1"><span class="stat-num" id="statCodigosLibres">–</span><span class="stat-label">Códigos libres sin usar</span></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <p class="block-title">🔔 Solicitudes de activación</p>
+      <p class="panel-hint">Cuando alguien transfiere, agrégalo aquí. Una vez que revises tu cuenta bancaria, toca "Generar y enviar" — se crea el código y se le manda por correo solo.</p>
+      <div class="list" id="solicitudesPendientes" style="margin-bottom:12px"></div>
+
+      <button class="add-toggle" id="agregarSolicitudToggle">+ Agregar solicitud</button>
+      <div id="agregarSolicitudForm" class="hidden" style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+        <input type="text" id="solNombre" placeholder="Nombre" style="padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px">
+        <input type="email" id="solEmail" placeholder="Correo" style="padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px">
+        <input type="text" id="solNota" placeholder="Nota (opcional)" style="padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px">
+        <button class="btn-save" id="solGuardar">Agregar a la cola</button>
+      </div>
+
+      <details style="margin-top:14px">
+        <summary class="panel-hint" style="cursor:pointer">Ver historial (atendidas/rechazadas)</summary>
+        <div class="list" id="solicitudesHistorial" style="margin-top:10px"></div>
+      </details>
+    </section>
+
+    <section class="block">
+      <p class="block-title">Clientes</p>
+      <div class="list" id="clientesList"></div>
+    </section>
+
+    <section class="block">
+      <p class="block-title">Generar código de activación suelto</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input type="text" id="notaCodigoInput" placeholder="Nota (ej: Mach - Juan Pérez)" style="flex:1;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px">
+        <button class="btn-save" id="generarCodigoBtn">Generar</button>
+      </div>
+      <div class="list" id="codigosList"></div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/panel.js"></script>
+</body>
+</html>
