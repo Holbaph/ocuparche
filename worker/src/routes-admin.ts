@@ -6,15 +6,16 @@
 // TODOS los clientes, así que ninguna ruta nueva puede saltarse el chequeo.
 import { json } from './cors';
 import { perfilDesdeSesion, crearSesion } from './auth';
-import { verifyPassword, sha256Hex, randomOtp6, randomCodigoActivacion } from './crypto';
-import { enviarCorreo, correoOtpAdmin, correoCodigoActivacion } from './email';
+import { verifyPassword, randomCodigoActivacion } from './crypto';
+import { enviarCorreo, correoCodigoActivacion } from './email';
+import { generarSecretoBase32, verificarTotp, otpauthUri } from './totp';
 import { uuid, readJson } from './helpers';
 import type { Env } from './types';
 
 type Handler = (request: Request, env: Env, origin: string | null) => Promise<Response>;
 
-const OTP_MINUTOS = 10;
-const OTP_MAX_INTENTOS = 5;
+const PENDIENTE_MINUTOS = 10;
+const MAX_INTENTOS = 5;
 
 async function exigirDueño(request: Request, env: Env) {
   const perfil = await perfilDesdeSesion(request, env);
@@ -27,6 +28,13 @@ async function exigirDueño(request: Request, env: Env) {
 // Si son correctos pero la cuenta no es la del dueño, respondemos el mismo
 // error genérico que si estuvieran mal — así este login no sirve para
 // confirmar si un correo existe o qué rol tiene.
+//
+// El segundo factor es TOTP (Google Authenticator y similares), no un
+// código por correo — no depende de que Resend entregue nada. La primera
+// vez que alguien pasa este paso 1 (o si nunca terminó de configurar el
+// authenticator) se genera/reusa el secreto y se manda junto con la
+// respuesta para armar la cuenta en la app; esto es seguro porque solo
+// pasa DESPUÉS de comprobar la contraseña.
 export const loginPaso1: Handler = async (request, env, origin) => {
   const body = await readJson<{ email?: string; password?: string }>(request);
   const email = (body?.email || '').trim().toLowerCase();
@@ -35,35 +43,38 @@ export const loginPaso1: Handler = async (request, env, origin) => {
   if (!email || !password) return credencialesInvalidas();
 
   const user = await env.DB.prepare(
-    'SELECT id, email, password_hash, password_salt, es_dueño FROM profiles WHERE email = ?'
-  ).bind(email).first<{ id: string; email: string; password_hash: string; password_salt: string; es_dueño: number }>();
+    'SELECT id, email, password_hash, password_salt, es_dueño, totp_secret, totp_confirmado FROM profiles WHERE email = ?'
+  ).bind(email).first<{
+    id: string; email: string; password_hash: string; password_salt: string;
+    es_dueño: number; totp_secret: string | null; totp_confirmado: number;
+  }>();
   if (!user || !user.es_dueño) return credencialesInvalidas();
 
   const valido = await verifyPassword(password, user.password_hash, user.password_salt);
   if (!valido) return credencialesInvalidas();
 
-  const codigo = randomOtp6();
-  const codigoHash = await sha256Hex(codigo);
   const pendienteId = uuid();
-  const expiresAt = new Date(Date.now() + OTP_MINUTOS * 60000).toISOString();
+  const expiresAt = new Date(Date.now() + PENDIENTE_MINUTOS * 60000).toISOString();
   await env.DB.prepare(
-    'INSERT INTO admin_login_pendiente (id, user_id, codigo_hash, expires_at) VALUES (?, ?, ?, ?)'
-  ).bind(pendienteId, user.id, codigoHash, expiresAt).run();
+    'INSERT INTO admin_login_pendiente (id, user_id, expires_at) VALUES (?, ?, ?)'
+  ).bind(pendienteId, user.id, expiresAt).run();
 
-  const enviado = await enviarCorreo(env, user.email, 'Tu código de acceso — Panel Ocuparche', correoOtpAdmin(codigo));
-  if (!enviado) {
-    // No dejamos a quien inició sesión esperando un código que nunca va a
-    // llegar — se borra el intento y se avisa de una para que no pierda
-    // tiempo. La causa más común es Resend rechazando el dominio de prueba
-    // (onboarding@resend.dev) para un destinatario que no sea el dueño de
-    // la cuenta de Resend — revisar los logs del Worker (wrangler tail).
-    await env.DB.prepare('DELETE FROM admin_login_pendiente WHERE id = ?').bind(pendienteId).run();
-    return json({ ok: false, error: 'No se pudo mandar el código por correo — revisa la configuración de Resend' }, origin, { status: 502 });
+  if (!user.totp_secret || !user.totp_confirmado) {
+    let secreto = user.totp_secret;
+    if (!secreto) {
+      secreto = generarSecretoBase32();
+      await env.DB.prepare('UPDATE profiles SET totp_secret = ? WHERE id = ?').bind(secreto, user.id).run();
+    }
+    return json({
+      ok: true, pendiente: pendienteId, configurarTotp: true,
+      secreto, otpauth: otpauthUri(secreto, user.email),
+    }, origin);
   }
-  return json({ ok: true, pendiente: pendienteId }, origin);
+
+  return json({ ok: true, pendiente: pendienteId, configurarTotp: false }, origin);
 };
 
-// ---------- login del panel, paso 2: código de un solo uso del correo ----------
+// ---------- login del panel, paso 2: código del authenticator ----------
 export const loginPaso2: Handler = async (request, env, origin) => {
   const body = await readJson<{ pendiente?: string; codigo?: string }>(request);
   const pendienteId = (body?.pendiente || '').trim();
@@ -71,22 +82,27 @@ export const loginPaso2: Handler = async (request, env, origin) => {
   if (!pendienteId || !codigo) return json({ ok: false, error: 'Faltan datos' }, origin, { status: 400 });
 
   const row = await env.DB.prepare(
-    `SELECT id, user_id, codigo_hash, intentos FROM admin_login_pendiente WHERE id = ? AND expires_at > datetime('now')`
-  ).bind(pendienteId).first<{ id: string; user_id: string; codigo_hash: string; intentos: number }>();
-  if (!row) return json({ ok: false, error: 'El código venció — vuelve a iniciar sesión' }, origin, { status: 400 });
+    `SELECT ap.id, ap.user_id, ap.intentos, p.totp_secret
+     FROM admin_login_pendiente ap JOIN profiles p ON p.id = ap.user_id
+     WHERE ap.id = ? AND ap.expires_at > datetime('now')`
+  ).bind(pendienteId).first<{ id: string; user_id: string; intentos: number; totp_secret: string | null }>();
+  if (!row || !row.totp_secret) return json({ ok: false, error: 'La sesión de login venció — vuelve a iniciar sesión' }, origin, { status: 400 });
 
-  if (row.intentos >= OTP_MAX_INTENTOS) {
+  if (row.intentos >= MAX_INTENTOS) {
     await env.DB.prepare('DELETE FROM admin_login_pendiente WHERE id = ?').bind(row.id).run();
     return json({ ok: false, error: 'Demasiados intentos — vuelve a iniciar sesión' }, origin, { status: 400 });
   }
 
-  const codigoHash = await sha256Hex(codigo);
-  if (codigoHash !== row.codigo_hash) {
+  const valido = await verificarTotp(row.totp_secret, codigo);
+  if (!valido) {
     await env.DB.prepare('UPDATE admin_login_pendiente SET intentos = intentos + 1 WHERE id = ?').bind(row.id).run();
     return json({ ok: false, error: 'Código incorrecto' }, origin, { status: 400 });
   }
 
-  await env.DB.prepare('DELETE FROM admin_login_pendiente WHERE id = ?').bind(row.id).run();
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM admin_login_pendiente WHERE id = ?').bind(row.id),
+    env.DB.prepare('UPDATE profiles SET totp_confirmado = 1 WHERE id = ?').bind(row.user_id),
+  ]);
   const { cookie } = await crearSesion(env, row.user_id);
   return json({ ok: true }, origin, { headers: { 'Set-Cookie': cookie } });
 };

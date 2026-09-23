@@ -32,8 +32,15 @@
       const err = document.getElementById('p1Error');
       err.classList.add('hidden');
       try {
-        pendienteLogin = await Admin.loginPaso1(email, password);
+        const resp = await Admin.loginPaso1(email, password);
+        pendienteLogin = resp.pendiente;
         document.getElementById('p2Codigo').value = '';
+        document.getElementById('p2Setup').classList.toggle('hidden', !resp.configurarTotp);
+        document.getElementById('p2Titulo').textContent = resp.configurarTotp ? 'Configura tu autenticador' : 'Código del autenticador';
+        document.getElementById('p2Subtitulo').textContent = resp.configurarTotp
+          ? 'Agrega la cuenta con la clave de abajo y después escribe el código que te muestre'
+          : 'Abre tu app de autenticación y escribe el código de 6 dígitos';
+        if (resp.configurarTotp) document.getElementById('p2Secreto').textContent = formatearSecreto(resp.secreto);
         showOverlay('panelLoginPaso2');
       } catch (e) {
         err.textContent = e.message || 'Correo o contraseña incorrectos';
@@ -243,6 +250,12 @@
         showToast('No se pudo generar el código');
       }
     });
+  }
+
+  // Agrupa el secreto base32 de a 4 caracteres — mucho más fácil de leer y
+  // transcribir a mano si hace falta.
+  function formatearSecreto(secreto) {
+    return (secreto || '').replace(/(.{4})/g, '$1 ').trim();
   }
 
   function escapeHtml(s) {

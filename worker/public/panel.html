@@ -49,17 +49,25 @@
 
 <!-- ============ Login paso 2: código del correo ============ -->
 <div id="panelLoginPaso2" class="auth-overlay hidden">
-  <div class="auth-box">
-    <div class="auth-icon">📩</div>
-    <h2>Revisa tu correo</h2>
-    <p class="muted">Te mandamos un código de 6 dígitos — vence en 10 minutos</p>
+  <div class="auth-box" style="max-width:400px">
+    <div class="auth-icon">🔐</div>
+    <h2 id="p2Titulo">Código del autenticador</h2>
+    <p class="muted" id="p2Subtitulo">Abre tu app de autenticación y escribe el código de 6 dígitos</p>
+
+    <div id="p2Setup" class="hidden" style="text-align:left;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:16px">
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 8px">
+        <b>Primera vez:</b> en Google Authenticator, Authy, 1Password, etc. — "Agregar cuenta" → "Ingresar clave de configuración" (no hace falta escanear nada). Nombre de cuenta: <b>Ocuparche</b>. Tipo: <b>Basado en tiempo</b>.
+      </p>
+      <p id="p2Secreto" style="font-family:monospace;font-size:15px;letter-spacing:.06em;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;word-break:break-all;margin:0"></p>
+    </div>
+
     <p class="auth-error hidden" id="p2Error"></p>
     <div class="field">
-      <label for="p2Codigo">Código</label>
+      <label for="p2Codigo">Código de 6 dígitos</label>
       <input type="text" id="p2Codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="letter-spacing:.3em;text-align:center;font-size:20px;font-weight:800">
     </div>
     <button class="btn-primary" id="btnP2">Entrar</button>
-    <button class="btn-link" id="btnP2Volver">Usar otro correo</button>
+    <button class="btn-link" id="btnP2Volver">Usar otra cuenta</button>
   </div>
 </div>
 

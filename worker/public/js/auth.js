@@ -79,7 +79,7 @@ const Admin = {
   async loginPaso1(email, password) {
     const { data } = await api('/admin/login', { method: 'POST', body: { email, password } });
     if (!data?.ok) throw new Error(data?.error || 'Correo o contraseña incorrectos');
-    return data.pendiente;
+    return { pendiente: data.pendiente, configurarTotp: !!data.configurarTotp, secreto: data.secreto || '' };
   },
   async loginPaso2(pendiente, codigo) {
     const { data } = await api('/admin/verify-otp', { method: 'POST', body: { pendiente, codigo } });
