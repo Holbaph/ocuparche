@@ -65,7 +65,7 @@ const Juego = (function () {
     encima: { chaqueta: 'Chaqueta', capa: 'Capa' },
     zapatos: { zapatillas: 'Zapatillas', botas: 'Botas', botines: 'Botines', balerinas: 'Balerinas', sandalias: 'Sandalias' },
     cabeza: { moño: 'Moño', collet: 'Collet', tiara: 'Tiara', flor: 'Flor', cintillo: 'Cintillo' },
-    cara: { lentes: 'Lentes de sol', 'lentes-corazon': 'Lentes de corazón', 'lentes-redondos': 'Lentes redondos' },
+    cara: { lentes: 'Lentes de sol', 'lentes-corazon': 'Lentes de corazón', 'lentes-redondos': 'Lentes redondos', antifaz: 'Antifaz de héroe' },
   };
   // Con estos, las botas van "metidas" (por encima del pantalón).
   const PANTALONES = ['jeans', 'bombacho'];
@@ -113,6 +113,7 @@ const Juego = (function () {
       ['lentes', [C.negro, C.rosado]],
       ['lentes-corazon', [C.rojo, C.rosado]],
       ['lentes-redondos', [C.verde, C.negro, C.rosado]],
+      ['antifaz', [C.negro, C.rojo, C.azul, C.morado, C.dorado]],
     ],
   };
 
@@ -186,11 +187,19 @@ const Juego = (function () {
     // ---------- más pensados para niños: superhéroes, rescate, espacio ----------
     {
       id: 'max', nombre: 'Max', grupo: 'Superhéroes', piel: '#f0cfb0', ojos: '#4a3222', peloEstilo: 'corto', peloColor: '#1f1a1c',
-      ropa: { arriba: { t: 'top', c: C.rojo }, abajo: { t: 'jeans', c: C.azul }, encima: { t: 'capa', c: C.rojo }, zapatos: { t: 'zapatillas', c: C.rojo } },
+      ropa: { arriba: { t: 'polera', c: C.rojo }, abajo: { t: 'jeans', c: C.azul }, encima: { t: 'capa', c: C.rojo }, zapatos: { t: 'zapatillas', c: C.rojo }, cara: { t: 'antifaz', c: C.azul } },
     },
     {
       id: 'nico', nombre: 'Nico', grupo: 'Superhéroes', piel: '#dfa77c', ojos: '#5f8a4c', peloEstilo: 'corto', peloColor: '#4a3222',
-      ropa: { arriba: { t: 'top', c: C.negro }, abajo: { t: 'jeans', c: C.negro }, encima: { t: 'capa', c: C.morado }, zapatos: { t: 'zapatillas', c: C.negro } },
+      ropa: { arriba: { t: 'polera', c: C.negro }, abajo: { t: 'jeans', c: C.negro }, encima: { t: 'capa', c: C.morado }, zapatos: { t: 'zapatillas', c: C.negro }, cara: { t: 'antifaz', c: C.morado } },
+    },
+    {
+      id: 'vera', nombre: 'Vera', grupo: 'Superhéroes', piel: '#fbe0cc', ojos: '#4f7fb5', peloEstilo: 'cola-alta', peloColor: '#d2432f',
+      ropa: { arriba: { t: 'polera', c: C.celeste }, abajo: { t: 'jeans', c: C.negro }, encima: { t: 'capa', c: C.celeste }, zapatos: { t: 'botas', c: C.negro }, cara: { t: 'antifaz', c: C.celeste } },
+    },
+    {
+      id: 'dante', nombre: 'Dante', grupo: 'Superhéroes', piel: '#8a5634', ojos: '#4a3222', peloEstilo: 'corto', peloColor: '#1f1a1c',
+      ropa: { arriba: { t: 'polera', c: C.amarillo }, abajo: { t: 'jeans', c: C.negro }, encima: { t: 'capa', c: C.negro }, zapatos: { t: 'botas', c: C.amarillo }, cara: { t: 'antifaz', c: C.negro } },
     },
     {
       id: 'leo', nombre: 'Leo', grupo: 'Equipo de rescate', piel: '#f1c9a5', ojos: '#4f7fb5', peloEstilo: 'corto', peloColor: '#6b4428',
@@ -473,6 +482,12 @@ const Juego = (function () {
       const corazon = (x, y) => `<path d="M${x} ${y + 18} L${x - 24} ${y - 4} A12 12 0 0 1 ${x} ${y - 14} A12 12 0 0 1 ${x + 24} ${y - 4} Z" fill="${c}" opacity=".92" stroke="${o}" stroke-width="2.5" stroke-linejoin="round"/>`;
       return patillas + corazon(112, 168) + corazon(208, 168) +
         `<path d="M136 160 Q160 152 184 160" fill="none" stroke="${o}" stroke-width="4"/>`;
+    }
+    if (acc.t === 'antifaz') {
+      // el clásico antifaz de superhéroe: una sola pieza que cubre los dos
+      // ojos con un hueco en el puente de la nariz, amarrado atrás.
+      return `<path d="M70 138 Q92 128 118 140 Q128 146 140 140 L148 150 Q160 156 172 150 L180 140 Q192 146 202 140 Q228 128 250 138 Q244 168 214 172 Q186 176 168 158 Q160 152 152 158 Q134 176 106 172 Q76 168 70 138 Z" fill="${c}" opacity=".95" stroke="${o}" stroke-width="2"/>` +
+        `<path d="M60 140 Q40 130 34 112 M260 140 Q280 130 286 112" stroke="${o}" stroke-width="4" stroke-linecap="round" opacity=".85"/>`;
     }
     return patillas +
       `<rect x="80" y="146" width="64" height="44" rx="18" fill="${c}" opacity=".94" stroke="${o}" stroke-width="3"/>` +
