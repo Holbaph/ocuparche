@@ -196,8 +196,10 @@
       if (act === 'atender') {
         btn.disabled = true;
         try {
-          const codigo = await Admin.atenderSolicitud(id);
-          showToast('Código generado y enviado: ' + codigo);
+          const { codigo, enviado } = await Admin.atenderSolicitud(id);
+          showToast(enviado
+            ? 'Código generado y enviado: ' + codigo
+            : 'Código generado (' + codigo + ') pero el correo NO se pudo mandar — envíaselo tú a mano');
           await cargarSolicitudes();
           await cargarStats();
         } catch (err) {

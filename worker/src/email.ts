@@ -7,26 +7,45 @@
 // Si RESEND_API_KEY no está configurado (secreto de Worker), no falla:
 // registra el link en los logs para poder probar sin tener Resend armado
 // todavía.
+//
+// OJO con el remitente de abajo: "onboarding@resend.dev" es el dominio de
+// PRUEBA de Resend, y Resend solo deja mandar con él al correo con el que
+// te registraste en Resend — a cualquier otro destinatario lo rechaza. Para
+// mandar de verdad a tus clientes (invitaciones, recuperar contraseña,
+// código de activación) hace falta verificar un dominio propio en Resend y
+// cambiar este FROM a algo de ese dominio.
 
 import type { Env } from './types';
 
 const FROM = 'Ocuparche <onboarding@resend.dev>'; // cámbialo cuando tengas tu propio dominio en Resend
 
-export async function enviarCorreo(env: Env, to: string, subject: string, html: string): Promise<void> {
+// Devuelve si el correo salió de verdad — antes esto no se comprobaba en
+// ningún lado, así que un rechazo de Resend (dominio de prueba mandando a
+// alguien que no sea el dueño de la cuenta de Resend, API key vencida, etc.)
+// quedaba solo en los logs del Worker y quien esperaba el correo nunca se
+// enteraba de que no iba a llegar.
+export async function enviarCorreo(env: Env, to: string, subject: string, html: string): Promise<boolean> {
   if (!env.RESEND_API_KEY) {
     console.log('[email simulado, falta RESEND_API_KEY]', { to, subject, html });
-    return;
+    return true; // no es una falla real, es el modo de prueba local a propósito
   }
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ from: FROM, to, subject, html }),
-  });
-  if (!res.ok) {
-    console.error('Resend error', res.status, await res.text());
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from: FROM, to, subject, html }),
+    });
+    if (!res.ok) {
+      console.error('Resend error', res.status, await res.text());
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('Resend fetch falló', e);
+    return false;
   }
 }
 

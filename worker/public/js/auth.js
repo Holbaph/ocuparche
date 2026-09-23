@@ -104,7 +104,7 @@ const Admin = {
   async atenderSolicitud(id) {
     const { data } = await api('/admin/solicitudes/atender', { method: 'POST', body: { id } });
     if (!data?.ok) throw new Error(data?.error || 'No se pudo generar el código');
-    return data.codigo;
+    return { codigo: data.codigo, enviado: data.enviado !== false };
   },
   async rechazarSolicitud(id) {
     const { data } = await api('/admin/solicitudes/rechazar', { method: 'POST', body: { id } });

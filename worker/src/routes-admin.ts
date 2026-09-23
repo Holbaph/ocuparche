@@ -50,7 +50,16 @@ export const loginPaso1: Handler = async (request, env, origin) => {
     'INSERT INTO admin_login_pendiente (id, user_id, codigo_hash, expires_at) VALUES (?, ?, ?, ?)'
   ).bind(pendienteId, user.id, codigoHash, expiresAt).run();
 
-  await enviarCorreo(env, user.email, 'Tu código de acceso — Panel Ocuparche', correoOtpAdmin(codigo));
+  const enviado = await enviarCorreo(env, user.email, 'Tu código de acceso — Panel Ocuparche', correoOtpAdmin(codigo));
+  if (!enviado) {
+    // No dejamos a quien inició sesión esperando un código que nunca va a
+    // llegar — se borra el intento y se avisa de una para que no pierda
+    // tiempo. La causa más común es Resend rechazando el dominio de prueba
+    // (onboarding@resend.dev) para un destinatario que no sea el dueño de
+    // la cuenta de Resend — revisar los logs del Worker (wrangler tail).
+    await env.DB.prepare('DELETE FROM admin_login_pendiente WHERE id = ?').bind(pendienteId).run();
+    return json({ ok: false, error: 'No se pudo mandar el código por correo — revisa la configuración de Resend' }, origin, { status: 502 });
+  }
   return json({ ok: true, pendiente: pendienteId }, origin);
 };
 
@@ -180,8 +189,8 @@ export const atenderSolicitud: Handler = async (request, env, origin) => {
       .bind(codigo, id),
   ]);
 
-  await enviarCorreo(env, solicitud.email, '¡Tu Ocuparche completo ya está listo! 🎉', correoCodigoActivacion(codigo));
-  return json({ ok: true, codigo }, origin);
+  const enviado = await enviarCorreo(env, solicitud.email, '¡Tu Ocuparche completo ya está listo! 🎉', correoCodigoActivacion(codigo));
+  return json({ ok: true, codigo, enviado }, origin);
 };
 
 export const rechazarSolicitud: Handler = async (request, env, origin) => {
