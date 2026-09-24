@@ -328,6 +328,13 @@ body.jugando{ overflow:hidden; }
 }
 .juego-reloj.poco{ color:var(--danger); border-color:var(--danger); }
 
+.juego-genero{ display:flex; gap:8px; padding:4px 12px 2px; flex-shrink:0; }
+.juego-genero button{
+  flex:1; padding:8px; border-radius:99px; border:1px solid var(--line); background:var(--surface);
+  color:var(--ink-soft); font-weight:800; font-size:13px; cursor:pointer;
+}
+.juego-genero button.activo{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+
 .juego-personajes{ display:flex; gap:8px; overflow-x:auto; padding:6px 12px; scrollbar-width:none; flex-shrink:0; }
 .juego-personajes::-webkit-scrollbar{ display:none; }
 .jpersonaje{

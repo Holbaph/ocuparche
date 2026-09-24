@@ -289,13 +289,16 @@
   </div>
 
   <section class="block">
-    <p class="block-title">Peinado</p>
-    <div class="seg wrap" id="peinadoSeg">
-      <button type="button" data-val="corto">Corto</button>
-      <button type="button" data-val="largo">Largo</button>
-      <button type="button" data-val="rizado">Rizado</button>
-      <button type="button" data-val="coleta">Coleta</button>
+    <p class="block-title">¿Niña o niño?</p>
+    <div class="seg" id="generoAvatarSeg">
+      <button type="button" data-val="niña">👧 Niña</button>
+      <button type="button" data-val="niño">👦 Niño</button>
     </div>
+  </section>
+
+  <section class="block">
+    <p class="block-title">Peinado</p>
+    <div class="seg wrap" id="peinadoSeg"></div>
   </section>
 
   <section class="block" id="colorPeloBlock">
@@ -496,6 +499,10 @@
     <button class="icon-btn" id="juegoSalir" aria-label="Salir del juego">✕</button>
     <div class="juego-titulo"><strong id="juegoNombre">Rumi</strong><small id="juegoGrupo"></small></div>
     <div class="juego-reloj hidden" id="juegoReloj">⏱ 20:00</div>
+  </div>
+  <div class="juego-genero" id="juegoGenero">
+    <button type="button" data-g="f" class="activo">👧 Niñas</button>
+    <button type="button" data-g="m">👦 Niños</button>
   </div>
   <div class="juego-personajes" id="juegoPersonajes"></div>
   <div class="juego-acciones">

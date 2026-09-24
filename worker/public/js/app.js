@@ -286,7 +286,14 @@
   }
 
   function renderPickersAvatar() {
-    document.querySelectorAll('#peinadoSeg button').forEach(b => b.classList.toggle('active', b.dataset.val === avatarBorrador.peinado));
+    // Peinados: solo los que le corresponden a niñas o a niños.
+    const genero = avatarBorrador.genero === 'niño' ? 'niño' : 'niña';
+    document.getElementById('peinadoSeg').innerHTML = peinadosDe(genero).map(p =>
+      '<button type="button" data-val="' + p.v + '"' + (p.v === avatarBorrador.peinado ? ' class="active"' : '') + '>' + p.n + '</button>'
+    ).join('');
+    document.querySelectorAll('#generoAvatarSeg button').forEach(b => b.classList.toggle('active', b.dataset.val === genero));
+    // el moño es cosa de niñas
+    document.getElementById('monoBlock').classList.toggle('hidden', !esPlanCompleto() || genero === 'niño');
     document.getElementById('monoOn').classList.toggle('active', avatarBorrador.moño);
     document.getElementById('monoOff').classList.toggle('active', !avatarBorrador.moño);
     document.getElementById('colorMonoSwatches').style.opacity = avatarBorrador.moño ? '1' : '.4';
@@ -311,15 +318,31 @@
     // exige (no alcanza con ocultarlo acá).
     const completo = esPlanCompleto();
     document.getElementById('colorPeloBlock').classList.toggle('hidden', !completo);
-    document.getElementById('monoBlock').classList.toggle('hidden', !completo);
+    document.getElementById('monoBlock').classList.toggle('hidden', !completo || avatarBorrador.genero === 'niño');
     document.getElementById('colorOjosBlock').classList.toggle('hidden', !completo);
     document.getElementById('colorRopaBlock').classList.toggle('hidden', !completo);
     document.getElementById('avatarUpsell').classList.toggle('hidden', completo);
 
     abrirAvatarSheet();
   });
-  document.querySelectorAll('#peinadoSeg button').forEach(b => {
-    b.addEventListener('click', () => { avatarBorrador.peinado = b.dataset.val; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+  document.getElementById('peinadoSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-val]');
+    if (!b) return;
+    avatarBorrador.peinado = b.dataset.val; aplicarAvatar(avatarBorrador); renderPickersAvatar();
+  });
+  // Cambiar de niña a niño (o al revés): el peinado, el moño y los colores
+  // de base pasan a los de ese género; en el plan completo se conservan los
+  // colores que ya había elegido.
+  document.getElementById('generoAvatarSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-val]');
+    if (!b || b.dataset.val === avatarBorrador.genero) return;
+    const g = b.dataset.val;
+    const base = avatarPorDefecto(g);
+    const previo = avatarBorrador;
+    avatarBorrador = esPlanCompleto()
+      ? { ...previo, genero: g, peinado: base.peinado, moño: base.moño }
+      : { ...base };
+    aplicarAvatar(avatarBorrador); renderPickersAvatar();
   });
   document.getElementById('monoOn').addEventListener('click', () => { avatarBorrador.moño = true; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
   document.getElementById('monoOff').addEventListener('click', () => { avatarBorrador.moño = false; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });

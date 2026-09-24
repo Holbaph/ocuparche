@@ -203,8 +203,8 @@
     return '<div class="avatar-editor" data-pid="' + p.id + '">' +
       '<p class="s-nombre">' + escapeHtml(p.nombre) + '</p>' +
       '<div class="seg wrap" data-role="peinado">' +
-        ['corto', 'largo', 'rizado', 'coleta'].map(v =>
-          '<button type="button" data-val="' + v + '">' + v.charAt(0).toUpperCase() + v.slice(1) + '</button>'
+        peinadosDe(a.genero === 'niño' ? 'niño' : 'niña').map(p =>
+          '<button type="button" data-val="' + p.v + '">' + p.n + '</button>'
         ).join('') +
       '</div>' +
       '<div class="swatch-row" data-role="pelo" style="margin-top:8px"></div>' +

@@ -38,7 +38,47 @@ const PEINADOS = {
   coleta: () => `
     <ellipse cx="160" cy="100" rx="100" ry="54"/>
     <ellipse cx="258" cy="132" rx="34" ry="46" transform="rotate(25 258 132)"/>`,
+  bob: () => `
+    <ellipse cx="160" cy="106" rx="112" ry="64"/>
+    <ellipse cx="62" cy="190" rx="30" ry="62"/>
+    <ellipse cx="258" cy="190" rx="30" ry="62"/>`,
+  chongos: () => `
+    <ellipse cx="160" cy="106" rx="108" ry="60"/>
+    <circle cx="70" cy="64" r="32"/>
+    <circle cx="250" cy="64" r="32"/>`,
+  trenzas: () => `
+    <ellipse cx="160" cy="106" rx="110" ry="62"/>
+    <ellipse cx="60" cy="230" rx="22" ry="84"/>
+    <ellipse cx="260" cy="230" rx="22" ry="84"/>
+    <circle cx="60" cy="318" r="12"/>
+    <circle cx="260" cy="318" r="12"/>`,
+  mohicano: () => `
+    <ellipse cx="160" cy="104" rx="100" ry="46" opacity=".3"/>
+    <ellipse cx="160" cy="56" rx="24" ry="58"/>`,
+  copete: () => `
+    <ellipse cx="160" cy="106" rx="110" ry="62"/>
+    <ellipse cx="184" cy="52" rx="66" ry="30" transform="rotate(-12 184 52)"/>`,
+  rapado: () => `<ellipse cx="160" cy="102" rx="104" ry="54" opacity=".32"/>`,
+  lado: () => `
+    <ellipse cx="160" cy="106" rx="112" ry="64"/>
+    <ellipse cx="120" cy="64" rx="86" ry="34" transform="rotate(-8 120 64)"/>`,
 };
+
+// g: 'f' solo niñas, 'm' solo niños, sin g = los dos
+const PEINADOS_LISTA = [
+  { v: 'corto', n: 'Corto' },
+  { v: 'rizado', n: 'Rizado' },
+  { v: 'largo', n: 'Largo', g: 'niña' },
+  { v: 'coleta', n: 'Coleta', g: 'niña' },
+  { v: 'bob', n: 'Bob', g: 'niña' },
+  { v: 'chongos', n: 'Chongos', g: 'niña' },
+  { v: 'trenzas', n: 'Trenzas', g: 'niña' },
+  { v: 'copete', n: 'Copete', g: 'niño' },
+  { v: 'lado', n: 'De lado', g: 'niño' },
+  { v: 'mohicano', n: 'Mohicano', g: 'niño' },
+  { v: 'rapado', n: 'Rapado', g: 'niño' },
+];
+function peinadosDe(genero) { return PEINADOS_LISTA.filter((p) => !p.g || p.g === genero); }
 
 function moñoSvg() {
   return `

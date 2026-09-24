@@ -50,70 +50,93 @@ const Juego = (function () {
     { c: '#8b5e3c', n: 'Café' }, { c: '#3a2a22', n: 'Café oscuro' }, { c: '#c79a3a', n: 'Ámbar' },
     { c: '#5f8a4c', n: 'Verde' }, { c: '#4f7fb5', n: 'Azul' }, { c: '#7d8a93', n: 'Gris' }, { c: '#7e57c2', n: 'Morado' },
   ];
+  // g: 'f' = solo niñas, 'm' = solo niños, sin g = para los dos.
   const PEINADOS = [
-    { v: 'largo', n: 'Pelo largo' }, { v: 'melena', n: 'Melena' }, { v: 'corto', n: 'Cortito' },
-    { v: 'trenza', n: 'Trenza' }, { v: 'dos-trenzas', n: 'Dos trenzas' }, { v: 'cola-alta', n: 'Cola alta' },
-    { v: 'cola', n: 'Cola al lado' }, { v: 'colitas', n: 'Dos colitas' }, { v: 'tomate', n: 'Tomate' },
-    { v: 'crespo', n: 'Crespo' }, { v: 'muy-largo', n: 'Larguísimo' }, { v: 'cola-baja', n: 'Cola larga' },
+    { v: 'largo', n: 'Pelo largo', g: 'f' }, { v: 'melena', n: 'Melena', g: 'f' }, { v: 'corto', n: 'Cortito' },
+    { v: 'trenza', n: 'Trenza', g: 'f' }, { v: 'dos-trenzas', n: 'Dos trenzas', g: 'f' }, { v: 'cola-alta', n: 'Cola alta', g: 'f' },
+    { v: 'cola', n: 'Cola al lado', g: 'f' }, { v: 'colitas', n: 'Dos colitas', g: 'f' }, { v: 'tomate', n: 'Tomate' },
+    { v: 'crespo', n: 'Crespo' }, { v: 'muy-largo', n: 'Larguísimo', g: 'f' }, { v: 'cola-baja', n: 'Cola larga', g: 'f' },
+    { v: 'bob', n: 'Bob', g: 'f' }, { v: 'ondas', n: 'Ondas largas', g: 'f' }, { v: 'chongos', n: 'Dos chongos', g: 'f' },
+    { v: 'rulos-cortos', n: 'Rulitos' },
+    { v: 'mohicano', n: 'Mohicano', g: 'm' }, { v: 'copete', n: 'Copete', g: 'm' }, { v: 'lado', n: 'Peinado de lado', g: 'm' },
+    { v: 'melenita', n: 'Melenita', g: 'm' }, { v: 'rapado', n: 'Rapado', g: 'm' },
   ];
+  // ¿Sirve este elemento (peinado, prenda) para este género?
+  function paraGenero(g, generoItem) { return !generoItem || generoItem === g; }
 
   // ---------- armario: qué prendas hay y en qué colores ----------
   const TIPOS = {
-    arriba: { polera: 'Polera', 'manga-larga': 'Polera manga larga', top: 'Top', poleron: 'Polerón', blusa: 'Blusa bordada', 'top-concha': 'Top de conchitas' },
-    abajo: { jeans: 'Jeans', falda: 'Falda', short: 'Short', 'falda-larga': 'Falda larga', bombacho: 'Pantalón bombacho', 'cola-sirena': 'Cola de sirena' },
-    vestido: { vestido: 'Vestido', 'vestido-largo': 'Vestido largo', 'vestido-princesa': 'Vestido de princesa' },
-    encima: { chaqueta: 'Chaqueta', capa: 'Capa' },
-    zapatos: { zapatillas: 'Zapatillas', botas: 'Botas', botines: 'Botines', balerinas: 'Balerinas', sandalias: 'Sandalias' },
-    cabeza: { moño: 'Moño', collet: 'Collet', tiara: 'Tiara', flor: 'Flor', cintillo: 'Cintillo' },
+    arriba: { polera: 'Polera', 'manga-larga': 'Polera manga larga', top: 'Top', poleron: 'Polerón', blusa: 'Blusa bordada', 'top-concha': 'Top de conchitas', camisa: 'Camisa', futbol: 'Camiseta de fútbol', rayas: 'Polera a rayas' },
+    abajo: { jeans: 'Jeans', falda: 'Falda', short: 'Short', 'falda-larga': 'Falda larga', bombacho: 'Pantalón bombacho', 'cola-sirena': 'Cola de sirena', buzo: 'Buzo', bermuda: 'Bermuda' },
+    vestido: { vestido: 'Vestido', 'vestido-largo': 'Vestido largo', 'vestido-princesa': 'Vestido de princesa', 'vestido-tutu': 'Vestido de tutú', 'vestido-flores': 'Vestido de flores' },
+    encima: { chaqueta: 'Chaqueta', capa: 'Capa', chaleco: 'Chaleco', abrigo: 'Abrigo largo' },
+    zapatos: { zapatillas: 'Zapatillas', botas: 'Botas', botines: 'Botines', balerinas: 'Balerinas', sandalias: 'Sandalias', mocasines: 'Mocasines', tacos: 'Zapatos de fútbol' },
+    cabeza: { moño: 'Moño', collet: 'Collet', tiara: 'Tiara', flor: 'Flor', cintillo: 'Cintillo', gorro: 'Gorro con visera', casco: 'Casco', corona: 'Corona', 'gorro-lana': 'Gorro de lana' },
     cara: { lentes: 'Lentes de sol', 'lentes-corazon': 'Lentes de corazón', 'lentes-redondos': 'Lentes redondos', antifaz: 'Antifaz de héroe' },
   };
   // Con estos, las botas van "metidas" (por encima del pantalón).
-  const PANTALONES = ['jeans', 'bombacho'];
+  const PANTALONES = ['jeans', 'bombacho', 'buzo'];
+  // Cada prenda: [tipo, colores, g] — g: 'f' solo niñas, 'm' solo niños, sin g = los dos.
   const ARMARIO = {
     arriba: [
-      ['polera', [C.rosado, C.blanco, C.celeste, C.amarillo, C.negro]],
-      ['manga-larga', [C.lila, C.rojo, C.verde, C.blanco]],
-      ['top', [C.negro, C.rojo, C.rosado, C.crema, C.morado, C.turquesa]],
-      ['poleron', [C.lila, C.gris, C.rosado, C.celeste]],
-      ['blusa', [C.blanco, C.rosado, C.amarillo]],
-      ['top-concha', [C.morado, C.lila, C.rosado]],
+      ['polera', [C.rosado, C.blanco, C.celeste, C.amarillo, C.negro, C.rojo, C.verde]],
+      ['manga-larga', [C.lila, C.rojo, C.verde, C.blanco, C.azul]],
+      ['rayas', [C.celeste, C.rojo, C.negro, C.verde]],
+      ['poleron', [C.lila, C.gris, C.rosado, C.celeste, C.negro, C.rojo, C.azulOscuro]],
+      ['top', [C.negro, C.rojo, C.rosado, C.crema, C.morado, C.turquesa], 'f'],
+      ['blusa', [C.blanco, C.rosado, C.amarillo], 'f'],
+      ['top-concha', [C.morado, C.lila, C.rosado], 'f'],
+      ['camisa', [C.blanco, C.celeste, C.verde, C.amarillo, C.azulOscuro, C.rojo], 'm'],
+      ['futbol', [C.rojo, C.azul, C.amarillo, C.blanco, C.verde], 'm'],
     ],
     abajo: [
       ['jeans', [C.mezclilla, C.mezclillaClara, C.negro]],
-      ['falda', [C.rosado, C.negro, C.rojo, C.celeste, C.morado]],
-      ['short', [C.negro, C.mezclilla, C.rosado]],
-      ['falda-larga', [C.rojo, C.verde, C.lila, C.azul, C.turquesa]],
-      ['bombacho', [C.turquesa, C.rosado, C.lila]],
-      ['cola-sirena', [C.turquesa, C.verde, C.lila]],
+      ['short', [C.negro, C.mezclilla, C.rosado, C.blanco, C.azul]],
+      ['falda', [C.rosado, C.negro, C.rojo, C.celeste, C.morado], 'f'],
+      ['falda-larga', [C.rojo, C.verde, C.lila, C.azul, C.turquesa], 'f'],
+      ['bombacho', [C.turquesa, C.rosado, C.lila], 'f'],
+      ['cola-sirena', [C.turquesa, C.verde, C.lila], 'f'],
+      ['buzo', [C.gris, C.negro, C.azulOscuro, C.rojo], 'm'],
+      ['bermuda', [C.crema, C.mezclilla, C.verde, C.negro], 'm'],
     ],
     vestido: [
-      ['vestido', [C.rosado, C.amarillo, C.celeste, C.rojo]],
-      ['vestido-largo', [C.hielo, C.morado, C.rosado, C.verde, C.azulOscuro]],
-      ['vestido-princesa', [C.verde, C.rosado, C.amarillo, C.celeste, C.dorado, C.lila]],
+      ['vestido', [C.rosado, C.amarillo, C.celeste, C.rojo], 'f'],
+      ['vestido-largo', [C.hielo, C.morado, C.rosado, C.verde, C.azulOscuro], 'f'],
+      ['vestido-princesa', [C.verde, C.rosado, C.amarillo, C.celeste, C.dorado, C.lila], 'f'],
+      ['vestido-tutu', [C.rosado, C.lila, C.celeste, C.blanco, C.amarillo], 'f'],
+      ['vestido-flores', [C.amarillo, C.celeste, C.rosado, C.menta], 'f'],
     ],
     encima: [
-      ['chaqueta', [C.negro, C.morado, C.rojo, C.mezclilla]],
-      ['capa', [C.hielo, C.rojo, C.morado]],
+      ['chaqueta', [C.negro, C.morado, C.rojo, C.mezclilla, C.verde]],
+      ['capa', [C.hielo, C.rojo, C.morado, C.azul, C.negro, C.amarillo]],
+      ['abrigo', [C.crema, C.negro, C.rojo, C.azulOscuro]],
+      ['chaleco', [C.azulOscuro, C.naranjo, C.gris, C.verde], 'm'],
     ],
     zapatos: [
-      ['zapatillas', [C.blanco, C.rosado, C.negro]],
+      ['zapatillas', [C.blanco, C.rosado, C.negro, C.rojo, C.azul]],
       ['botas', [C.negro, C.cafe, C.blanco]],
       ['botines', [C.cafe, C.rosado]],
-      ['balerinas', [C.celeste, C.negro, C.rosado, C.dorado, C.plateado, C.turquesa]],
       ['sandalias', [C.cafe, C.rosado]],
+      ['balerinas', [C.celeste, C.negro, C.rosado, C.dorado, C.plateado, C.turquesa], 'f'],
+      ['mocasines', [C.negro, C.cafe, C.azulOscuro], 'm'],
+      ['tacos', [C.negro, C.rojo, C.azul, C.verde], 'm'],
     ],
     cabeza: [
-      ['moño', [C.rosado, C.rojo, C.celeste, C.morado]],
-      ['collet', [C.amarillo, C.rosado, C.lila]],
-      ['tiara', [C.dorado, C.plateado]],
-      ['flor', [C.rojo, C.blanco, C.rosado, C.amarillo]],
       ['cintillo', [C.negro, C.rosado, C.dorado, C.celeste]],
+      ['corona', [C.dorado, C.plateado, C.rosado]],
+      ['gorro-lana', [C.rojo, C.azul, C.negro, C.verde, C.amarillo]],
+      ['moño', [C.rosado, C.rojo, C.celeste, C.morado], 'f'],
+      ['collet', [C.amarillo, C.rosado, C.lila], 'f'],
+      ['tiara', [C.dorado, C.plateado], 'f'],
+      ['flor', [C.rojo, C.blanco, C.rosado, C.amarillo], 'f'],
+      ['gorro', [C.rojo, C.azul, C.negro, C.verde, C.amarillo], 'm'],
+      ['casco', [C.amarillo, C.blanco, C.rojo, C.azul], 'm'],
     ],
     cara: [
       ['lentes', [C.negro, C.rosado]],
-      ['lentes-corazon', [C.rojo, C.rosado]],
       ['lentes-redondos', [C.verde, C.negro, C.rosado]],
       ['antifaz', [C.negro, C.rojo, C.azul, C.morado, C.dorado]],
+      ['lentes-corazon', [C.rojo, C.rosado], 'f'],
     ],
   };
 
@@ -217,7 +240,58 @@ const Juego = (function () {
       id: 'bruno', nombre: 'Bruno', grupo: 'Dinosaurios', piel: '#b97d52', ojos: '#5f8a4c', peloEstilo: 'crespo', peloColor: '#1f1a1c',
       ropa: { arriba: { t: 'polera', c: C.verde }, abajo: { t: 'short', c: C.mezclilla }, zapatos: { t: 'zapatillas', c: C.verde } },
     },
+    // ---------- más niñas ----------
+    {
+      id: 'lola', nombre: 'Lola', grupo: 'Bailarinas', piel: '#f6d7bd', ojos: '#5f8a4c', peloEstilo: 'chongos', peloColor: '#6b4428',
+      ropa: { vestido: { t: 'vestido-tutu', c: C.rosado }, zapatos: { t: 'balerinas', c: C.rosado } },
+    },
+    {
+      id: 'sofi', nombre: 'Sofi', grupo: 'Colegio', piel: '#e9c3a0', ojos: '#4a3222', peloEstilo: 'bob', peloColor: '#1f1a1c',
+      ropa: { arriba: { t: 'polera', c: C.blanco }, abajo: { t: 'falda', c: C.azulOscuro }, zapatos: { t: 'zapatillas', c: C.blanco } },
+    },
+    {
+      id: 'luna', nombre: 'Luna', grupo: 'Aventureras', piel: '#c98e64', ojos: '#4a3222', peloEstilo: 'ondas', peloColor: '#8e2c48',
+      ropa: { arriba: { t: 'rayas', c: C.turquesa }, abajo: { t: 'jeans', c: C.mezclilla }, zapatos: { t: 'zapatillas', c: C.amarillo }, cabeza: { t: 'flor', c: C.amarillo } },
+    },
+    {
+      id: 'flor', nombre: 'Flor', grupo: 'Primavera', piel: '#fbe3ce', ojos: '#5f8a4c', peloEstilo: 'colitas', peloColor: '#d9b46a',
+      ropa: { vestido: { t: 'vestido-flores', c: C.amarillo }, cabeza: { t: 'collet', c: C.rosado }, zapatos: { t: 'sandalias', c: C.rosado } },
+    },
+    {
+      id: 'isa', nombre: 'Isa', grupo: 'Científicas', piel: '#dfa77c', ojos: '#7d8a93', peloEstilo: 'cola-alta', peloColor: '#2b2420',
+      ropa: { arriba: { t: 'manga-larga', c: C.blanco }, abajo: { t: 'falda-larga', c: C.verde }, zapatos: { t: 'botines', c: C.cafe }, cara: { t: 'lentes-redondos', c: C.negro } },
+    },
+    // ---------- más niños ----------
+    {
+      id: 'tomas', nombre: 'Tomás', grupo: 'Fútbol', piel: '#f1c9a5', ojos: '#4a3222', peloEstilo: 'copete', peloColor: '#4a3222',
+      ropa: { arriba: { t: 'futbol', c: C.rojo }, abajo: { t: 'short', c: C.blanco }, zapatos: { t: 'tacos', c: C.negro } },
+    },
+    {
+      id: 'mateo', nombre: 'Mateo', grupo: 'Exploradores', piel: '#dfa77c', ojos: '#5f8a4c', peloEstilo: 'lado', peloColor: '#6b4428',
+      ropa: { arriba: { t: 'camisa', c: C.verde }, abajo: { t: 'bermuda', c: C.crema }, zapatos: { t: 'botas', c: C.cafe }, cabeza: { t: 'gorro', c: C.verde } },
+    },
+    {
+      id: 'sami', nombre: 'Sami', grupo: 'Skaters', piel: '#e9c3a0', ojos: '#7d8a93', peloEstilo: 'melenita', peloColor: '#a8744a',
+      ropa: { arriba: { t: 'poleron', c: C.negro }, abajo: { t: 'buzo', c: C.gris }, zapatos: { t: 'zapatillas', c: C.rojo }, cabeza: { t: 'gorro-lana', c: C.azul } },
+    },
+    {
+      id: 'joaco', nombre: 'Joaco', grupo: 'Constructores', piel: '#b97d52', ojos: '#4a3222', peloEstilo: 'rapado', peloColor: '#1f1a1c',
+      ropa: { arriba: { t: 'camisa', c: C.amarillo }, abajo: { t: 'jeans', c: C.mezclilla }, encima: { t: 'chaleco', c: C.naranjo }, zapatos: { t: 'botas', c: C.cafe }, cabeza: { t: 'casco', c: C.amarillo } },
+    },
+    {
+      id: 'kai', nombre: 'Kai', grupo: 'Rockeros', piel: '#8a5634', ojos: '#4a3222', peloEstilo: 'mohicano', peloColor: '#6a3fa0',
+      ropa: { arriba: { t: 'rayas', c: C.negro }, abajo: { t: 'jeans', c: C.negro }, encima: { t: 'chaqueta', c: C.negro }, zapatos: { t: 'zapatillas', c: C.rojo } },
+    },
+    {
+      id: 'simon', nombre: 'Simón', grupo: 'Príncipes', piel: '#fbe3ce', ojos: '#4f7fb5', peloEstilo: 'rulos-cortos', peloColor: '#d9b46a',
+      ropa: { arriba: { t: 'camisa', c: C.azulOscuro }, abajo: { t: 'jeans', c: C.negro }, encima: { t: 'capa', c: C.rojo }, zapatos: { t: 'mocasines', c: C.negro }, cabeza: { t: 'corona', c: C.dorado } },
+    },
   ];
+
+  // Género de cada personaje: 'f' niña, 'm' niño. Filtra qué ropa y peinados
+  // se le ofrecen — a un niño solo le salen cosas de niño, y viceversa.
+  const HOMBRES = ['max', 'nico', 'dante', 'leo', 'teo', 'santi', 'bruno', 'tomas', 'mateo', 'sami', 'joaco', 'kai', 'simon'];
+  PERSONAJES.forEach((p) => { p.g = HOMBRES.indexOf(p.id) >= 0 ? 'm' : 'f'; });
 
   function personaje(id) { return PERSONAJES.find((p) => p.id === id) || PERSONAJES[0]; }
 
@@ -367,6 +441,78 @@ const Juego = (function () {
         };
       case 'encima:capa':
         return { atras: `<path d="M118 288 L202 288 L252 432 Q160 444 68 432 Z" fill="${c}" opacity=".88"/>`, svg: '' };
+
+      // ---- prendas nuevas ----
+      case 'arriba:camisa': {
+        const botones = [312, 326, 340].map((y) => `<circle cx="160" cy="${y}" r="2.3" fill="${d}"/>`).join('');
+        return {
+          svg: `<path d="${TORSO}" fill="${c}"/>` +
+            `<path d="M160 298 L160 350" stroke="${o}" stroke-width="1.6"/>` + botones +
+            `<path d="M146 284 L160 302 L174 284 L168 281 L160 291 L152 281 Z" fill="${d}"/>`,
+          manga: mangas('corta', c),
+        };
+      }
+      case 'arriba:futbol':
+        return {
+          svg: `<path d="${TORSO}" fill="${c}"/>` +
+            `<path d="M146 284 L160 300 L174 284" fill="none" stroke="${d}" stroke-width="4" stroke-linecap="round"/>` +
+            `<text x="160" y="336" text-anchor="middle" font-size="30" font-weight="800" font-family="Baloo 2, sans-serif" fill="${d}">10</text>`,
+          manga: mangas('corta', c),
+        };
+      case 'arriba:rayas':
+        return {
+          svg: `<path d="${TORSO}" fill="${c}"/>` +
+            `<path d="M111 300 L209 300 M110 316 L210 316 M110 332 L210 332 M110 346 L210 346" stroke="${d}" stroke-width="5" opacity=".6"/>`,
+          manga: mangas('corta', c),
+        };
+      case 'abajo:buzo':
+        return {
+          svg: `<path d="${PANTALON}" fill="${c}"/>` +
+            `<path d="M110 344 L210 344" stroke="${o}" stroke-width="7"/>` +
+            `<path d="M118 356 L124 414 M202 356 L196 414" stroke="${d}" stroke-width="2.5" opacity=".7"/>` +
+            `<rect x="122" y="414" width="36" height="9" rx="3" fill="${o}"/><rect x="162" y="414" width="36" height="9" rx="3" fill="${o}"/>`,
+        };
+      case 'abajo:bermuda':
+        return {
+          svg: `<path d="M108 340 L212 340 L214 396 L166 396 L160 374 L154 396 L106 396 Z" fill="${c}"/>` +
+            `<path d="M108 346 L212 346" stroke="${o}" stroke-width="5"/>` +
+            `<path d="M112 388 L154 388 M166 388 L208 388" stroke="${o}" stroke-width="2" stroke-dasharray="3 3"/>`,
+        };
+      case 'vestido:vestido-tutu':
+        return {
+          svg: `<path d="M122 284 L198 284 Q206 300 208 320 L112 320 Q114 300 122 284 Z" fill="${c}"/>` +
+            `<path d="M126 292 L122 282 M194 292 L198 282" stroke="${c}" stroke-width="5" stroke-linecap="round"/>` +
+            `<path d="M100 324 L220 324 L252 376 Q160 398 68 376 Z" fill="${aclarar(c, 0.3)}" opacity=".92"/>` +
+            `<path d="M108 330 L212 330 L242 378 Q160 396 78 378 Z" fill="${c}" opacity=".95"/>` +
+            `<path d="M116 322 Q160 332 204 322" fill="none" stroke="${d}" stroke-width="6" stroke-linecap="round"/>` +
+            `<path d="M86 370 Q160 392 234 370" fill="none" stroke="${o}" stroke-width="2" stroke-dasharray="4 4" opacity=".6"/>`,
+          manga: '',
+        };
+      case 'vestido:vestido-flores': {
+        const fl = [[136, 340, '#fff'], [176, 352, '#e8578a'], [150, 372, '#f2cf5b'], [196, 380, '#fff'], [120, 380, '#e8578a'], [166, 304, '#fff'], [140, 318, '#f2cf5b']]
+          .map(([x, y, col]) => `<circle cx="${x}" cy="${y}" r="4.6" fill="${col}"/><circle cx="${x}" cy="${y}" r="1.6" fill="${o}"/>`).join('');
+        return {
+          svg: `<path d="M122 284 L198 284 Q206 300 210 318 L236 388 Q160 404 84 388 L110 318 Q114 300 122 284 Z" fill="${c}"/>` + fl,
+          manga: mangas('corta', c),
+        };
+      }
+      case 'encima:chaleco':
+        return {
+          svg: `<path d="M120 286 L150 292 L146 352 L110 352 L110 314 Q112 296 120 286 Z" fill="${c}"/>` +
+            `<path d="M200 286 L170 292 L174 352 L210 352 L210 314 Q208 296 200 286 Z" fill="${c}"/>` +
+            `<path d="M136 288 L150 292 L140 314 Z M184 288 L170 292 L180 314 Z" fill="${o}"/>` +
+            `<circle cx="152" cy="326" r="2.4" fill="${d}"/><circle cx="152" cy="340" r="2.4" fill="${d}"/>` +
+            `<path d="M116 330 L140 330 M180 330 L204 330" stroke="${o}" stroke-width="2"/>`,
+          manga: '',
+        };
+      case 'encima:abrigo':
+        return {
+          svg: `<path d="M114 286 L150 290 L148 392 L98 392 L102 314 Q104 296 114 286 Z" fill="${c}"/>` +
+            `<path d="M206 286 L170 290 L172 392 L222 392 L218 314 Q216 296 206 286 Z" fill="${c}"/>` +
+            `<path d="M128 288 L150 290 L136 316 Z M192 288 L170 290 L184 316 Z" fill="${o}"/>` +
+            `<circle cx="146" cy="330" r="2.6" fill="${d}"/><circle cx="146" cy="352" r="2.6" fill="${d}"/><circle cx="146" cy="374" r="2.6" fill="${d}"/>`,
+          manga: mangas('larga', c),
+        };
       default:
         return { svg: '' };
     }
@@ -388,6 +534,23 @@ const Juego = (function () {
         `<path d="M${cx - 12} 384 L${cx + 12} 384 L${cx + 13} 424 Q${cx + 14} 433 ${cx + 7} 433 L${cx - 7} 433 Q${cx - 14} 433 ${cx - 13} 424 Z" fill="${z.c}"/>` +
         `<rect x="${cx - 13.5}" y="381" width="27" height="8" rx="3.5" fill="${l}"/>` +
         `<rect x="${cx - 13}" y="430" width="26" height="3.5" rx="1.5" fill="${o}"/>`
+      ).join('');
+    }
+    if (z.t === 'mocasines') {
+      const o = oscurecer(z.c, 0.25);
+      return [142, 178].map((cx) =>
+        `<path d="M${cx - 13} 433 L${cx - 13} 420 Q${cx} 411 ${cx + 13} 420 L${cx + 13} 433 Z" fill="${z.c}"/>` +
+        `<rect x="${cx - 14}" y="430" width="28" height="4" rx="2" fill="${o}"/>` +
+        `<path d="M${cx - 6} 421 Q${cx} 417 ${cx + 6} 421" fill="none" stroke="${o}" stroke-width="2"/>`
+      ).join('');
+    }
+    if (z.t === 'tacos') {
+      const o = oscurecer(z.c, 0.3);
+      return [142, 178].map((cx) =>
+        `<path d="M${cx - 14} 431 L${cx - 14} 420 Q${cx - 14} 410 ${cx} 410 Q${cx + 14} 410 ${cx + 14} 420 L${cx + 14} 431 Z" fill="${z.c}"/>` +
+        `<rect x="${cx - 15}" y="428" width="30" height="5" rx="2" fill="#2a2740"/>` +
+        `<rect x="${cx - 12}" y="432" width="5" height="4" fill="#2a2740"/><rect x="${cx + 7}" y="432" width="5" height="4" fill="#2a2740"/>` +
+        `<path d="M${cx - 6} 416 L${cx + 6} 416 M${cx - 6} 421 L${cx + 6} 421" stroke="${o}" stroke-width="1.8" stroke-linecap="round"/>`
       ).join('');
     }
     const ap = { zapatos: z.t === 'botines' ? 'botitas' : z.t, zapatosColor: z.c, piel };
@@ -421,7 +584,50 @@ const Juego = (function () {
       return `<path d="M35.6 200 A128 128 0 1 1 284.4 200 Z" fill="${h}"/>` +
         `<path d="M176 52 Q252 18 294 90 Q320 162 290 254 Q282 182 258 132 Q234 92 190 82 Z" fill="${h}"/>`;
     }
+    const casquete = `<path d="M35.6 200 A128 128 0 1 1 284.4 200 Z" fill="${h}"/>`;
+    if (st.peloEstilo === 'bob') {
+      return `<path d="M30 172 A130 130 0 0 1 290 172 L290 234 Q286 254 262 252 L58 252 Q34 254 30 234 Z" fill="${h}"/>`;
+    }
+    if (st.peloEstilo === 'ondas') {
+      const o = oscurecer(h, 0.18);
+      return `<path d="M30 172 A130 130 0 0 1 290 172 L298 252 Q282 274 298 298 Q306 324 284 344 Q268 314 250 302 L70 302 Q52 314 36 344 Q14 324 22 298 Q38 274 22 252 Z" fill="${h}"/>` +
+        `<path d="M40 250 Q34 290 46 330 M280 250 Q286 290 274 330" fill="none" stroke="${o}" stroke-width="3" opacity=".45"/>`;
+    }
+    if (st.peloEstilo === 'chongos') {
+      return casquete + `<circle cx="80" cy="72" r="30" fill="${h}"/><circle cx="240" cy="72" r="30" fill="${h}"/>`;
+    }
+    if (st.peloEstilo === 'rulos-cortos') {
+      let s = casquete;
+      for (let a = -10; a <= 190; a += 20) {
+        const r = (a * Math.PI) / 180;
+        s += `<circle cx="${(160 + 124 * Math.cos(r)).toFixed(1)}" cy="${(184 - 124 * Math.sin(r)).toFixed(1)}" r="22" fill="${h}"/>`;
+      }
+      return s + `<circle cx="160" cy="70" r="40" fill="${h}"/>`;
+    }
+    if (st.peloEstilo === 'mohicano') {
+      return `<path d="M35.6 200 A128 128 0 1 1 284.4 200 Z" fill="${h}" opacity=".3"/>` +
+        `<path d="M126 92 L134 22 L148 70 L160 8 L172 70 L186 22 L194 92 Z" fill="${h}"/>`;
+    }
+    if (st.peloEstilo === 'copete') {
+      return casquete + `<path d="M96 116 Q104 40 176 34 Q244 36 250 108 Q214 74 160 80 Q118 84 96 116 Z" fill="${h}"/>` +
+        `<ellipse cx="190" cy="48" rx="56" ry="24" transform="rotate(-14 190 48)" fill="${h}"/>`;
+    }
+    if (st.peloEstilo === 'lado') {
+      return casquete + `<path d="M46 126 Q120 20 262 96 Q274 112 276 132 Q220 78 160 84 Q96 88 46 126 Z" fill="${h}"/>`;
+    }
+    if (st.peloEstilo === 'melenita') {
+      return casquete + `<path d="M36 172 L26 246 Q46 236 62 246 L70 178 Z" fill="${h}"/><path d="M284 172 L294 246 Q274 236 258 246 L250 178 Z" fill="${h}"/>`;
+    }
+    if (st.peloEstilo === 'rapado') {
+      return `<path d="M35.6 200 A128 128 0 1 1 284.4 200 Z" fill="${h}" opacity=".32"/>`;
+    }
     return P.peloAtras({ peloEstilo: st.peloEstilo, peloColor: h });
+  }
+
+  // El flequillo de adelante no va con el mohicano ni con la cabeza rapada.
+  function flequilloDe(st, ap) {
+    if (st.peloEstilo === 'mohicano' || st.peloEstilo === 'rapado') return '';
+    return P.flequillo(ap);
   }
 
   function trenza(x0, dx, largo, grosor, h) {
@@ -448,6 +654,7 @@ const Juego = (function () {
     if (estilo === 'cola-baja') return [{ x: 250, y: 206, s: 0.6 }];
     if (estilo === 'trenza') return [{ x: 272, y: 206, s: 0.6 }];
     if (estilo === 'dos-trenzas') return [{ x: 48, y: 206, s: 0.55 }, { x: 272, y: 206, s: 0.55 }];
+    if (estilo === 'chongos') return [{ x: 80, y: 74, s: 0.7 }, { x: 240, y: 74, s: 0.7 }];
     return P.amarres(estilo);
   }
 
@@ -461,6 +668,23 @@ const Juego = (function () {
         return `<path d="M160 54 Q138 22 148 10 Q157 28 160 30 Q163 28 172 10 Q182 22 160 54 Z" fill="${st.peloColor}"/>` + P.collet(160, 52, 1, c);
       case 'flor': return puntos.length ? puntos.map((p) => P.flor(p.x, p.y, p.s, c)).join('') : P.flor(222, 72, 1, c);
       case 'cintillo': return `<path d="M42 140 A124 124 0 0 1 278 140" fill="none" stroke="${c}" stroke-width="12" stroke-linecap="round"/>`;
+      case 'gorro':
+        return `<path d="M72 118 Q72 44 160 38 Q248 44 248 118 Z" fill="${c}"/>` +
+          `<ellipse cx="160" cy="120" rx="96" ry="13" fill="${oscurecer(c, 0.25)}"/>` +
+          `<circle cx="160" cy="40" r="6" fill="${oscurecer(c, 0.25)}"/>` +
+          `<path d="M160 40 L160 116" stroke="${oscurecer(c, 0.15)}" stroke-width="2" opacity=".6"/>`;
+      case 'casco':
+        return `<path d="M62 124 Q62 36 160 32 Q258 36 258 124 Z" fill="${c}"/>` +
+          `<rect x="50" y="116" width="220" height="15" rx="7" fill="${oscurecer(c, 0.25)}"/>` +
+          `<path d="M160 33 L160 116 M132 40 L134 116 M188 40 L186 116" stroke="${aclarar(c, 0.35)}" stroke-width="5" opacity=".6"/>`;
+      case 'corona':
+        return `<path d="M108 76 L116 36 L138 58 L160 26 L182 58 L204 36 L212 76 Q160 66 108 76 Z" fill="${c}" stroke="${oscurecer(c, 0.25)}" stroke-width="2"/>` +
+          `<circle cx="160" cy="52" r="5" fill="#e8578a"/><circle cx="124" cy="60" r="3.5" fill="#7cc4ea"/><circle cx="196" cy="60" r="3.5" fill="#7cc4ea"/>`;
+      case 'gorro-lana':
+        return `<path d="M74 112 Q74 46 160 40 Q246 46 246 112 Z" fill="${c}"/>` +
+          `<rect x="68" y="98" width="184" height="24" rx="11" fill="${oscurecer(c, 0.2)}"/>` +
+          `<path d="M84 100 L84 120 M104 100 L104 120 M124 100 L124 120 M144 100 L144 120 M164 100 L164 120 M184 100 L184 120 M204 100 L204 120 M224 100 L224 120" stroke="${oscurecer(c, 0.35)}" stroke-width="2" opacity=".5"/>` +
+          `<circle cx="160" cy="38" r="15" fill="${aclarar(c, 0.35)}"/>`;
       case 'tiara':
         return `<path d="M118 76 L126 46 L142 64 L160 34 L178 64 L194 46 L202 76 Q160 66 118 76 Z" fill="${c}" stroke="${oscurecer(c, 0.25)}" stroke-width="1.5"/>` +
           `<circle cx="160" cy="54" r="4.5" fill="#e8578a"/><circle cx="127" cy="60" r="3" fill="#7cc4ea"/><circle cx="193" cy="60" r="3" fill="#7cc4ea"/>`;
@@ -543,7 +767,7 @@ const Juego = (function () {
     if (deArriba && deArriba.manga && !mangaEncima) s += deArriba.manga; // la chaqueta las tapa
     if (mangaEncima) s += mangaEncima;
 
-    s += peloDelante(st) + P.cara(ap) + ojos(st.ojos) + P.flequillo(ap) + cabeza(st.cabeza, st) + cara(st.cara);
+    s += peloDelante(st) + P.cara(ap) + ojos(st.ojos) + flequilloDe(st, ap) + cabeza(st.cabeza, st) + cara(st.cara);
     return s;
   }
 
@@ -559,14 +783,14 @@ const Juego = (function () {
     if (cat === 'peinado') {
       const s2 = { ...st, peloEstilo: valor };
       const ap = { piel: personaje(id).piel, peloColor: st.peloColor };
-      dentro = peloAtras(s2) + peloDelante(s2) + P.cara(ap) + ojos(st.ojos) + P.flequillo(ap);
+      dentro = peloAtras(s2) + peloDelante(s2) + P.cara(ap) + ojos(st.ojos) + flequilloDe(s2, ap);
     } else if (cat === 'zapatos') {
       dentro = zapatos(valor, '#f1c9a5');
       if (valor.t === 'botas') caja = '120 362 80 76';
     } else if (cat === 'cabeza') {
       const s2 = { peloEstilo: 'melena', peloColor: '#b9a597' };
       dentro = cabeza(valor, s2);
-      caja = { moño: '122 14 76 64', collet: '124 2 72 70', tiara: '110 28 100 54', flor: '194 44 56 56', cintillo: '30 40 260 110' }[valor.t] || caja;
+      caja = { moño: '122 14 76 64', collet: '124 2 72 70', tiara: '110 28 100 54', flor: '194 44 56 56', cintillo: '30 40 260 110', gorro: '62 24 196 112', casco: '44 24 232 112', corona: '96 18 128 66', 'gorro-lana': '60 20 200 112' }[valor.t] || caja;
     } else if (cat === 'cara') {
       dentro = cara(valor);
     } else {
@@ -581,6 +805,7 @@ const Juego = (function () {
   let estados = {};         // id de personaje -> estado
   let actual = 'rumi';
   let cat = 'arriba';
+  let filtroG = 'f';        // qué personajes se muestran: 'f' niñas, 'm' niños
   let guardarTimer = null;
   let toast = () => {};
 
@@ -670,7 +895,7 @@ const Juego = (function () {
   const $ = (id) => document.getElementById(id);
 
   function renderPersonajes() {
-    $('juegoPersonajes').innerHTML = PERSONAJES.map((p) =>
+    $('juegoPersonajes').innerHTML = PERSONAJES.filter((p) => p.g === filtroG).map((p) =>
       `<button class="jpersonaje${p.id === actual ? ' activo' : ''}" data-id="${p.id}" aria-label="${p.nombre}">` +
       `<svg viewBox="22 18 276 276">${figura(p.id, estados[p.id])}</svg><span>${p.nombre}</span></button>`
     ).join('');
@@ -685,8 +910,29 @@ const Juego = (function () {
     if (pop) { svg.classList.remove('pop'); void svg.getBoundingClientRect(); svg.classList.add('pop'); }
   }
 
+  function generoActual() { return personaje(actual).g; }
+
+  // Categorías que tienen algo para el género del personaje (a un niño no le
+  // sale "Vestidos", por ejemplo).
+  function categoriasVisibles() {
+    const g = generoActual();
+    return CATEGORIAS.filter((c) => {
+      if (c.id === 'pelo' || c.id === 'ojos') return true;
+      if (c.id === 'peinado') return PEINADOS.some((p) => paraGenero(g, p.g));
+      return ARMARIO[c.id].some((it) => paraGenero(g, it[2]));
+    });
+  }
+  function asegurarCategoria() {
+    if (!categoriasVisibles().some((c) => c.id === cat)) cat = 'arriba';
+  }
+
+  function renderGenero() {
+    document.querySelectorAll('#juegoGenero button').forEach((b) => b.classList.toggle('activo', b.dataset.g === filtroG));
+  }
+
   function renderCats() {
-    $('juegoCats').innerHTML = CATEGORIAS.map((c) =>
+    asegurarCategoria();
+    $('juegoCats').innerHTML = categoriasVisibles().map((c) =>
       `<button data-cat="${c.id}"${c.id === cat ? ' class="activo"' : ''}><span>${c.e}</span>${c.n}</button>`
     ).join('');
   }
@@ -694,11 +940,12 @@ const Juego = (function () {
   // Lista de cosas de la categoría actual: [{ key, valor, nombre, puesto }]
   function itemsDeCategoria() {
     const st = estados[actual];
-    if (cat === 'peinado') return PEINADOS.map((p) => ({ key: 'peinado|' + p.v, valor: p.v, nombre: p.n, puesto: st.peloEstilo === p.v }));
+    const g = generoActual();
+    if (cat === 'peinado') return PEINADOS.filter((p) => paraGenero(g, p.g)).map((p) => ({ key: 'peinado|' + p.v, valor: p.v, nombre: p.n, puesto: st.peloEstilo === p.v }));
     if (cat === 'pelo') return COLORES_PELO.map((p) => ({ key: 'pelo|' + p.c, valor: p.c, nombre: 'Pelo ' + p.n.toLowerCase(), puesto: st.peloColor === p.c }));
     if (cat === 'ojos') return COLORES_OJOS.map((p) => ({ key: 'ojos|' + p.c, valor: p.c, nombre: 'Ojos ' + p.n.toLowerCase(), puesto: st.ojos === p.c }));
     const out = [];
-    ARMARIO[cat].forEach(([t, colores]) => colores.forEach((c) => {
+    ARMARIO[cat].filter((it) => paraGenero(g, it[2])).forEach(([t, colores]) => colores.forEach((c) => {
       const puesto = !!st[cat] && st[cat].t === t && st[cat].c === c;
       out.push({ key: cat + '|' + t + '|' + c, valor: { t, c }, nombre: TIPOS[cat][t] + ' ' + (NOMBRE_COLOR[c] || ''), puesto });
     }));
@@ -756,7 +1003,18 @@ const Juego = (function () {
       const b = e.target.closest('.jpersonaje');
       if (!b) return;
       actual = b.dataset.id;
-      renderPersonajes(); renderEscenario(true); renderItems();
+      renderPersonajes(); renderEscenario(true); renderCats(); renderItems();
+      guardar();
+    });
+
+    $('juegoGenero').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-g]');
+      if (!b || b.dataset.g === filtroG) return;
+      filtroG = b.dataset.g;
+      // pasa al primer personaje de ese género (si ya estaba en uno, se queda)
+      if (generoActual() !== filtroG) actual = PERSONAJES.find((p) => p.g === filtroG).id;
+      renderGenero(); renderPersonajes(); renderEscenario(true); renderCats(); renderItems();
+      $('juegoPersonajes').scrollLeft = 0;
       guardar();
     });
 
@@ -841,10 +1099,11 @@ const Juego = (function () {
 
     const local = leerLocal();
     aplicarGuardado(local);
+    filtroG = generoActual();
     $('juegoFin').classList.add('hidden');
     $('juego').classList.remove('hidden');
     document.body.classList.add('jugando');
-    renderPersonajes(); renderEscenario(false); renderCats(); renderItems();
+    renderGenero(); renderPersonajes(); renderEscenario(false); renderCats(); renderItems();
 
     if (segundosRestantes() <= 0) { terminarTiempo(); return; }
     empezarReloj();
@@ -858,8 +1117,9 @@ const Juego = (function () {
     const remoto = await Config.obtenerJuego(pacienteId);
     if (remoto && v === version && !$('juego').classList.contains('hidden')) {
       aplicarGuardado(remoto);
+      filtroG = generoActual();
       guardarLocal(false);
-      renderPersonajes(); renderEscenario(false); renderItems();
+      renderGenero(); renderPersonajes(); renderEscenario(false); renderCats(); renderItems();
     }
   }
 

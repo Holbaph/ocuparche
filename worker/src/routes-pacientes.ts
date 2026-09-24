@@ -35,7 +35,7 @@ const AVATAR_POR_DEFECTO: Record<string, Record<string, unknown>> = {
   niña: { genero: 'niña', peinado: 'largo', colorPelo: '#6b4a34', moño: true, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#c9525a' },
   niño: { genero: 'niño', peinado: 'corto', colorPelo: '#2b2420', moño: false, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#5b8fae' },
 };
-const PEINADOS_VALIDOS = new Set(['corto', 'largo', 'rizado', 'coleta']);
+const PEINADOS_VALIDOS = new Set(['corto', 'largo', 'rizado', 'coleta', 'bob', 'chongos', 'trenzas', 'mohicano', 'copete', 'rapado', 'lado']);
 
 // El plan gratis solo deja elegir género y peinado — cualquier otro campo
 // del avatar (color de pelo, moño y su color, color de ojos, color de
