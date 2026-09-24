@@ -379,6 +379,43 @@ const Juego = (function () {
   const HOMBRES = ['max', 'nico', 'dante', 'leo', 'teo', 'santi', 'bruno', 'tomas', 'mateo', 'sami', 'joaco', 'kai', 'simon', 'rayo', 'titan', 'capitan', 'kuro', 'halcon'];
   PERSONAJES.forEach((p) => { p.g = HOMBRES.indexOf(p.id) >= 0 ? 'm' : 'f'; });
 
+  // ---------- los avatares de los hij@s, como personajes del juego ----------
+  // Cada hij@ de la cuenta aparece como un personaje más (grupo "Mis hij@s"),
+  // vestido como su avatar de la pantalla principal; desde ahí se le puede
+  // cambiar la ropa como a cualquier otro y sacarse fotos con él o ella (y
+  // ponerle el parche). Su estado se guarda con el resto del guardarropa.
+  const MAPA_PEINADO = {
+    corto: 'corto', largo: 'largo', rizado: 'rulos-cortos', coleta: 'cola', bob: 'bob', chongos: 'chongos',
+    trenzas: 'dos-trenzas', copete: 'copete', lado: 'lado', mohicano: 'mohicano', rapado: 'rapado',
+  };
+  const MAPA_SOMBRERO = { jockey: 'gorro', 'jockey-plano': 'jockey-plano', 'gorro-lana': 'gorro-lana', sombrero: 'sombrero', boina: 'boina' };
+  function personajeDeHijo(h) {
+    const a = normalizarAvatar(h.avatar);
+    const ropa = {};
+    if (a.ropa === 'vestido') ropa.vestido = { t: 'vestido', c: a.colorRopa };
+    else {
+      ropa.arriba = { t: a.ropa === 'heroe' ? 'heroe-estrella' : a.ropa, c: a.colorRopa };
+      ropa.abajo = { t: a.pantalon, c: a.colorPantalon };
+    }
+    ropa.zapatos = { t: 'zapatillas', c: a.colorZapatos };
+    if (MAPA_SOMBRERO[a.sombrero]) ropa.cabeza = { t: MAPA_SOMBRERO[a.sombrero], c: a.colorSombrero };
+    else if (a.moño) ropa.cabeza = { t: 'moño', c: a.colorMoño };
+    if (a.lentes === 'sol') ropa.cara = { t: 'lentes', c: '#3a3540' };
+    if (a.lentes === 'redondos') ropa.cara = { t: 'lentes-redondos', c: '#3a3540' };
+    if (a.collar === 'cadena') ropa.cuello = { t: 'cadena', c: C.dorado };
+    if (a.collar === 'perlas') ropa.cuello = { t: 'collar', c: C.blanco };
+    if (a.reloj) ropa.muneca = { t: 'reloj', c: C.dorado };
+    if (a.aros) ropa.orejas = { t: 'aros', c: C.dorado };
+    return {
+      id: 'hijo-' + h.id, nombre: h.nombre, grupo: 'Mis hij@s', hijo: true, g: a.genero === 'niño' ? 'm' : 'f',
+      piel: a.piel, ojos: a.colorOjos, peloEstilo: MAPA_PEINADO[a.peinado] || 'corto', peloColor: a.colorPelo, cuerpo: a.cuerpo, ropa,
+    };
+  }
+  function cargarHijos(hijos) {
+    for (let i = PERSONAJES.length - 1; i >= 0; i--) if (PERSONAJES[i].hijo) PERSONAJES.splice(i, 1);
+    (hijos || []).slice().reverse().forEach((h) => PERSONAJES.unshift(personajeDeHijo(h)));
+  }
+
   function personaje(id) { return PERSONAJES.find((p) => p.id === id) || PERSONAJES[0]; }
 
   // "En blanco": sin ropa ni accesorios, con su peinado y ojos originales.
@@ -415,7 +452,15 @@ const Juego = (function () {
   // Piernas del pantalón centradas sobre los pies (x 142 y 178).
   const PANTALON = 'M110 342 L210 342 L198 424 L162 424 L160 380 L158 424 L122 424 Z';
 
+  // Devuelve el svg de la manga, pero también recuerda su tipo y color (un
+  // String con propiedades): así las poses de la cámara pueden volver a
+  // dibujarla sobre otro brazo sin tocar cada prenda.
   function mangas(tipo, c) {
+    const out = new String(mangasSvg(tipo, c));
+    out.tipo = tipo; out.c = c;
+    return out;
+  }
+  function mangasSvg(tipo, c) {
     if (tipo === 'corta') return `<ellipse cx="118" cy="298" rx="15" ry="13" fill="${c}"/><ellipse cx="202" cy="298" rx="15" ry="13" fill="${c}"/>`;
     if (tipo === 'globo') return `<ellipse cx="116" cy="298" rx="20" ry="16" fill="${c}"/><ellipse cx="204" cy="298" rx="20" ry="16" fill="${c}"/>`;
     if (tipo === 'larga' || tipo === 'velo') {
@@ -673,8 +718,65 @@ const Juego = (function () {
     }
   }
 
+  // ================= POSES (cámara) =================
+  // Hombro -> (codo) -> mano de cada brazo (izq = a la izquierda de la
+  // pantalla). Los brazos levantados salen hacia el lado con el codo doblado,
+  // para que no queden pegados a la cara. 'normal' usa los brazos de siempre.
+  const POSES = {
+    normal: { izq: [[118, 298], [102, 362]], der: [[202, 298], [218, 362]] },
+    saludo: { izq: [[118, 298], [102, 362]], der: [[202, 298], [264, 304], [296, 236]] },
+    abrazo: { izq: [[118, 298], [44, 306]], der: [[202, 298], [276, 306]] },
+    victoria: { izq: [[118, 298], [102, 362]], der: [[202, 298], [262, 306], [290, 246]] },
+    corazon: { izq: [[118, 298], [146, 316]], der: [[202, 298], [174, 316]] },
+    hurra: { izq: [[118, 298], [56, 304], [24, 236]], der: [[202, 298], [264, 304], [296, 236]] },
+  };
+  const POSES_NOMBRES = [
+    { v: 'normal', n: '🙂 Normal' }, { v: 'saludo', n: '👋 Saludo' }, { v: 'abrazo', n: '🤗 Abrazo' },
+    { v: 'victoria', n: '✌️ La V' }, { v: 'corazon', n: '💗 Corazón' }, { v: 'hurra', n: '🙌 ¡Hurra!' },
+  ];
+
+  // muñeca y mano de cada brazo según la pose (lo que cuenta es el último tramo)
+  function puntosBrazo(pose, lado) {
+    const pts = pose[lado];
+    const [sx, sy] = pts[pts.length - 2], [hx, hy] = pts[pts.length - 1];
+    const dx = hx - sx, dy = hy - sy;
+    return { muneca: [sx + dx * 0.86, sy + dy * 0.86], mano: [hx, hy], giro: -Math.atan2(dx, dy) * 180 / Math.PI };
+  }
+
+  // La manga de una prenda sobre el brazo de un lado en una pose.
+  function mangaPose(m, lado, pts) {
+    if (!m || !m.tipo) return '';
+    const [sx, sy] = pts[0];
+    const afuera = lado === 'izq' ? -1 : 1;
+    if (m.tipo === 'corta') return `<ellipse cx="${sx}" cy="${sy}" rx="15" ry="13" fill="${m.c}"/>`;
+    if (m.tipo === 'globo') return `<ellipse cx="${sx + afuera * 2}" cy="${sy}" rx="20" ry="16" fill="${m.c}"/>`;
+    if (m.tipo !== 'larga' && m.tipo !== 'velo') return '';
+    const [ax, ay] = pts[pts.length - 2], [hx, hy] = pts[pts.length - 1];
+    const ex = ax + (hx - ax) * 0.875, ey = ay + (hy - ay) * 0.875;
+    const medio = pts.slice(1, -1).map(([x, y]) => ` L${x} ${y}`).join('');
+    const op = m.tipo === 'velo' ? ' opacity=".75"' : '';
+    return `<g${op}><path d="M${sx} ${sy}${medio} L${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="${m.c}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="${sx}" cy="${sy}" rx="14" ry="12" fill="${m.c}"/></g>`;
+  }
+
+  function pathCorazon(x, y, k) {
+    const p = (dx, dy) => `${(x + dx * k).toFixed(1)} ${(y + dy * k).toFixed(1)}`;
+    return `M${p(0, 1)} C${p(-0.33, 0.73)} ${p(-1.33, 0.2)} ${p(-1.27, -0.4)} C${p(-1.2, -1)} ${p(-0.4, -1.07)} ${p(0, -0.53)} ` +
+      `C${p(0.4, -1.07)} ${p(1.2, -1)} ${p(1.27, -0.4)} C${p(1.33, 0.2)} ${p(0.33, 0.73)} ${p(0, 1)} Z`;
+  }
+
+  // El parche de un ojo (para la cámara, con el avatar de un hij@): el mismo
+  // de la pantalla principal, con su cinta.
+  function parcheOjo(lado) {
+    const der = lado === 'derecho';
+    const x = der ? 112 : 208, y = 168, giro = der ? -8 : 8;
+    const cinta = der ? 'M84 150 q-14 -30 6 -58' : 'M236 150 q14 -30 -6 -58';
+    return `<path d="${cinta}" fill="none" stroke="#4b3b36" stroke-width="7" stroke-linecap="round"/>` +
+      `<ellipse cx="${x}" cy="${y}" rx="33" ry="24" transform="rotate(${giro} ${x} ${y})" fill="#4b3b36"/>` +
+      `<ellipse cx="${x}" cy="${y}" rx="27" ry="18" transform="rotate(${giro} ${x} ${y})" fill="none" stroke="#6d5a53" stroke-width="1.5" stroke-dasharray="3 4"/>`;
+  }
+
   // Joyas y detalles que van sobre el cuerpo: cadenas, relojes, aros…
-  function joya(cat, acc) {
+  function joya(cat, acc, pose) {
     if (!acc) return '';
     const c = acc.c, o = oscurecer(c, 0.3), l = aclarar(c, 0.5);
     if (cat === 'cuello') {
@@ -697,18 +799,24 @@ const Juego = (function () {
       }
     }
     if (cat === 'muneca') {
+      const pz = pose || POSES.normal;
+      const Lb = puntosBrazo(pz, 'izq'), Rb = puntosBrazo(pz, 'der');
+      const [lx, ly] = Lb.muneca, [rx, ry] = Rb.muneca;
+      const rot = (b, x, y) => `transform="rotate(${b.giro.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})"`;
+      const f = (n) => n.toFixed(1);
       if (acc.t === 'reloj') {
-        return `<rect x="91" y="349" width="20" height="13" rx="3" fill="#2a2740"/>` +
-          `<circle cx="101" cy="355.5" r="6.4" fill="${c}" stroke="${o}" stroke-width="1.4"/><circle cx="101" cy="355.5" r="4" fill="#fff"/>` +
-          `<path d="M101 355.5 L101 352.5 M101 355.5 L103.6 357" stroke="#2a2740" stroke-width="1.2" stroke-linecap="round"/>`;
+        return `<rect x="${f(lx - 10)}" y="${f(ly - 6.5)}" width="20" height="13" rx="3" fill="#2a2740" ${rot(Lb, lx, ly)}/>` +
+          `<circle cx="${f(lx)}" cy="${f(ly)}" r="6.4" fill="${c}" stroke="${o}" stroke-width="1.4"/><circle cx="${f(lx)}" cy="${f(ly)}" r="4" fill="#fff"/>` +
+          `<path d="M${f(lx)} ${f(ly)} l0 -3 M${f(lx)} ${f(ly)} l2.6 1.5" stroke="#2a2740" stroke-width="1.2" stroke-linecap="round"/>`;
       }
       if (acc.t === 'pulsera') {
-        return `<rect x="91" y="352" width="20" height="6.5" rx="3.2" fill="${c}" stroke="${o}" stroke-width="1"/>` +
-          `<rect x="209" y="352" width="20" height="6.5" rx="3.2" fill="${c}" stroke="${o}" stroke-width="1"/>`;
+        return `<rect x="${f(lx - 10)}" y="${f(ly - 3.2)}" width="20" height="6.5" rx="3.2" fill="${c}" stroke="${o}" stroke-width="1" ${rot(Lb, lx, ly)}/>` +
+          `<rect x="${f(rx - 10)}" y="${f(ry - 3.2)}" width="20" height="6.5" rx="3.2" fill="${c}" stroke="${o}" stroke-width="1" ${rot(Rb, rx, ry)}/>`;
       }
       if (acc.t === 'guantes') {
-        return `<circle cx="101" cy="366" r="12" fill="${c}"/><circle cx="219" cy="366" r="12" fill="${c}"/>` +
-          `<rect x="90" y="350" width="22" height="9" rx="3.5" fill="${o}"/><rect x="208" y="350" width="22" height="9" rx="3.5" fill="${o}"/>`;
+        const [lh, lv] = Lb.mano, [rh, rv] = Rb.mano;
+        return `<circle cx="${lh}" cy="${lv}" r="12" fill="${c}"/><circle cx="${rh}" cy="${rv}" r="12" fill="${c}"/>` +
+          `<rect x="${f(lx - 11)}" y="${f(ly - 4.5)}" width="22" height="9" rx="3.5" fill="${o}" ${rot(Lb, lx, ly)}/><rect x="${f(rx - 11)}" y="${f(ry - 4.5)}" width="22" height="9" rx="3.5" fill="${o}" ${rot(Rb, rx, ry)}/>`;
       }
     }
     if (cat === 'orejas') {
@@ -916,7 +1024,10 @@ const Juego = (function () {
     ).join('');
   }
 
-  function figura(id, st) {
+  // o = { pose, parche } (solo para la cámara)
+  function figura(id, st, o) {
+    o = o || {};
+    const pose = o.pose && o.pose !== 'normal' ? POSES[o.pose] : null;
     const piel = st.piel || personaje(id).piel;
     const ap = { piel, peloColor: st.peloColor };
     const partes = {};
@@ -955,22 +1066,45 @@ const Juego = (function () {
     if (partes.encima) c += partes.encima.svg;
 
     // brazos y mangas (la chaqueta tapa las mangas de lo de abajo)
-    c += `<path d="M112 292 C100 300 96 326 94 350 C93 358 93 364 95 370 L109 372 C110 352 114 330 124 306 Z" fill="${piel}"/>` +
-      `<path d="M208 292 C220 300 224 326 226 350 C227 358 227 364 225 370 L211 372 C210 352 206 330 196 306 Z" fill="${piel}"/>` +
-      `<ellipse cx="102" cy="370" rx="10" ry="12" fill="${piel}"/><ellipse cx="218" cy="370" rx="10" ry="12" fill="${piel}"/>`;
     const deArriba = partes.vestido || partes.arriba;
     const mangaEncima = partes.encima && partes.encima.manga;
-    if (deArriba && deArriba.manga && !mangaEncima) c += deArriba.manga; // la chaqueta las tapa
-    if (mangaEncima) c += mangaEncima;
+    if (!pose) {
+      c += `<path d="M112 292 C100 300 96 326 94 350 C93 358 93 364 95 370 L109 372 C110 352 114 330 124 306 Z" fill="${piel}"/>` +
+        `<path d="M208 292 C220 300 224 326 226 350 C227 358 227 364 225 370 L211 372 C210 352 206 330 196 306 Z" fill="${piel}"/>` +
+        `<ellipse cx="102" cy="370" rx="10" ry="12" fill="${piel}"/><ellipse cx="218" cy="370" rx="10" ry="12" fill="${piel}"/>`;
+      if (deArriba && deArriba.manga && !mangaEncima) c += deArriba.manga; // la chaqueta las tapa
+      if (mangaEncima) c += mangaEncima;
+    } else {
+      // con pose: cada brazo es una línea hombro -> (codo) -> mano, en su propio
+      // grupo para poder animarlo
+      const mangaVisible = mangaEncima || (deArriba && deArriba.manga) || null;
+      const contorno = oscurecer(piel, 0.14);
+      ['izq', 'der'].forEach((lado) => {
+        const pts = pose[lado];
+        const [hx, hy] = pts[pts.length - 1];
+        const d = 'M' + pts.map(([x, y]) => `${x} ${y}`).join(' L');
+        let b = `<path d="${d}" fill="none" stroke="${contorno}" stroke-width="17.5" stroke-linecap="round" stroke-linejoin="round"/>` +
+          `<path d="${d}" fill="none" stroke="${piel}" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>` +
+          `<circle cx="${hx}" cy="${hy}" r="9.5" fill="${piel}" stroke="${contorno}" stroke-width="1.2"/>`;
+        if (o.pose === 'victoria' && lado === 'der') {
+          b += `<path d="M${hx - 3} ${hy - 6} l-5 -15 M${hx + 3} ${hy - 6} l5 -15" stroke="${piel}" stroke-width="5.5" stroke-linecap="round"/>`;
+        }
+        b += mangaPose(mangaVisible, lado, pts);
+        c += `<g class="brazo brazo-${lado}">${b}</g>`;
+      });
+      if (o.pose === 'corazon') {
+        c += `<g class="corazon-manos"><path d="${pathCorazon(160, 300, 16)}" fill="#e8578a" stroke="#c23f6f" stroke-width="2"/></g>`;
+      }
+    }
 
     // cadenas, relojes, guantes…
-    c += joya('cuello', st.cuello) + joya('muneca', st.muneca);
+    c += joya('cuello', st.cuello) + joya('muneca', st.muneca, pose);
 
     const k = ESCALA_CUERPO[st.cuerpo] || 1;
     const cuerpo = k === 1 ? c : `<g transform="translate(160 0) scale(${k} 1) translate(-160 0)">${c}</g>`;
 
     return peloAtras(st) + cuerpo +
-      peloDelante(st) + P.cara(ap) + ojos(st.ojos) + flequilloDe(st, ap) + joya('orejas', st.orejas) + cabeza(st.cabeza, st) + cara(st.cara);
+      peloDelante(st) + P.cara(ap) + ojos(st.ojos) + (o.parche === 'derecho' || o.parche === 'izquierdo' ? parcheOjo(o.parche) : '') + flequilloDe(st, ap) + joya('orejas', st.orejas) + cabeza(st.cabeza, st) + cara(st.cara);
   }
 
   // Ícono de cada cosa del armario (la prenda sola, recortada con el viewBox).
@@ -1016,6 +1150,7 @@ const Juego = (function () {
   let estados = {};         // id de personaje -> estado
   let actual = 'rumi';
   let cat = 'arriba';
+  let parcheHoy = 'ninguno';  // ojo con parche hoy (para la cámara): 'derecho' | 'izquierdo' | 'ninguno'
   let filtroG = 'todos';    // qué personajes se muestran: 'todos', 'f' niñas, 'm' niños, 'h' superhéroes
   let guardarTimer = null;
   let toast = () => {};
@@ -1034,7 +1169,7 @@ const Juego = (function () {
     estados = {};
     PERSONAJES.forEach((p) => { estados[p.id] = normalizar(p.id, j && j.personajes && j.personajes[p.id]); });
     if (j && PERSONAJES.some((p) => p.id === j.actual)) actual = j.actual;
-    else actual = PERSONAJES[0].id;
+    else actual = (PERSONAJES.find((p) => p.id === 'hijo-' + pacienteId) || PERSONAJES[0]).id;
   }
   function paquete() { return { personajes: estados, actual }; }
 
@@ -1098,6 +1233,7 @@ const Juego = (function () {
 
   function terminarTiempo() {
     clearInterval(tick); tick = null;
+    Camara.cerrar();
     guardarRemoto();
     document.getElementById('juegoFin').classList.remove('hidden');
   }
@@ -1127,12 +1263,15 @@ const Juego = (function () {
   // puede vestir a cualquiera. Los superhéroes van primero.
   function visibleEnLista(p) {
     if (filtroG === 'todos') return true;
+    if (filtroG === 'hijos') return !!p.hijo;
     if (filtroG === 'h') return p.grupo === 'Superhéroes';
     return p.g === filtroG;
   }
   function listaVisible() {
     const l = PERSONAJES.filter(visibleEnLista);
-    return filtroG === 'todos' ? l.filter((p) => p.grupo === 'Superhéroes').concat(l.filter((p) => p.grupo !== 'Superhéroes')) : l;
+    if (filtroG !== 'todos') return l;
+    const resto = l.filter((p) => !p.hijo);
+    return l.filter((p) => p.hijo).concat(resto.filter((p) => p.grupo === 'Superhéroes'), resto.filter((p) => p.grupo !== 'Superhéroes'));
   }
 
   // Categorías que tienen algo para el género del personaje (a un niño no le
@@ -1224,6 +1363,15 @@ const Juego = (function () {
 
   function cablear() {
     $('juegoSalir').addEventListener('click', cerrar);
+    $('juegoFoto').addEventListener('click', () => {
+      const id = actual;
+      Camara.abrir({
+        dibujar: (o) => figura(id, estados[id], o),
+        poses: POSES_NOMBRES,
+        conParche: !!personaje(id).hijo,   // el parche solo tiene sentido en el avatar de un hij@
+        parche: parcheHoy,
+      });
+    });
     $('juegoFinOk').addEventListener('click', cerrar);
 
     $('juegoPersonajes').addEventListener('click', (e) => {
@@ -1323,10 +1471,12 @@ const Juego = (function () {
     toast = opts.toast || toast;
     pacienteId = opts.pacienteId;
     minutosDia = opts.minutosDia;
+    parcheHoy = opts.parcheHoy === 'derecho' || opts.parcheHoy === 'izquierdo' ? opts.parcheHoy : 'ninguno';
+    cargarHijos(opts.hijos);
 
     const local = leerLocal();
     aplicarGuardado(local);
-    filtroG = 'todos';
+    filtroG = personaje(actual).hijo ? 'hijos' : 'todos';
     $('juegoFin').classList.add('hidden');
     $('juego').classList.remove('hidden');
     document.body.classList.add('jugando');
@@ -1351,6 +1501,7 @@ const Juego = (function () {
 
   function cerrar() {
     clearInterval(tick); tick = null;
+    Camara.cerrar();
     limpiarArrastre();
     if (guardarTimer) guardarRemoto();
     $('juego').classList.add('hidden');

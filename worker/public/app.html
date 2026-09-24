@@ -507,13 +507,15 @@
     <div class="juego-reloj hidden" id="juegoReloj">⏱ 20:00</div>
   </div>
   <div class="juego-genero" id="juegoGenero">
-    <button type="button" data-g="todos" class="activo">⭐ Todos</button>
+    <button type="button" data-g="hijos" class="activo">💛 Mis hij@s</button>
+    <button type="button" data-g="todos">⭐ Todos</button>
     <button type="button" data-g="h">🦸 Héroes</button>
     <button type="button" data-g="f">👧 Niñas</button>
     <button type="button" data-g="m">👦 Niños</button>
   </div>
   <div class="juego-personajes" id="juegoPersonajes"></div>
   <div class="juego-acciones">
+    <button class="ja-foto" id="juegoFoto" aria-label="Sacarse una foto con el personaje"><span class="ja-ico">📸</span><span class="ja-txt">Foto</span></button>
     <button id="juegoOriginal" data-txt="Original" aria-label="Volver a la ropa original"><span class="ja-ico">👗</span><span class="ja-txt">Original</span></button>
     <button id="juegoReset" data-txt="En blanco" aria-label="Dejar al personaje en blanco"><span class="ja-ico">↺</span><span class="ja-txt">En blanco</span></button>
   </div>
@@ -524,6 +526,52 @@
     <div class="juego-cats" id="juegoCats"></div>
     <div class="juego-items" id="juegoItems"></div>
     <p class="juego-ayuda">Arrastra la ropa hasta el personaje, o tócala 👆</p>
+  </div>
+
+  <!-- Cámara: foto con el personaje (js/camara.js). Las fotos quedan solo en este celular. -->
+  <div class="camara hidden" id="camara">
+    <div class="cam-vista" id="camVista">
+      <video id="camVideo" playsinline autoplay muted></video>
+      <div class="cam-sin hidden" id="camSin">
+        <p>No se pudo abrir la cámara 📷<br><small>Igual puedes sacar la foto con este fondo de colores. Para usar la cámara, da permiso en los ajustes del celular.</small></p>
+      </div>
+      <div class="cam-personaje" id="camPersonaje">
+        <svg id="camPersonajeSvg" viewBox="0 0 320 440" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+      </div>
+      <div class="cam-flash" id="camFlash"></div>
+    </div>
+    <div class="cam-top">
+      <button class="cam-btn" id="camCerrar" aria-label="Cerrar la cámara">✕</button>
+      <span class="cam-ayuda" id="camAyuda">Mueve al personaje con el dedo</span>
+      <button class="cam-btn" id="camGirar" aria-label="Cambiar de cámara">🔄</button>
+    </div>
+    <div class="cam-abajo">
+      <div class="cam-poses" id="camPoses" aria-label="Poses"></div>
+      <div class="cam-extras">
+        <button class="cam-chip" id="camIA" aria-label="La IA ubica al personaje junto a tu cara">🤖 IA</button>
+        <button class="cam-chip hidden" id="camParche" aria-label="Ponerle o sacarle el parche">🩹 Sin parche</button>
+      </div>
+      <label class="cam-tamano"><span>🔍</span><input type="range" id="camTamano" min="25" max="95" value="45" aria-label="Tamaño del personaje"></label>
+      <div class="cam-controles">
+        <button class="cam-galeria" id="camGaleriaBtn" aria-label="Mis fotos"><img id="camUltima" class="hidden" alt=""><span>🖼️</span></button>
+        <button class="cam-disparo" id="camDisparo" aria-label="Sacar foto"></button>
+        <button class="cam-btn" id="camEspejo" aria-label="Voltear al personaje">↔️</button>
+      </div>
+    </div>
+    <div class="cam-flash-full" aria-hidden="true"></div>
+    <div class="cam-resultado hidden" id="camResultado">
+      <img id="camFoto" alt="La foto que sacaste">
+      <div class="cam-res-botones">
+        <button id="camOtra">📸 Otra foto</button>
+        <button id="camCompartir" class="btn-save">💾 Guardar o compartir</button>
+      </div>
+      <button class="cam-borrar hidden" id="camBorrar">🗑 Borrar</button>
+    </div>
+    <div class="cam-galeria-vista hidden" id="camGaleria">
+      <div class="cam-gal-top"><button class="cam-btn" id="camGalCerrar" aria-label="Volver a la cámara">←</button><strong>Mis fotos</strong></div>
+      <div class="cam-gal-grid" id="camGalGrid"></div>
+      <p class="cam-gal-nota">Las fotos quedan guardadas solo en este celular. Para guardarlas en la galería, ábrela y toca "Guardar o compartir".</p>
+    </div>
   </div>
 
   <div class="juego-fin hidden" id="juegoFin">
@@ -544,6 +592,7 @@
 <script src="js/core.js"></script>
 <script src="js/avatar.js"></script>
 <script src="js/juego-piezas.js"></script>
+<script src="js/camara.js"></script>
 <script src="js/juego.js"></script>
 <script src="js/app.js"></script>
 <script>

@@ -1,6 +1,6 @@
 // Service worker de la app (app.html) — cachea el cascarón estático y maneja
 // los avisos push del temporizador. La landing (index.html) no lo usa.
-const CACHE_NAME = 'ocuparche-v12';
+const CACHE_NAME = 'ocuparche-v13';
 const ASSETS = [
   './app.html',
   './manifest.json',
@@ -13,6 +13,7 @@ const ASSETS = [
   './js/avatar.js',
   './js/juego-piezas.js',
   './js/juego.js',
+  './js/camara.js',
   './js/app.js',
   './icons/icon-192.png',
   './icons/icon-512.png',

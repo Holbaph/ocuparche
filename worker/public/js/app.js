@@ -748,7 +748,13 @@
   // ================= JUEGO DE VESTIR (js/juego.js) — plan completo =================
   document.getElementById('openJuego').addEventListener('click', () => {
     if (!pacienteActualId) return;
-    Juego.abrir({ pacienteId: pacienteActualId, minutosDia: juegoMinutos, toast: showToast });
+    Juego.abrir({
+      pacienteId: pacienteActualId, minutosDia: juegoMinutos, toast: showToast,
+      // los avatares de todos los hij@s de la cuenta aparecen como personajes
+      hijos: pacientes.map(p => ({ id: p.id, nombre: p.nombre, avatar: p.avatar })),
+      // el ojo con parche de hoy (para ponérselo en las fotos)
+      parcheHoy: (entries[Utils.todayId()] || {}).ojo,
+    });
   });
 
   function renderJuegoHint() {
