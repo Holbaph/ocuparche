@@ -330,8 +330,8 @@ body.jugando{ overflow:hidden; }
 
 .juego-genero{ display:flex; gap:8px; padding:4px 12px 2px; flex-shrink:0; }
 .juego-genero button{
-  flex:1; padding:8px; border-radius:99px; border:1px solid var(--line); background:var(--surface);
-  color:var(--ink-soft); font-weight:800; font-size:13px; cursor:pointer;
+  flex:1; padding:8px 4px; border-radius:99px; border:1px solid var(--line); background:var(--surface);
+  color:var(--ink-soft); font-weight:800; font-size:12px; cursor:pointer; white-space:nowrap;
 }
 .juego-genero button.activo{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
 
@@ -384,6 +384,7 @@ body.jugando{ overflow:hidden; }
   background:var(--success); color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;
 }
 .jitem.fantasma{ position:fixed; z-index:90; pointer-events:none; transform:scale(1.15) rotate(-4deg); box-shadow:var(--shadow); opacity:.95; }
+.jtxt{ font-size:11px; font-weight:800; text-align:center; line-height:1.15; color:var(--ink-soft); }
 .jcolor{ width:44px; height:44px; border-radius:50%; box-shadow:inset -6px -6px 0 rgba(0,0,0,.15), inset 5px 5px 0 rgba(255,255,255,.25); }
 .juego-ayuda{ text-align:center; font-size:11.5px; color:var(--ink-faint); margin:2px 0 0; }
 

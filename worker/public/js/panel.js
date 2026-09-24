@@ -198,7 +198,7 @@
   }
 
   function renderAvatarEditor(p) {
-    const a = { ...avatarPorDefecto(p.avatar?.genero || 'niña'), ...(p.avatar || {}) };
+    const a = normalizarAvatar(p.avatar);
     avatarEditores[p.id] = a;
     return '<div class="avatar-editor" data-pid="' + p.id + '">' +
       '<p class="s-nombre">' + escapeHtml(p.nombre) + '</p>' +
@@ -215,6 +215,7 @@
       '<div class="swatch-row" data-role="mono-color" style="margin-top:8px"></div>' +
       '<div class="swatch-row" data-role="ojos" style="margin-top:8px"></div>' +
       '<div class="swatch-row" data-role="ropa" style="margin-top:8px"></div>' +
+      '<div data-role="extras" style="margin-top:8px"></div>' +
       '<button class="btn-save small" style="margin-top:10px;width:100%" data-role="guardar">Guardar avatar</button>' +
     '</div>';
   }
@@ -231,6 +232,7 @@
     crearSwatches(monoColorRow, PALETA_MONO, a.colorMoño, (c) => { a.colorMoño = c; pintarEditor(el, pid); });
     crearSwatches(el.querySelector('[data-role="ojos"]'), PALETA_OJOS, a.colorOjos, (c) => { a.colorOjos = c; pintarEditor(el, pid); });
     crearSwatches(el.querySelector('[data-role="ropa"]'), PALETA_ROPA, a.colorRopa, (c) => { a.colorRopa = c; pintarEditor(el, pid); });
+    renderControlesExtra(el.querySelector('[data-role="extras"]'), a, () => pintarEditor(el, pid));
   }
 
   function wireAvatarEditores(container) {

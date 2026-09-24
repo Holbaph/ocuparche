@@ -158,22 +158,11 @@
       <p class="orientation-hint">Mirándol@ de frente: su ojo derecho queda a tu izquierda 👀</p>
       <div class="face-wrap">
         <svg class="face" viewBox="0 0 320 500" xmlns="http://www.w3.org/2000/svg">
-          <!-- cuerpo: capa de atrás del todo — piernas y zapatos con color
-               fijo, brazos y torso con .ropa-fill (aplicarAvatar les pone
-               el color elegido). Va primero para que un peinado largo
-               pueda "caer" sobre los hombros, dibujado encima. -->
-          <g id="bodyLayer">
-            <rect x="112" y="405" width="38" height="75" rx="18" fill="#5b7c9e"/>
-            <rect x="170" y="405" width="38" height="75" rx="18" fill="#5b7c9e"/>
-            <ellipse cx="131" cy="482" rx="24" ry="13" fill="var(--ink-soft)"/>
-            <ellipse cx="189" cy="482" rx="24" ry="13" fill="var(--ink-soft)"/>
-            <ellipse class="ropa-fill" cx="78" cy="355" rx="26" ry="58" transform="rotate(10 78 355)"/>
-            <ellipse class="ropa-fill" cx="242" cy="355" rx="26" ry="58" transform="rotate(-10 242 355)"/>
-            <circle cx="66" cy="404" r="17" fill="var(--skin)"/>
-            <circle cx="254" cy="404" r="17" fill="var(--skin)"/>
-            <rect class="ropa-fill" x="85" y="295" width="150" height="125" rx="45"/>
-            <rect x="145" y="270" width="30" height="40" rx="12" fill="var(--skin)"/>
-          </g>
+          <!-- cuerpo: capa de atrás del todo — lo dibuja avatar.js (cuello,
+               torso, brazos, piernas, ropa, zapatos…) según la apariencia
+               del paciente. Va primero para que un peinado largo pueda
+               "caer" sobre los hombros, dibujado encima. -->
+          <g id="bodyLayer"></g>
           <g id="hairBack"></g>
           <circle cx="160" cy="168" r="118" fill="var(--skin)" stroke="var(--skin-line)" stroke-width="2"/>
           <ellipse cx="94" cy="204" rx="19" ry="11" fill="var(--blush)" opacity=".55"/>
@@ -325,8 +314,10 @@
     <div class="swatch-row" id="colorRopaSwatches"></div>
   </section>
 
+  <div id="avatarExtras"></div>
+
   <div id="avatarUpsell" class="upsell-box hidden">
-    <p>Personalizar el color de pelo, el moño, el color de ojos y el color de ropa es parte del <b>plan completo</b>. En el plan gratis puedes elegir el género y el peinado.</p>
+    <p>Personalizar colores, ropa, cuerpo, gorros, lentes, joyas y más es parte del <b>plan completo</b>. En el plan gratis puedes elegir el género y el peinado.</p>
     <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
   </div>
 
@@ -501,7 +492,9 @@
     <div class="juego-reloj hidden" id="juegoReloj">⏱ 20:00</div>
   </div>
   <div class="juego-genero" id="juegoGenero">
-    <button type="button" data-g="f" class="activo">👧 Niñas</button>
+    <button type="button" data-g="todos" class="activo">⭐ Todos</button>
+    <button type="button" data-g="h">🦸 Héroes</button>
+    <button type="button" data-g="f">👧 Niñas</button>
     <button type="button" data-g="m">👦 Niños</button>
   </div>
   <div class="juego-personajes" id="juegoPersonajes"></div>

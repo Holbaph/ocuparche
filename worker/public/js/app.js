@@ -302,12 +302,16 @@
     crearSwatches(document.getElementById('colorMonoSwatches'), PALETA_MONO, avatarBorrador.colorMoño, (c) => { avatarBorrador.colorMoño = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
     crearSwatches(document.getElementById('colorOjosSwatches'), PALETA_OJOS, avatarBorrador.colorOjos, (c) => { avatarBorrador.colorOjos = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
     crearSwatches(document.getElementById('colorRopaSwatches'), PALETA_ROPA, avatarBorrador.colorRopa, (c) => { avatarBorrador.colorRopa = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+    // el resto de la personalización (cuerpo, ropa, gorros, joyas…) es del plan completo
+    const extras = document.getElementById('avatarExtras');
+    if (esPlanCompleto()) renderControlesExtra(extras, avatarBorrador, () => { aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+    else extras.innerHTML = '';
   }
 
   document.getElementById('btnPersonalizar').addEventListener('click', () => {
     const p = pacienteActual();
     if (!p) return;
-    avatarBorrador = { ...avatarPorDefecto(p.avatar?.genero || 'niña'), ...(p.avatar || {}) };
+    avatarBorrador = normalizarAvatar(p.avatar);
     renderPickersAvatar();
     aplicarAvatar(avatarBorrador);
     document.getElementById('eliminarPacienteNombre').textContent = p.nombre;
@@ -340,7 +344,7 @@
     const base = avatarPorDefecto(g);
     const previo = avatarBorrador;
     avatarBorrador = esPlanCompleto()
-      ? { ...previo, genero: g, peinado: base.peinado, moño: base.moño }
+      ? { ...previo, genero: g, peinado: base.peinado, moño: base.moño, ropa: base.ropa, pantalon: base.pantalon }
       : { ...base };
     aplicarAvatar(avatarBorrador); renderPickersAvatar();
   });

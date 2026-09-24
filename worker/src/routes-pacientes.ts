@@ -28,27 +28,55 @@ function parseAvatar(row: { avatar_json?: string | null }): unknown {
   try { return JSON.parse(row.avatar_json); } catch { return null; }
 }
 
-// Mismos valores por defecto que public/js/avatar.js (AVATAR_POR_DEFECTO) —
-// hace falta una copia acá porque el Worker no comparte runtime con el
-// navegador.
+// Mismos valores por defecto y opciones que public/js/avatar.js — hace falta
+// una copia acá porque el Worker no comparte runtime con el navegador.
+const BASE_COMUN = {
+  colorMoño: '#c96f8f', colorOjos: '#8b5e3c',
+  piel: '#f6e0c8', cuerpo: 'normal', colorPantalon: '#5b7c9e', colorZapatos: '#3a3540',
+  sombrero: 'ninguno', colorSombrero: '#e1673f', lentes: 'ninguno', reloj: false, collar: 'ninguno', aros: false,
+};
 const AVATAR_POR_DEFECTO: Record<string, Record<string, unknown>> = {
-  niña: { genero: 'niña', peinado: 'largo', colorPelo: '#6b4a34', moño: true, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#c9525a' },
-  niño: { genero: 'niño', peinado: 'corto', colorPelo: '#2b2420', moño: false, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#5b8fae' },
+  niña: { ...BASE_COMUN, genero: 'niña', peinado: 'largo', colorPelo: '#6b4a34', moño: true, colorRopa: '#c9525a', ropa: 'vestido', pantalon: 'falda' },
+  niño: { ...BASE_COMUN, genero: 'niño', peinado: 'corto', colorPelo: '#2b2420', moño: false, colorRopa: '#5b8fae', ropa: 'polera', pantalon: 'jeans' },
 };
 const PEINADOS_VALIDOS = new Set(['corto', 'largo', 'rizado', 'coleta', 'bob', 'chongos', 'trenzas', 'mohicano', 'copete', 'rapado', 'lado']);
 
-// El plan gratis solo deja elegir género y peinado — cualquier otro campo
-// del avatar (color de pelo, moño y su color, color de ojos, color de
-// ropa) se fuerza al valor por defecto de ese género, aunque alguien mande
-// otra cosa a mano pegándole directo a la API. Esto se comprueba acá — no
-// alcanza con ocultar los selectores en el frontend.
+const HEX = /^#[0-9a-f]{6}$/i;
+const CAMPOS_COLOR = ['colorPelo', 'colorMoño', 'colorOjos', 'colorRopa', 'piel', 'colorPantalon', 'colorZapatos', 'colorSombrero'];
+const CAMPOS_ENUM: Record<string, Set<string>> = {
+  cuerpo: new Set(['delgado', 'normal', 'fuerte']),
+  ropa: new Set(['polera', 'sweater', 'tirantes', 'vestido', 'heroe']),
+  pantalon: new Set(['jeans', 'short', 'calzas', 'falda']),
+  sombrero: new Set(['ninguno', 'jockey', 'jockey-plano', 'gorro-lana', 'sombrero', 'boina']),
+  lentes: new Set(['ninguno', 'sol', 'redondos']),
+  collar: new Set(['ninguno', 'cadena', 'perlas']),
+};
+const CAMPOS_BOOL = ['moño', 'reloj', 'aros'];
+
+// Se queda solo con los campos conocidos y con valores válidos (colores
+// #rrggbb, opciones de la lista): lo que se guarda termina dentro de un SVG
+// en el navegador de toda la familia, así que no se guarda cualquier cosa.
+function sanearAvatar(a: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (typeof a.peinado === 'string' && PEINADOS_VALIDOS.has(a.peinado)) out.peinado = a.peinado;
+  for (const k of CAMPOS_COLOR) if (typeof a[k] === 'string' && HEX.test(a[k] as string)) out[k] = (a[k] as string).toLowerCase();
+  for (const k of Object.keys(CAMPOS_ENUM)) if (typeof a[k] === 'string' && CAMPOS_ENUM[k].has(a[k] as string)) out[k] = a[k];
+  for (const k of CAMPOS_BOOL) if (typeof a[k] === 'boolean') out[k] = a[k];
+  return out;
+}
+
+// El plan gratis solo deja elegir género y peinado — todo lo demás (colores,
+// ropa, cuerpo, gorros, joyas…) se fuerza al valor por defecto de ese género,
+// aunque alguien mande otra cosa a mano pegándole directo a la API. Esto se
+// comprueba acá — no alcanza con ocultar los selectores en el frontend.
 export function limitarAvatarSegunPlan(avatar: unknown, plan: string | undefined): unknown {
   if (!avatar || typeof avatar !== 'object') return avatar;
   const a = avatar as Record<string, unknown>;
   const genero = a.genero === 'niño' ? 'niño' : 'niña';
   const base = AVATAR_POR_DEFECTO[genero];
-  if (plan === 'completo') return { ...base, ...a, genero };
-  const peinado = typeof a.peinado === 'string' && PEINADOS_VALIDOS.has(a.peinado) ? a.peinado : base.peinado;
+  const limpio = sanearAvatar(a);
+  if (plan === 'completo') return { ...base, ...limpio, genero };
+  const peinado = typeof limpio.peinado === 'string' ? limpio.peinado : base.peinado;
   return { ...base, genero, peinado };
 }
 
