@@ -862,9 +862,14 @@ const Juego = (function () {
     return P.amarres(estilo);
   }
 
+  const GORROS_JUEGO = { gorro: 'jockey', 'jockey-plano': 'jockey-plano', 'gorro-lana': 'gorro-lana', sombrero: 'sombrero', boina: 'boina', casco: 'casco', corona: 'corona' };
   function cabeza(acc, st) {
     if (!acc) return '';
     const c = acc.c, puntos = amarres(st.peloEstilo);
+    // Gorros, jockeys, cascos y coronas: se dibujan con las mismas piezas del
+    // avatar principal (avatar.js), que ya vienen al tamaño de la cabeza. Acá
+    // la cabeza está 8 px más abajo, por eso el corrimiento.
+    if (GORROS_JUEGO[acc.t]) return `<g transform="translate(0 8)">${sombreroAv(GORROS_JUEGO[acc.t], c)}</g>`;
     switch (acc.t) {
       case 'moño': return puntos.length ? puntos.map((p) => P.moño(p.x, p.y, p.s, c)).join('') : P.moño(160, 46, 1, c);
       case 'collet':
@@ -872,38 +877,6 @@ const Juego = (function () {
         return `<path d="M160 54 Q138 22 148 10 Q157 28 160 30 Q163 28 172 10 Q182 22 160 54 Z" fill="${st.peloColor}"/>` + P.collet(160, 52, 1, c);
       case 'flor': return puntos.length ? puntos.map((p) => P.flor(p.x, p.y, p.s, c)).join('') : P.flor(222, 72, 1, c);
       case 'cintillo': return `<path d="M42 140 A124 124 0 0 1 278 140" fill="none" stroke="${c}" stroke-width="12" stroke-linecap="round"/>`;
-      case 'gorro':
-        return `<path d="M72 118 Q72 44 160 38 Q248 44 248 118 Z" fill="${c}"/>` +
-          `<ellipse cx="160" cy="120" rx="96" ry="13" fill="${oscurecer(c, 0.25)}"/>` +
-          `<circle cx="160" cy="40" r="6" fill="${oscurecer(c, 0.25)}"/>` +
-          `<path d="M160 40 L160 116" stroke="${oscurecer(c, 0.15)}" stroke-width="2" opacity=".6"/>`;
-      case 'jockey-plano':
-        return `<path d="M74 116 Q74 50 160 46 Q246 50 246 116 Z" fill="${c}"/>` +
-          `<path d="M52 114 Q160 98 268 114 L276 128 Q160 114 44 128 Z" fill="${oscurecer(c, 0.25)}"/>` +
-          `<circle cx="160" cy="48" r="5" fill="${oscurecer(c, 0.25)}"/><path d="M160 50 L160 106" stroke="${oscurecer(c, 0.15)}" stroke-width="2" opacity=".5"/>`;
-      case 'sombrero':
-        return `<ellipse cx="160" cy="100" rx="136" ry="22" fill="${c}"/>` +
-          `<path d="M94 100 Q98 30 160 26 Q222 30 226 100 Z" fill="${c}"/>` +
-          `<rect x="94" y="80" width="132" height="14" fill="${oscurecer(c, 0.3)}"/>`;
-      case 'boina':
-        return `<ellipse cx="150" cy="66" rx="90" ry="34" transform="rotate(-8 150 66)" fill="${c}"/>` +
-          `<ellipse cx="150" cy="66" rx="90" ry="34" transform="rotate(-8 150 66)" fill="none" stroke="${oscurecer(c, 0.2)}" stroke-width="2"/>` +
-          `<circle cx="164" cy="30" r="6" fill="${oscurecer(c, 0.25)}"/>`;
-      case 'casco':
-        return `<path d="M62 124 Q62 36 160 32 Q258 36 258 124 Z" fill="${c}"/>` +
-          `<rect x="50" y="116" width="220" height="15" rx="7" fill="${oscurecer(c, 0.25)}"/>` +
-          `<path d="M160 33 L160 116 M132 40 L134 116 M188 40 L186 116" stroke="${aclarar(c, 0.35)}" stroke-width="5" opacity=".6"/>`;
-      case 'corona':
-        return `<path d="M108 76 L116 36 L138 58 L160 26 L182 58 L204 36 L212 76 Q160 66 108 76 Z" fill="${c}" stroke="${oscurecer(c, 0.25)}" stroke-width="2"/>` +
-          `<circle cx="160" cy="52" r="5" fill="#e8578a"/><circle cx="124" cy="60" r="3.5" fill="#7cc4ea"/><circle cx="196" cy="60" r="3.5" fill="#7cc4ea"/>`;
-      case 'gorro-lana':
-        return `<path d="M74 112 Q74 46 160 40 Q246 46 246 112 Z" fill="${c}"/>` +
-          `<rect x="68" y="98" width="184" height="24" rx="11" fill="${oscurecer(c, 0.2)}"/>` +
-          `<path d="M84 100 L84 120 M104 100 L104 120 M124 100 L124 120 M144 100 L144 120 M164 100 L164 120 M184 100 L184 120 M204 100 L204 120 M224 100 L224 120" stroke="${oscurecer(c, 0.35)}" stroke-width="2" opacity=".5"/>` +
-          `<circle cx="160" cy="38" r="15" fill="${aclarar(c, 0.35)}"/>`;
-      case 'tiara':
-        return `<path d="M118 76 L126 46 L142 64 L160 34 L178 64 L194 46 L202 76 Q160 66 118 76 Z" fill="${c}" stroke="${oscurecer(c, 0.25)}" stroke-width="1.5"/>` +
-          `<circle cx="160" cy="54" r="4.5" fill="#e8578a"/><circle cx="127" cy="60" r="3" fill="#7cc4ea"/><circle cx="193" cy="60" r="3" fill="#7cc4ea"/>`;
       default: return '';
     }
   }
@@ -968,7 +941,7 @@ const Juego = (function () {
         `<path d="M167 362 L192 362 Q190 398 183 430 L171 430 Q168 398 167 362 Z" fill="${piel}"/>`;
       if (!botasMetidas) c += zapatos(st.zapatos, piel);
     }
-    c += `<path d="${TORSO}" fill="${piel}"/>`;
+    c += `<path d="${TORSO}" fill="${piel}" transform="translate(160 0) scale(.93 1) translate(-160 0)"/>`;
 
     // ropa (o la ropa interior blanca si no tiene nada puesto)
     const blanco = '#f4f1ee';
@@ -982,8 +955,9 @@ const Juego = (function () {
     if (partes.encima) c += partes.encima.svg;
 
     // brazos y mangas (la chaqueta tapa las mangas de lo de abajo)
-    c += `<path d="M118 298 L102 362 M202 298 L218 362" stroke="${piel}" stroke-width="15" stroke-linecap="round"/>` +
-      `<circle cx="101" cy="367" r="10" fill="${piel}"/><circle cx="219" cy="367" r="10" fill="${piel}"/>`;
+    c += `<path d="M112 292 C100 300 96 326 94 350 C93 358 93 364 95 370 L109 372 C110 352 114 330 124 306 Z" fill="${piel}"/>` +
+      `<path d="M208 292 C220 300 224 326 226 350 C227 358 227 364 225 370 L211 372 C210 352 206 330 196 306 Z" fill="${piel}"/>` +
+      `<ellipse cx="102" cy="370" rx="10" ry="12" fill="${piel}"/><ellipse cx="218" cy="370" rx="10" ry="12" fill="${piel}"/>`;
     const deArriba = partes.vestido || partes.arriba;
     const mangaEncima = partes.encima && partes.encima.manga;
     if (deArriba && deArriba.manga && !mangaEncima) c += deArriba.manga; // la chaqueta las tapa
@@ -1397,5 +1371,5 @@ const Juego = (function () {
     await guardarRemoto();
   }
 
-  return { abrir, cerrar, minutosRestantesHoy, darMasTiempo, restablecerTodos, figura };
+  return { abrir, cerrar, minutosRestantesHoy, darMasTiempo, restablecerTodos, figura, inicial };
 })();

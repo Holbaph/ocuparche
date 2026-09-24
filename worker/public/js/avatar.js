@@ -153,29 +153,33 @@ function normalizarAvatar(avatar) {
 }
 
 // ---------- el cuerpo ----------
-// Coordenadas (viewBox 0 0 320 500): la cabeza es un círculo en (160,168) de
-// radio 118; el cuello arranca en y=262 y el cuerpo va debajo, con zapatos
-// hasta y≈494. Todo centrado en x=160 para poder ensancharlo/afinarlo.
-const BRAZO_I = 'M104 302 Q78 316 68 372 Q66 394 79 396 Q92 396 96 378 Q101 342 123 320 Z';
-const BRAZO_D = 'M216 302 Q242 316 252 372 Q254 394 241 396 Q228 396 224 378 Q219 342 197 320 Z';
-const TORSO_AV = 'M100 296 Q160 278 220 296 Q234 304 234 326 L230 386 Q228 404 224 410 L96 410 Q92 404 90 386 L86 326 Q86 304 100 296 Z';
+// Coordenadas (viewBox 0 0 320 570): la cabeza es un círculo en (160,168) de
+// radio 118; el cuello arranca en y≈250, los hombros están en y≈306, la
+// cintura en y≈410, la cadera en y≈440 y los pies terminan en y≈566. Todo
+// está hecho con curvas (no con rectas) y centrado en x=160, así se puede
+// ensanchar o afinar simétricamente.
+const TORSO_AV = 'M104 306 C124 292 196 292 216 306 C232 314 238 340 236 372 C234 396 226 410 224 440 L96 440 C94 410 86 396 84 372 C82 340 88 314 104 306 Z';
+const PECHO_AV = 'M112 304 C132 296 188 296 208 304 L210 346 L110 346 Z'; // piel del pecho: siempre queda metida bajo la ropa
+const BRAZO_I = 'M104 308 C82 314 68 338 64 370 C60 398 58 420 58 440 L84 442 C86 424 90 404 96 384 C100 364 108 348 120 336 Z';
+const BRAZO_D = 'M216 308 C238 314 252 338 256 370 C260 398 262 420 262 440 L236 442 C234 424 230 404 224 384 C220 364 212 348 200 336 Z';
+const PIERNA_I = 'M118 436 C112 480 116 516 122 546 L154 546 C157 516 159 480 160 436 Z';
+const PIERNA_D = 'M202 436 C208 480 204 516 198 546 L166 546 C163 516 161 480 160 436 Z';
 
 function pantalonAv(tipo, c, o) {
+  const cinturon = `<path d="M97 428 C130 434 190 434 223 428" fill="none" stroke="${o}" stroke-width="6" stroke-linecap="round"/>`;
   switch (tipo) {
     case 'short':
-      return `<path d="M118 382 L202 382 L204 438 L166 438 L160 414 L154 438 L116 438 Z" fill="${c}"/>` +
-        `<path d="M118 386 L202 386" stroke="${o}" stroke-width="5"/>`;
+      return `<path d="M97 424 L223 424 C225 450 224 476 222 502 L166 502 L160 472 L154 502 L98 502 C96 476 95 450 97 424 Z" fill="${c}"/>` + cinturon +
+        `<path d="M104 496 L152 496 M168 496 L216 496" stroke="${o}" stroke-width="2" stroke-dasharray="3 3" opacity=".7"/>`;
     case 'calzas':
-      return `<path d="M122 382 L198 382 L196 430 L194 476 L166 476 L160 416 L154 476 L126 476 L124 430 Z" fill="${c}"/>` +
-        `<path d="M122 386 L198 386" stroke="${o}" stroke-width="5"/><path d="M160 396 L160 416" stroke="${o}" stroke-width="2"/>`;
+      return `<path d="M104 424 L216 424 C216 448 214 470 212 490 C210 514 206 530 202 546 L166 546 C164 520 162 490 160 470 C158 490 156 520 154 546 L118 546 C114 530 110 514 108 490 C106 470 104 448 104 424 Z" fill="${c}"/>` + cinturon +
+        `<path d="M160 436 L160 470" stroke="${o}" stroke-width="2"/>`;
     case 'falda':
-      return `<path d="M102 380 L218 380 L242 442 Q160 460 78 442 Z" fill="${c}"/>` +
-        `<path d="M102 384 L218 384" stroke="${o}" stroke-width="5"/>` +
-        `<path d="M84 436 Q160 454 236 436" fill="none" stroke="${o}" stroke-width="2.4" stroke-dasharray="5 4" opacity=".7"/>`;
+      return `<path d="M100 422 L220 422 C232 452 240 482 246 510 C200 526 120 526 74 510 C80 482 88 452 100 422 Z" fill="${c}"/>` + cinturon +
+        `<path d="M82 504 C130 520 190 520 238 504" fill="none" stroke="${o}" stroke-width="2.4" stroke-dasharray="5 4" opacity=".7"/>`;
     default: // jeans
-      return `<path d="M116 382 L204 382 L202 432 L198 476 L165 476 L160 414 L155 476 L122 476 L118 432 Z" fill="${c}"/>` +
-        `<path d="M116 386 L204 386" stroke="${o}" stroke-width="5"/>` +
-        `<path d="M160 392 L160 414 M126 470 L152 470 M168 470 L194 470" stroke="${aclararHex(c, 0.35)}" stroke-width="1.8" stroke-dasharray="3 3"/>`;
+      return `<path d="M97 424 L223 424 C225 448 224 470 221 490 C217 516 213 530 209 546 L167 546 C164 522 162 496 160 472 C158 496 156 522 153 546 L111 546 C107 530 103 516 99 490 C96 470 95 448 97 424 Z" fill="${c}"/>` + cinturon +
+        `<path d="M160 436 L160 472 M114 538 L150 538 M170 538 L206 538" stroke="${aclararHex(c, 0.35)}" stroke-width="1.8" stroke-dasharray="3 3"/>`;
   }
 }
 
@@ -188,95 +192,105 @@ function cuerpoAvatar(a) {
   const mangaLarga = a.ropa === 'sweater' || a.ropa === 'heroe';
   let s = '';
 
-  // cuello, piernas, zapatos y torso de piel (debajo de la ropa)
-  s += `<rect x="146" y="262" width="28" height="44" rx="12" fill="${piel}"/>`;
-  s += `<path d="M126 396 L156 396 Q155 436 152 476 L132 476 Q127 436 126 396 Z" fill="${piel}"/>` +
-    `<path d="M164 396 L194 396 Q193 436 188 476 L168 476 Q165 436 164 396 Z" fill="${piel}"/>`;
-  s += [140, 180].map((x) =>
-    `<ellipse cx="${x}" cy="483" rx="25" ry="11" fill="${cz}"/>` +
-    `<path d="M${x - 24} 488 Q${x} 497 ${x + 24} 488" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>`
+  // cuello, piernas, zapatos y el parche de piel del pecho (todo queda debajo de la ropa)
+  s += `<path d="M146 246 L174 246 L176 300 C176 314 170 318 160 318 C150 318 144 314 144 300 Z" fill="${piel}"/>`;
+  s += `<path d="${PIERNA_I}" fill="${piel}"/><path d="${PIERNA_D}" fill="${piel}"/>`;
+  s += [136, 184].map((x) =>
+    `<ellipse cx="${x}" cy="553" rx="29" ry="13" fill="${cz}"/>` +
+    `<path d="M${x - 28} 558 C${x - 10} 568 ${x + 10} 568 ${x + 28} 558" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>`
   ).join('');
-  s += `<path d="${TORSO_AV}" fill="${piel}"/>`;
+  s += `<path d="${PECHO_AV}" fill="${piel}"/>`;
 
   // ropa de abajo (no si lleva vestido)
   if (!vestido) s += pantalonAv(a.pantalon, cp, oP);
 
   // ropa de arriba
-  const cuerpoTop = `M100 296 Q160 278 220 296 Q234 304 234 326 L230 396 L90 396 L86 326 Q86 304 100 296 Z`;
   if (vestido) {
-    s += `<path d="M104 300 Q160 280 216 300 Q232 308 232 330 L226 372 L248 452 Q160 472 72 452 L94 372 L88 330 Q88 308 104 300 Z" fill="${cr}"/>` +
-      `<path d="M94 372 Q160 386 226 372" fill="none" stroke="${oR}" stroke-width="6" stroke-linecap="round"/>` +
-      `<path d="M78 446 Q160 466 242 446" fill="none" stroke="${oR}" stroke-width="2.4" stroke-dasharray="5 4" opacity=".7"/>`;
+    s += `<path d="M104 306 C124 292 196 292 216 306 C232 314 238 340 232 372 C230 392 226 408 222 424 L250 514 C200 530 120 530 70 514 L98 424 C94 408 90 392 88 372 C82 340 88 314 104 306 Z" fill="${cr}"/>` +
+      `<path d="M94 420 C130 432 190 432 226 420" fill="none" stroke="${oR}" stroke-width="6" stroke-linecap="round"/>` +
+      `<path d="M76 508 C130 524 190 524 244 508" fill="none" stroke="${oR}" stroke-width="2.4" stroke-dasharray="5 4" opacity=".7"/>`;
   } else if (a.ropa === 'tirantes') {
-    s += `<path d="M110 306 L210 306 Q226 316 228 334 L226 396 L94 396 L92 334 Q94 316 110 306 Z" fill="${cr}"/>` +
-      `<path d="M132 304 L128 286 M188 304 L192 286" stroke="${cr}" stroke-width="10" stroke-linecap="round"/>`;
+    s += `<path d="M112 332 C130 324 190 324 208 332 C226 340 236 354 236 374 C234 396 226 410 224 440 L96 440 C94 410 86 396 84 374 C84 354 94 340 112 332 Z" fill="${cr}"/>` +
+      `<path d="M130 330 L126 300 M190 330 L194 300" stroke="${cr}" stroke-width="11" stroke-linecap="round"/>`;
   } else {
-    s += `<path d="${cuerpoTop}" fill="${cr}"/>` +
-      `<path d="M146 292 Q160 312 174 292" fill="none" stroke="${oR}" stroke-width="4" stroke-linecap="round"/>`;
-    if (a.ropa === 'sweater') s += `<rect x="90" y="386" width="140" height="10" rx="4" fill="${oR}"/>`;
+    s += `<path d="${TORSO_AV}" fill="${cr}"/>` +
+      `<path d="M143 297 C149 320 171 320 177 297" fill="none" stroke="${oR}" stroke-width="4" stroke-linecap="round"/>`;
+    if (a.ropa === 'sweater') s += `<path d="M96 432 C130 440 190 440 224 432 L224 442 L96 442 Z" fill="${oR}"/>`;
     if (a.ropa === 'heroe') {
-      s += `<path d="M160 306 l6.5 13.5 14.5 2 -10.5 10 2.5 14.5 -13 -7 -13 7 2.5 -14.5 -10.5 -10 14.5 -2z" fill="${lR}"/>` +
-        `<rect x="90" y="384" width="140" height="12" fill="${oR}"/><rect x="150" y="382" width="20" height="16" rx="3" fill="${lR}"/>`;
+      s += `<path d="M160 328 l7 14.5 15.5 2.2 -11.3 10.8 2.7 15.5 -13.9 -7.5 -13.9 7.5 2.7 -15.5 -11.3 -10.8 15.5 -2.2z" fill="${lR}"/>` +
+        `<path d="M95 424 C130 432 190 432 225 424 L225 438 C190 446 130 446 95 438 Z" fill="${oR}"/><rect x="149" y="426" width="22" height="16" rx="4" fill="${lR}"/>`;
     }
   }
 
   // collar / cadena (sobre la ropa)
   if (a.collar === 'cadena') {
-    s += `<path d="M126 296 Q160 342 194 296" fill="none" stroke="#e2b64a" stroke-width="4.5" stroke-dasharray="7 3" stroke-linecap="round"/>` +
-      `<circle cx="160" cy="333" r="8" fill="#e2b64a" stroke="#b58a1f" stroke-width="1.5"/><circle cx="160" cy="333" r="3" fill="#fbe9a8"/>`;
+    s += `<path d="M128 306 C132 352 188 352 192 306" fill="none" stroke="#e2b64a" stroke-width="4.5" stroke-dasharray="7 3" stroke-linecap="round"/>` +
+      `<circle cx="160" cy="352" r="9" fill="#e2b64a" stroke="#b58a1f" stroke-width="1.5"/><circle cx="160" cy="352" r="3.4" fill="#fbe9a8"/>`;
   } else if (a.collar === 'perlas') {
     for (let i = 0; i <= 10; i++) {
       const t = i / 10, u = 1 - t;
-      s += `<circle cx="${(u * u * 122 + 2 * t * u * 160 + t * t * 198).toFixed(1)}" cy="${(u * u * 298 + 2 * t * u * 348 + t * t * 298).toFixed(1)}" r="5" fill="#f7f5f2" stroke="#cfc6bb" stroke-width="1"/>`;
+      s += `<circle cx="${(u * u * 124 + 2 * t * u * 160 + t * t * 196).toFixed(1)}" cy="${(u * u * 308 + 2 * t * u * 372 + t * t * 308).toFixed(1)}" r="5.4" fill="#f7f5f2" stroke="#cfc6bb" stroke-width="1"/>`;
     }
   }
 
-  // brazos (con mangas según la ropa)
+  // brazos (con mangas según la ropa) y manos
   s += `<path d="${BRAZO_I}" fill="${mangaLarga ? cr : piel}"/><path d="${BRAZO_D}" fill="${mangaLarga ? cr : piel}"/>`;
   if (!mangaLarga && (a.ropa === 'polera' || vestido)) {
-    s += `<path d="M104 298 Q80 310 72 346 L100 354 Q104 326 124 316 Z" fill="${cr}"/><path d="M216 298 Q240 310 248 346 L220 354 Q216 326 196 316 Z" fill="${cr}"/>`;
+    s += `<path d="M102 306 C82 312 68 334 63 368 C74 376 90 376 100 370 C102 350 110 336 122 330 Z" fill="${cr}"/>` +
+      `<path d="M218 306 C238 312 252 334 257 368 C246 376 230 376 220 370 C218 350 210 336 198 330 Z" fill="${cr}"/>`;
   }
-  s += `<circle cx="73" cy="399" r="14" fill="${piel}"/><circle cx="247" cy="399" r="14" fill="${piel}"/>`;
+  s += `<ellipse cx="71" cy="458" rx="15" ry="19" fill="${piel}"/><ellipse cx="249" cy="458" rx="15" ry="19" fill="${piel}"/>`;
   if (mangaLarga) {
-    s += `<path d="M69 384 Q80 392 94 388" fill="none" stroke="${oR}" stroke-width="7" stroke-linecap="round"/>` +
-      `<path d="M251 384 Q240 392 226 388" fill="none" stroke="${oR}" stroke-width="7" stroke-linecap="round"/>`;
+    s += `<path d="M59 428 C69 436 79 436 85 430" fill="none" stroke="${oR}" stroke-width="8" stroke-linecap="round"/>` +
+      `<path d="M261 428 C251 436 241 436 235 430" fill="none" stroke="${oR}" stroke-width="8" stroke-linecap="round"/>`;
   }
 
   // reloj en la muñeca
   if (a.reloj) {
-    s += `<rect x="60" y="377" width="28" height="14" rx="4" fill="#2a2740"/>` +
-      `<circle cx="74" cy="384" r="8" fill="#e2b64a" stroke="#b58a1f" stroke-width="1.5"/><circle cx="74" cy="384" r="5.2" fill="#fff"/>` +
-      `<path d="M74 384 L74 380.5 M74 384 L77 386" stroke="#2a2740" stroke-width="1.4" stroke-linecap="round"/>`;
+    s += `<rect x="54" y="422" width="32" height="15" rx="4" fill="#2a2740"/>` +
+      `<circle cx="70" cy="429.5" r="9" fill="#e2b64a" stroke="#b58a1f" stroke-width="1.5"/><circle cx="70" cy="429.5" r="6" fill="#fff"/>` +
+      `<path d="M70 429.5 L70 425 M70 429.5 L73.5 431.5" stroke="#2a2740" stroke-width="1.5" stroke-linecap="round"/>`;
   }
 
   const k = ESCALA_CUERPO_AV[a.cuerpo] || 1;
   return k === 1 ? s : `<g transform="translate(160 0) scale(${k} 1) translate(-160 0)">${s}</g>`;
 }
 
-// Gorros, lentes, aros y moño: van por encima de la cabeza.
+// Gorros: van por encima de la cabeza y son más grandes que ella (la cabeza
+// es un círculo de radio 118 en (160,168), así que un gorro tiene que cubrir
+// de x≈44 a x≈276 y llegar hasta arriba de y≈30). Se usan también en el juego
+// (ahí la cabeza está 8 px más abajo).
 function sombreroAv(tipo, c) {
   const o = oscurecerHex(c, 0.25);
   switch (tipo) {
     case 'jockey':
-      return `<path d="M76 112 Q76 34 160 28 Q244 34 244 112 Z" fill="${c}"/>` +
-        `<ellipse cx="160" cy="114" rx="96" ry="14" fill="${o}"/><circle cx="160" cy="30" r="6" fill="${o}"/>` +
-        `<path d="M160 32 L160 108" stroke="${o}" stroke-width="2" opacity=".5"/>`;
+      return `<path d="M44 126 C36 58 92 20 160 20 C228 20 284 58 276 126 C230 116 90 116 44 126 Z" fill="${c}"/>` +
+        `<path d="M44 122 C100 134 220 134 276 122 L282 130 C222 142 98 142 38 130 Z" fill="${o}"/>` +
+        `<circle cx="160" cy="21" r="7" fill="${o}"/><path d="M160 26 L160 118 M120 32 L114 116 M200 32 L206 116" stroke="${o}" stroke-width="2" opacity=".45"/>`;
     case 'jockey-plano':
-      return `<path d="M78 112 Q78 40 160 36 Q242 40 242 112 Z" fill="${c}"/>` +
-        `<path d="M52 110 Q160 92 268 110 L278 126 Q160 110 42 126 Z" fill="${o}"/><circle cx="160" cy="38" r="5" fill="${o}"/>`;
+      return `<path d="M46 122 C40 70 96 36 160 36 C224 36 280 70 274 122 Z" fill="${c}"/>` +
+        `<path d="M16 116 C100 104 220 104 304 116 L316 132 C222 122 98 122 4 132 Z" fill="${o}"/>` +
+        `<circle cx="160" cy="38" r="6" fill="${o}"/><path d="M160 42 L160 106" stroke="${o}" stroke-width="2" opacity=".45"/>`;
     case 'gorro-lana':
-      return `<path d="M80 108 Q80 34 160 28 Q240 34 240 108 Z" fill="${c}"/>` +
-        `<rect x="74" y="94" width="172" height="24" rx="11" fill="${o}"/>` +
-        `<path d="M92 96 L92 116 M112 96 L112 116 M132 96 L132 116 M152 96 L152 116 M172 96 L172 116 M192 96 L192 116 M212 96 L212 116 M228 96 L228 116" stroke="${oscurecerHex(c, 0.4)}" stroke-width="2" opacity=".5"/>` +
-        `<circle cx="160" cy="26" r="15" fill="${aclararHex(c, 0.35)}"/>`;
+      return `<path d="M50 126 C42 48 96 8 160 8 C224 8 278 48 270 126 Z" fill="${c}"/>` +
+        `<rect x="40" y="98" width="240" height="36" rx="16" fill="${o}"/>` +
+        `<path d="M62 100 L62 132 M86 100 L86 132 M110 100 L110 132 M134 100 L134 132 M158 100 L158 132 M182 100 L182 132 M206 100 L206 132 M230 100 L230 132 M254 100 L254 132" stroke="${oscurecerHex(c, 0.4)}" stroke-width="2.4" opacity=".5"/>` +
+        `<circle cx="160" cy="10" r="22" fill="${aclararHex(c, 0.35)}"/>`;
     case 'sombrero':
-      return `<ellipse cx="160" cy="98" rx="138" ry="22" fill="${c}"/>` +
-        `<path d="M92 98 Q96 22 160 18 Q224 22 228 98 Z" fill="${c}"/>` +
-        `<rect x="92" y="78" width="136" height="14" fill="${oscurecerHex(c, 0.3)}"/>`;
+      return `<ellipse cx="160" cy="104" rx="176" ry="24" fill="${c}"/>` +
+        `<path d="M70 104 C70 34 108 8 160 8 C212 8 250 34 250 104 Z" fill="${c}"/>` +
+        `<path d="M70 96 C120 106 200 106 250 96 L250 84 C200 94 120 94 70 84 Z" fill="${oscurecerHex(c, 0.3)}"/>`;
     case 'boina':
-      return `<ellipse cx="150" cy="62" rx="92" ry="34" transform="rotate(-8 150 62)" fill="${c}"/>` +
-        `<ellipse cx="150" cy="62" rx="92" ry="34" transform="rotate(-8 150 62)" fill="none" stroke="${o}" stroke-width="2"/>` +
-        `<circle cx="166" cy="26" r="6" fill="${o}"/>`;
+      return `<ellipse cx="152" cy="66" rx="124" ry="46" transform="rotate(-8 152 66)" fill="${c}"/>` +
+        `<ellipse cx="152" cy="66" rx="124" ry="46" transform="rotate(-8 152 66)" fill="none" stroke="${o}" stroke-width="2.4"/>` +
+        `<circle cx="170" cy="22" r="8" fill="${o}"/>`;
+    case 'casco':
+      return `<path d="M38 132 C30 52 92 10 160 10 C228 10 290 52 282 132 Z" fill="${c}"/>` +
+        `<rect x="24" y="118" width="272" height="18" rx="9" fill="${o}"/>` +
+        `<path d="M160 12 L160 118 M118 20 L120 118 M202 20 L200 118" stroke="${aclararHex(c, 0.35)}" stroke-width="6" opacity=".6"/>`;
+    case 'corona':
+      return `<path d="M88 92 L98 24 L128 58 L160 12 L192 58 L222 24 L232 92 C194 80 126 80 88 92 Z" fill="${c}" stroke="${o}" stroke-width="2.5"/>` +
+        `<circle cx="160" cy="52" r="7" fill="#e8578a"/><circle cx="108" cy="64" r="4.6" fill="#7cc4ea"/><circle cx="212" cy="64" r="4.6" fill="#7cc4ea"/>`;
     default: return '';
   }
 }
