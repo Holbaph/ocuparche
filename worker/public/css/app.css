@@ -407,3 +407,27 @@ body.jugando{ overflow:hidden; }
 .juego-acciones .ja-ico{ font-size:17px; line-height:1; }
 .juego-acciones .ja-txt{ font-size:12.5px; font-weight:800; }
 .juego-acciones button.confirmar{ background:var(--danger); border-color:var(--danger); color:#fff; }
+
+
+/* ---------- personalizar apariencia: vista previa en vivo + pestañas (como en Ojitos de Mili) ---------- */
+.sheet-avatar{ padding-top:10px; }
+.avatar-preview{
+  position:sticky; top:-10px; z-index:2; margin:0 -18px 10px; padding:6px 0 10px;
+  background:var(--surface); border-bottom:1px solid var(--line);
+  display:flex; justify-content:center;
+}
+.avatar-preview svg.face{ height:220px; width:auto; max-width:none; overflow:visible; }
+.face-preview .eye{ cursor:default; }
+.avatar-tabs{ display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px; scrollbar-width:none; }
+.avatar-tabs::-webkit-scrollbar{ display:none; }
+.avatar-tabs button{
+  flex-shrink:0; padding:8px 13px; border-radius:99px; border:1px solid var(--line);
+  background:var(--surface); color:var(--ink-soft); font-weight:700; font-size:13px; cursor:pointer;
+}
+.avatar-tabs button.active{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.avatar-actions{
+  position:sticky; bottom:-26px; display:flex; gap:8px; margin:6px -18px -26px; padding:12px 18px 22px;
+  background:var(--surface); border-top:1px solid var(--line);
+}
+.avatar-actions button{ flex:1; padding:12px; border-radius:12px; border:1px solid transparent; font-weight:700; font-size:14px; cursor:pointer; }
+.avatar-actions .btn-cancel{ border-color:var(--line); }

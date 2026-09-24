@@ -321,26 +321,28 @@ function arosAv() {
 
 // Pinta un avatar dentro del monito que ya está en el DOM (uno solo a la
 // vez — el del paciente que se está viendo).
-function aplicarAvatar(avatar) {
+function aplicarAvatar(avatar, svgRaiz) {
   const a = normalizarAvatar(avatar);
-  const svg = document.querySelector('svg.face');
-  const hairBack = document.getElementById('hairBack');
-  const bowLayer = document.getElementById('bowLayer');
-  const bodyLayer = document.getElementById('bodyLayer');
-  if (svg) {
-    svg.style.setProperty('--skin', a.piel);
-    svg.style.setProperty('--skin-line', oscurecerHex(a.piel, 0.12));
-  }
-  hairBack.innerHTML = `<g fill="${a.colorPelo}">${(PEINADOS[a.peinado] || PEINADOS.corto)()}</g>`;
-  if (bodyLayer) bodyLayer.innerHTML = cuerpoAvatar(a);
+  // Sin `svgRaiz` pinta el monito de la pantalla principal; con `svgRaiz`, esa
+  // copia (la vista previa del panel de personalizar). Las capas se buscan
+  // dentro del svg por data-capa, así funcionan aunque haya dos monitos.
+  const svg = svgRaiz || document.querySelector('svg.face:not(.face-preview)');
+  if (!svg) return;
+  const capa = (n) => svg.querySelector('[data-capa="' + n + '"]');
+  svg.style.setProperty('--skin', a.piel);
+  svg.style.setProperty('--skin-line', oscurecerHex(a.piel, 0.12));
+  capa('pelo').innerHTML = `<g fill="${a.colorPelo}">${(PEINADOS[a.peinado] || PEINADOS.corto)()}</g>`;
+  const cuerpo = capa('cuerpo');
+  if (cuerpo) cuerpo.innerHTML = cuerpoAvatar(a);
   // esta capa no debe tapar los ojos (se tocan para registrar el parche)
-  bowLayer.setAttribute('pointer-events', 'none');
-  bowLayer.innerHTML =
+  const arriba = capa('arriba');
+  arriba.setAttribute('pointer-events', 'none');
+  arriba.innerHTML =
     lentesAv(a.lentes) +
     (a.aros ? arosAv() : '') +
     (a.moño ? `<g fill="${a.colorMoño}">${moñoSvg()}</g>` : '') +
     sombreroAv(a.sombrero, a.colorSombrero);
-  document.querySelectorAll('.iris-circle').forEach(el => el.setAttribute('fill', a.colorOjos));
+  svg.querySelectorAll('.iris-circle').forEach(el => el.setAttribute('fill', a.colorOjos));
 }
 
 function crearSwatches(contenedor, paleta, colorActual, onPick) {
@@ -359,8 +361,10 @@ function crearSwatches(contenedor, paleta, colorActual, onPick) {
 // Dibuja, dentro de `cont`, todos los selectores extra (tono de piel, cuerpo,
 // ropa, pantalón, zapatos, gorro, lentes, joyas) para el avatar `a` (se
 // modifica en el lugar). `cambio()` se llama después de cada toque.
-function renderControlesExtra(cont, a, cambio) {
+function renderControlesExtra(cont, a, cambio, grupo) {
   cont.innerHTML = '';
+  // grupo: 'cuerpo' | 'ropa' | 'accesorios' (sin grupo: todos)
+  const quiere = (g) => !grupo || grupo === g;
   const genero = a.genero === 'niño' ? 'niño' : 'niña';
 
   function bloque(titulo) {
@@ -404,20 +408,26 @@ function renderControlesExtra(cont, a, cambio) {
     sec.appendChild(d);
   }
 
-  let s = bloque('Tono de piel');
-  const d = document.createElement('div'); d.className = 'swatch-row'; s.appendChild(d);
-  crearSwatches(d, PALETA_PIEL, a.piel, (c) => { a.piel = c; cambio(); });
-
-  seg(bloque('Forma del cuerpo'), CUERPOS_AV, 'cuerpo');
-  s = bloque('Ropa de arriba'); seg(s, opcionesDe(ROPAS_AV, genero), 'ropa', true);
-  if (a.ropa !== 'vestido') {
-    s = bloque('Pantalón o falda'); seg(s, opcionesDe(PANTALONES_AV, genero), 'pantalon', true); colores(s, PALETA_PANTALON, 'colorPantalon');
+  let s;
+  if (quiere('cuerpo')) {
+    s = bloque('Tono de piel');
+    const d = document.createElement('div'); d.className = 'swatch-row'; s.appendChild(d);
+    crearSwatches(d, PALETA_PIEL, a.piel, (c) => { a.piel = c; cambio(); });
+    seg(bloque('Forma del cuerpo'), CUERPOS_AV, 'cuerpo');
   }
-  colores(bloque('Zapatos'), PALETA_ZAPATOS, 'colorZapatos');
-  s = bloque('Gorro o jockey'); seg(s, SOMBREROS_AV, 'sombrero', true);
-  if (a.sombrero !== 'ninguno') colores(s, PALETA_ROPA, 'colorSombrero');
-  seg(bloque('Lentes'), LENTES_AV, 'lentes');
-  seg(bloque('Collar o cadena'), COLLARES_AV, 'collar');
-  siNo(bloque('Reloj'), 'reloj');
-  siNo(bloque('Aros'), 'aros');
+  if (quiere('ropa')) {
+    s = bloque('Ropa de arriba'); seg(s, opcionesDe(ROPAS_AV, genero), 'ropa', true);
+    if (a.ropa !== 'vestido') {
+      s = bloque('Pantalón o falda'); seg(s, opcionesDe(PANTALONES_AV, genero), 'pantalon', true); colores(s, PALETA_PANTALON, 'colorPantalon');
+    }
+    colores(bloque('Zapatos'), PALETA_ZAPATOS, 'colorZapatos');
+  }
+  if (quiere('accesorios')) {
+    s = bloque('Gorro o jockey'); seg(s, SOMBREROS_AV, 'sombrero', true);
+    if (a.sombrero !== 'ninguno') colores(s, PALETA_ROPA, 'colorSombrero');
+    seg(bloque('Lentes'), LENTES_AV, 'lentes');
+    seg(bloque('Collar o cadena'), COLLARES_AV, 'collar');
+    siNo(bloque('Reloj'), 'reloj');
+    siNo(bloque('Aros'), 'aros');
+  }
 }

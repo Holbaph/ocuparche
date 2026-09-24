@@ -273,17 +273,65 @@
   });
 
   // ================= PERSONALIZAR APARIENCIA =================
-  // La misma carita de la pantalla principal sirve de vista previa en vivo:
-  // cada toque en el panel llama aplicarAvatar() de una y listo se ve el
-  // cambio, sin necesitar una segunda carita solo para "probar".
+  // Igual que en Ojitos de Mili: arriba del panel hay una vista previa fija del
+  // personaje (una copia del de la pantalla principal) que se va actualizando
+  // a cada toque, así se ve cómo va quedando sin tener que cerrar el panel. El
+  // de la pantalla principal solo cambia al tocar Guardar.
   let avatarBorrador = null;
+  let avTab = 'general';
   const avatarScrim = document.getElementById('avatarScrim'), avatarSheet = document.getElementById('avatarSheet');
+  const AV_TABS = [
+    { id: 'general', n: '👧 Género y peinado' },
+    { id: 'pelo', n: '🎨 Pelo y ojos', premium: true },
+    { id: 'cuerpo', n: '🧍 Cuerpo', premium: true },
+    { id: 'ropa', n: '👕 Ropa', premium: true },
+    { id: 'accesorios', n: '🧢 Accesorios', premium: true },
+  ];
   function abrirAvatarSheet() {
+    avatarSheet.scrollTop = 0;
     avatarSheet.classList.add('show'); avatarScrim.classList.add('show');
   }
   function cerrarAvatarSheet() {
     avatarSheet.classList.remove('show'); avatarScrim.classList.remove('show');
   }
+
+  // Copia el monito de la pantalla principal a la vista previa (sin ids, sin
+  // el aro que se marca al pasar el mouse y sin parches puestos).
+  function prepararPreview() {
+    const principal = document.querySelector('svg.face:not(.face-preview)');
+    const pv = document.getElementById('avatarPreview');
+    pv.innerHTML = principal.innerHTML;
+    pv.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+    pv.querySelectorAll('.ring, .hit, .eye-patch').forEach(e => e.remove());
+    pv.querySelectorAll('.eye').forEach(e => {
+      e.classList.remove('patched');
+      ['role', 'tabindex', 'aria-label'].forEach(a => e.removeAttribute(a));
+    });
+  }
+  function pintarBorrador() { aplicarAvatar(avatarBorrador, document.getElementById('avatarPreview')); }
+  function cambioAvatar() { pintarBorrador(); renderPickersAvatar(); }
+
+  function renderTabsAvatar() {
+    const completo = esPlanCompleto();
+    document.getElementById('avatarTabs').innerHTML = AV_TABS.map(t =>
+      '<button type="button" role="tab" data-tab="' + t.id + '"' + (t.id === avTab ? ' class="active"' : '') + '>' +
+      t.n + (t.premium && !completo ? ' 🔒' : '') + '</button>'
+    ).join('');
+  }
+  // Plan gratis: solo género y peinado — las demás pestañas muestran el
+  // aviso del plan completo (y el servidor también lo exige).
+  function mostrarPaneAvatar() {
+    const t = AV_TABS.find(x => x.id === avTab);
+    const bloqueado = !!t.premium && !esPlanCompleto();
+    document.querySelectorAll('.av-pane').forEach(p => p.classList.toggle('hidden', bloqueado || p.dataset.pane !== avTab));
+    document.getElementById('avatarUpsell').classList.toggle('hidden', !bloqueado);
+  }
+  document.getElementById('avatarTabs').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-tab]');
+    if (!b) return;
+    avTab = b.dataset.tab;
+    renderTabsAvatar(); mostrarPaneAvatar();
+  });
 
   function renderPickersAvatar() {
     // Peinados: solo los que le corresponden a niñas o a niños.
@@ -293,46 +341,41 @@
     ).join('');
     document.querySelectorAll('#generoAvatarSeg button').forEach(b => b.classList.toggle('active', b.dataset.val === genero));
     // el moño es cosa de niñas
-    document.getElementById('monoBlock').classList.toggle('hidden', !esPlanCompleto() || genero === 'niño');
+    document.getElementById('monoBlock').classList.toggle('hidden', genero === 'niño');
     document.getElementById('monoOn').classList.toggle('active', avatarBorrador.moño);
     document.getElementById('monoOff').classList.toggle('active', !avatarBorrador.moño);
     document.getElementById('colorMonoSwatches').style.opacity = avatarBorrador.moño ? '1' : '.4';
     document.getElementById('colorMonoSwatches').style.pointerEvents = avatarBorrador.moño ? 'auto' : 'none';
-    crearSwatches(document.getElementById('colorPeloSwatches'), PALETA_PELO, avatarBorrador.colorPelo, (c) => { avatarBorrador.colorPelo = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
-    crearSwatches(document.getElementById('colorMonoSwatches'), PALETA_MONO, avatarBorrador.colorMoño, (c) => { avatarBorrador.colorMoño = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
-    crearSwatches(document.getElementById('colorOjosSwatches'), PALETA_OJOS, avatarBorrador.colorOjos, (c) => { avatarBorrador.colorOjos = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
-    crearSwatches(document.getElementById('colorRopaSwatches'), PALETA_ROPA, avatarBorrador.colorRopa, (c) => { avatarBorrador.colorRopa = c; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
-    // el resto de la personalización (cuerpo, ropa, gorros, joyas…) es del plan completo
-    const extras = document.getElementById('avatarExtras');
-    if (esPlanCompleto()) renderControlesExtra(extras, avatarBorrador, () => { aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
-    else extras.innerHTML = '';
+    crearSwatches(document.getElementById('colorPeloSwatches'), PALETA_PELO, avatarBorrador.colorPelo, (c) => { avatarBorrador.colorPelo = c; cambioAvatar(); });
+    crearSwatches(document.getElementById('colorMonoSwatches'), PALETA_MONO, avatarBorrador.colorMoño, (c) => { avatarBorrador.colorMoño = c; cambioAvatar(); });
+    crearSwatches(document.getElementById('colorOjosSwatches'), PALETA_OJOS, avatarBorrador.colorOjos, (c) => { avatarBorrador.colorOjos = c; cambioAvatar(); });
+    crearSwatches(document.getElementById('colorRopaSwatches'), PALETA_ROPA, avatarBorrador.colorRopa, (c) => { avatarBorrador.colorRopa = c; cambioAvatar(); });
+    // cuerpo, ropa, gorros, joyas… son del plan completo
+    const grupos = { avExtrasCuerpo: 'cuerpo', avExtrasRopa: 'ropa', avExtrasAccesorios: 'accesorios' };
+    Object.keys(grupos).forEach(id => {
+      const cont = document.getElementById(id);
+      if (esPlanCompleto()) renderControlesExtra(cont, avatarBorrador, cambioAvatar, grupos[id]);
+      else cont.innerHTML = '';
+    });
   }
 
   document.getElementById('btnPersonalizar').addEventListener('click', () => {
     const p = pacienteActual();
     if (!p) return;
     avatarBorrador = normalizarAvatar(p.avatar);
+    avTab = 'general';
+    prepararPreview();
     renderPickersAvatar();
-    aplicarAvatar(avatarBorrador);
+    pintarBorrador();
+    renderTabsAvatar(); mostrarPaneAvatar();
     document.getElementById('eliminarPacienteNombre').textContent = p.nombre;
     document.getElementById('eliminarPacienteConfirm').classList.add('hidden');
-
-    // Plan gratis: solo género (se elige al crear) y peinado — el resto de
-    // la personalización es del plan completo, y el servidor también lo
-    // exige (no alcanza con ocultarlo acá).
-    const completo = esPlanCompleto();
-    document.getElementById('colorPeloBlock').classList.toggle('hidden', !completo);
-    document.getElementById('monoBlock').classList.toggle('hidden', !completo || avatarBorrador.genero === 'niño');
-    document.getElementById('colorOjosBlock').classList.toggle('hidden', !completo);
-    document.getElementById('colorRopaBlock').classList.toggle('hidden', !completo);
-    document.getElementById('avatarUpsell').classList.toggle('hidden', completo);
-
     abrirAvatarSheet();
   });
   document.getElementById('peinadoSeg').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-val]');
     if (!b) return;
-    avatarBorrador.peinado = b.dataset.val; aplicarAvatar(avatarBorrador); renderPickersAvatar();
+    avatarBorrador.peinado = b.dataset.val; cambioAvatar();
   });
   // Cambiar de niña a niño (o al revés): el peinado, el moño y los colores
   // de base pasan a los de ese género; en el plan completo se conservan los
@@ -346,15 +389,12 @@
     avatarBorrador = esPlanCompleto()
       ? { ...previo, genero: g, peinado: base.peinado, moño: base.moño, ropa: base.ropa, pantalon: base.pantalon }
       : { ...base };
-    aplicarAvatar(avatarBorrador); renderPickersAvatar();
+    cambioAvatar();
   });
-  document.getElementById('monoOn').addEventListener('click', () => { avatarBorrador.moño = true; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
-  document.getElementById('monoOff').addEventListener('click', () => { avatarBorrador.moño = false; aplicarAvatar(avatarBorrador); renderPickersAvatar(); });
+  document.getElementById('monoOn').addEventListener('click', () => { avatarBorrador.moño = true; cambioAvatar(); });
+  document.getElementById('monoOff').addEventListener('click', () => { avatarBorrador.moño = false; cambioAvatar(); });
 
-  function cancelarAvatar() {
-    aplicarAvatar((pacienteActual() || {}).avatar);
-    cerrarAvatarSheet();
-  }
+  function cancelarAvatar() { cerrarAvatarSheet(); }
   document.getElementById('closeAvatar').addEventListener('click', cancelarAvatar);
   document.getElementById('avatarCancelar').addEventListener('click', cancelarAvatar);
   avatarScrim.addEventListener('click', cancelarAvatar);
@@ -364,6 +404,7 @@
     try {
       await Pacientes.actualizarAvatar(p.id, avatarBorrador);
       p.avatar = avatarBorrador;
+      aplicarAvatar(p.avatar);
       showToast('¡Apariencia guardada!');
       cerrarAvatarSheet();
     } catch (e) {
