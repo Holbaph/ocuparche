@@ -173,7 +173,7 @@ export const listarRegistros: Handler = async (request, env, origin) => {
   if (!pacienteId) return json({ ok: false, error: 'Falta paciente_id' }, origin, { status: 400 });
   if (!(await pacienteDeLaCuenta(env, pacienteId, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
   const { results } = await env.DB.prepare(
-    'SELECT id, fecha, ojo, hora, registrado_por FROM registros WHERE paciente_id = ? ORDER BY fecha DESC LIMIT 400'
+    'SELECT id, fecha, ojo, hora, hora_fin, registrado_por FROM registros WHERE paciente_id = ? ORDER BY fecha DESC LIMIT 400'
   ).bind(pacienteId).all();
   return json({ ok: true, registros: results }, origin);
 };
@@ -198,7 +198,7 @@ export const guardarRegistro: Handler = async (request, env, origin) => {
     `INSERT INTO registros (id, paciente_id, fecha, ojo, hora, registrado_por, notificado)
      VALUES (?, ?, ?, ?, ?, ?, 0)
      ON CONFLICT(paciente_id, fecha) DO UPDATE SET
-       ojo = excluded.ojo, hora = excluded.hora, registrado_por = excluded.registrado_por, notificado = 0`
+       ojo = excluded.ojo, hora = excluded.hora, hora_fin = NULL, registrado_por = excluded.registrado_por, notificado = 0`
   ).bind(uuid(), pacienteId, fecha, ojo, hora, perfil.id).run();
 
   await avisarCambio(env, pacienteId);
@@ -242,9 +242,111 @@ export const obtenerConfig: Handler = async (request, env, origin) => {
   const pacienteId = new URL(request.url).searchParams.get('paciente_id');
   if (!pacienteId) return json({ ok: false, error: 'Falta paciente_id' }, origin, { status: 400 });
   if (!(await pacienteDeLaCuenta(env, pacienteId, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
-  const row = await env.DB.prepare('SELECT duracion_minutos FROM configuracion WHERE paciente_id = ?')
-    .bind(pacienteId).first<{ duracion_minutos: number }>();
-  return json({ ok: true, duracion_minutos: row?.duracion_minutos ?? 120 }, origin);
+  const row = await env.DB.prepare(
+    `SELECT duracion_minutos, indicacion_ojo, indicacion_dias, premio_meta, premio_texto, control_fecha, control_hora,
+            control_detalle, control_preguntas, resumen_activo
+     FROM configuracion WHERE paciente_id = ?`
+  ).bind(pacienteId).first<FilaTratamiento & { duracion_minutos: number | null }>();
+  return json({ ok: true, duracion_minutos: row?.duracion_minutos ?? 120, tratamiento: tratamientoDeFila(row) }, origin);
+};
+
+// ---------- control del tratamiento (indicación, premio, próximo control) ----------
+// Plan completo, igual que el temporizador. Portado de Ojitos de Mili.
+type FilaTratamiento = {
+  indicacion_ojo?: string | null; indicacion_dias?: string | null; premio_meta?: number | null; premio_texto?: string | null;
+  control_fecha?: string | null; control_hora?: string | null; control_detalle?: string | null; control_preguntas?: string | null;
+  resumen_activo?: number | null;
+};
+
+function tratamientoDeFila(r: FilaTratamiento | null | undefined) {
+  return {
+    indicacion_ojo: r?.indicacion_ojo ?? 'alternar',
+    indicacion_dias: (r?.indicacion_dias ?? '0,1,2,3,4,5,6').split(',').map(Number).filter((n) => n >= 0 && n <= 6),
+    premio_meta: r?.premio_meta ?? null,
+    premio_texto: r?.premio_texto ?? null,
+    control_fecha: r?.control_fecha ?? null,
+    control_hora: r?.control_hora ?? null,
+    control_detalle: r?.control_detalle ?? null,
+    control_preguntas: r?.control_preguntas ?? null,
+    resumen_activo: r?.resumen_activo === 0 ? 0 : 1,
+  };
+}
+
+export const guardarTratamiento: Handler = async (request, env, origin) => {
+  const perfil = await perfilDesdeSesion(request, env);
+  if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
+  const b = await readJson<Record<string, unknown>>(request);
+  const pacienteId = b?.paciente_id;
+  const malo = (msg: string) => json({ ok: false, error: msg }, origin, { status: 400 });
+  if (typeof pacienteId !== 'string') return malo('Datos inválidos');
+  if (!(await pacienteDeLaCuenta(env, pacienteId, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
+  const cuenta = await env.DB.prepare('SELECT plan FROM cuentas WHERE id = ?').bind(perfil.cuenta_id).first<{ plan: string }>();
+  if (cuenta?.plan !== 'completo') return json({ ok: false, error: 'El control del tratamiento es parte del plan completo' }, origin, { status: 403 });
+
+  const ojo = b?.indicacion_ojo;
+  if (ojo !== 'alternar' && ojo !== 'derecho' && ojo !== 'izquierdo') return malo('Elige qué ojo se tapa');
+  const diasArr = Array.isArray(b?.indicacion_dias) ? (b!.indicacion_dias as unknown[]) : [];
+  const dias = [...new Set(diasArr.map(Number))].filter((n) => Number.isInteger(n) && n >= 0 && n <= 6).sort();
+  if (!dias.length) return malo('Elige al menos un día de la semana');
+
+  const meta = b?.premio_meta == null || b.premio_meta === '' ? null : Math.round(Number(b.premio_meta));
+  if (meta !== null && !(meta >= 1 && meta <= 7)) return malo('La meta del premio va de 1 a 7 días');
+  const premioTexto = typeof b?.premio_texto === 'string' ? b.premio_texto.trim().slice(0, 60) : '';
+
+  const fecha = typeof b?.control_fecha === 'string' && b.control_fecha ? b.control_fecha : null;
+  if (fecha !== null && (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || Number.isNaN(Date.parse(fecha)))) return malo('La fecha del control no es válida');
+  const hora = typeof b?.control_hora === 'string' && b.control_hora ? b.control_hora : null;
+  if (hora !== null && !/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) return malo('La hora del control no es válida');
+  const detalle = typeof b?.control_detalle === 'string' ? b.control_detalle.trim().slice(0, 80) : '';
+  const preguntas = typeof b?.control_preguntas === 'string' ? b.control_preguntas.trim().slice(0, 1500) : '';
+  const resumen = b?.resumen_activo === false || b?.resumen_activo === 0 ? 0 : 1;
+
+  // si cambió la fecha del control, el aviso vuelve a quedar pendiente
+  const previa = await env.DB.prepare('SELECT control_fecha FROM configuracion WHERE paciente_id = ?').bind(pacienteId).first<{ control_fecha: string | null }>();
+  const reiniciarAviso = (previa?.control_fecha ?? null) !== fecha;
+
+  await env.DB.prepare(
+    `INSERT INTO configuracion (paciente_id, indicacion_ojo, indicacion_dias, premio_meta, premio_texto, control_fecha, control_hora,
+                                control_detalle, control_preguntas, resumen_activo, updated_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, datetime('now'))
+     ON CONFLICT(paciente_id) DO UPDATE SET
+       indicacion_ojo = ?2, indicacion_dias = ?3, premio_meta = ?4, premio_texto = ?5, control_fecha = ?6, control_hora = ?7,
+       control_detalle = ?8, control_preguntas = ?9, resumen_activo = ?10, updated_at = datetime('now')`
+  ).bind(pacienteId, ojo, dias.join(','), meta, premioTexto || null, fecha, hora, detalle || null, preguntas || null, resumen).run();
+  if (reiniciarAviso) await env.DB.prepare('UPDATE configuracion SET control_aviso_enviado = NULL WHERE paciente_id = ?').bind(pacienteId).run();
+
+  await avisarCambio(env, pacienteId);
+  return json({ ok: true }, origin);
+};
+
+// "Se sacó el parche": cualquiera de la familia puede anotarlo (aunque otra persona haya
+// registrado el parche). hora = null lo deshace.
+export const sacarParche: Handler = async (request, env, origin) => {
+  const perfil = await perfilDesdeSesion(request, env);
+  if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
+  const b = await readJson<{ paciente_id?: string; fecha?: string; hora?: string | null }>(request);
+  const pacienteId = b?.paciente_id, fecha = b?.fecha;
+  if (typeof pacienteId !== 'string' || typeof fecha !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return json({ ok: false, error: 'Datos inválidos' }, origin, { status: 400 });
+  if (!(await pacienteDeLaCuenta(env, pacienteId, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
+  const cuenta = await env.DB.prepare('SELECT plan FROM cuentas WHERE id = ?').bind(perfil.cuenta_id).first<{ plan: string }>();
+  if (cuenta?.plan !== 'completo') return json({ ok: false, error: 'Registrar cuándo se sacó el parche es parte del plan completo' }, origin, { status: 403 });
+
+  const reg = await env.DB.prepare('SELECT hora FROM registros WHERE paciente_id = ? AND fecha = ?').bind(pacienteId, fecha).first<{ hora: string }>();
+  if (!reg) return json({ ok: false, error: 'Ese día no tiene parche registrado' }, origin, { status: 404 });
+
+  let horaFin: string | null = null;
+  if (b?.hora != null) {
+    const ms = Date.parse(b.hora);
+    if (Number.isNaN(ms) || ms < Date.parse(reg.hora) || ms > Date.now() + 5 * 60000) {
+      return json({ ok: false, error: 'La hora en que se sacó el parche no es válida' }, origin, { status: 400 });
+    }
+    horaFin = new Date(ms).toISOString();
+  }
+  // con "se sacó" ya no hace falta el aviso de "ya se puede sacar"
+  await env.DB.prepare('UPDATE registros SET hora_fin = ?, notificado = CASE WHEN ? IS NULL THEN notificado ELSE 1 END WHERE paciente_id = ? AND fecha = ?')
+    .bind(horaFin, horaFin, pacienteId, fecha).run();
+  await avisarCambio(env, pacienteId);
+  return json({ ok: true }, origin);
 };
 
 export const guardarConfig: Handler = async (request, env, origin) => {

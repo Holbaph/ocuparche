@@ -15,7 +15,7 @@ import * as pacientes from './routes-pacientes';
 import * as cuenta from './routes-cuenta';
 import * as admin from './routes-admin';
 import * as juego from './routes-juego';
-import { revisarYAvisar } from './reminders';
+import { revisarYAvisar, revisarTratamiento } from './reminders';
 
 export type { Env };
 export { PacienteRoom } from './PacienteRoom';
@@ -248,6 +248,8 @@ export default {
 
       'GET /api/config': pacientes.obtenerConfig,
       'PUT /api/config': pacientes.guardarConfig,
+      'PUT /api/tratamiento': pacientes.guardarTratamiento,
+      'PUT /api/registros/fin': pacientes.sacarParche,
 
       'GET /api/juego': juego.obtenerJuego,
       'PUT /api/juego': juego.guardarJuego,
@@ -298,6 +300,14 @@ export default {
     // Una vez por hora: borra sesiones, tokens y contadores vencidos (si no,
     // las tablas crecen para siempre).
     if (new Date().getUTCMinutes() === 0) ctx.waitUntil(limpiarVencidos(env).catch((e) => console.error('[cron] limpieza falló', e)));
+    // Control con el oftalmólogo y resumen semanal: no hace falta cada minuto, cada 10 alcanza.
+    if (new Date().getUTCMinutes() % 10 === 0) {
+      ctx.waitUntil(
+        revisarTratamiento(env)
+          .then((r) => console.log('[cron] tratamiento:', r))
+          .catch((e) => console.error('[cron] tratamiento falló', e))
+      );
+    }
     ctx.waitUntil(
       revisarYAvisar(env)
         .then((r) => console.log('[cron] avisos enviados:', r.avisos))

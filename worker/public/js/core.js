@@ -63,7 +63,7 @@ const Pacientes = {
 };
 
 function rowToRegistro(r) {
-  return { fecha: r.fecha, ojo: r.ojo, hora: r.hora, registradoPor: r.registrado_por, id: r.id };
+  return { fecha: r.fecha, ojo: r.ojo, hora: r.hora, horaFin: r.hora_fin || null, registradoPor: r.registrado_por, id: r.id };
 }
 
 // ---------- registros ----------
@@ -77,6 +77,12 @@ const DB = {
 
   async guardarRegistro(pacienteId, fecha, ojo, horaISO) {
     const { data } = await api('/registros', { method: 'PUT', body: { paciente_id: pacienteId, fecha, ojo, hora: horaISO } });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo guardar');
+  },
+
+  // "Se sacó el parche" (plan completo). horaISO = null lo deshace.
+  async sacarParche(pacienteId, fecha, horaISO) {
+    const { data } = await api('/registros/fin', { method: 'PUT', body: { paciente_id: pacienteId, fecha, hora: horaISO } });
     if (!data?.ok) throw new Error(data?.error || 'No se pudo guardar');
   },
 
@@ -115,6 +121,15 @@ const DB = {
 
 // ---------- duración del parche (por paciente) ----------
 const Config = {
+  // duración del parche + indicaciones del oftalmólogo, premio y próximo control
+  async obtener(pacienteId) {
+    const { data } = await api(`/config?paciente_id=${encodeURIComponent(pacienteId)}`);
+    return data?.ok ? { duracion_minutos: data.duracion_minutos, tratamiento: data.tratamiento || null } : { duracion_minutos: 120, tratamiento: null };
+  },
+  async guardarTratamiento(pacienteId, t) {
+    const { data } = await api('/tratamiento', { method: 'PUT', body: { paciente_id: pacienteId, ...t } });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo guardar');
+  },
   async obtenerDuracionMinutos(pacienteId) {
     const { data } = await api(`/config?paciente_id=${encodeURIComponent(pacienteId)}`);
     return data?.ok ? data.duracion_minutos : 120;

@@ -14,6 +14,7 @@
   let realtimeConn = null;   // { cerrar() }
   let duracionMinutos = 120;
   let timerTick = null;
+  let trat = tratamientoPorDefecto(); // indicaciones del oftalmólogo, premio y control (plan completo)
   let juegoMinutos = 20;      // minutos de juego por día (0 = sin límite) — del paciente actual
 
   // El correo de recuperación/invitación trae #reset=TOKEN o #invite=TOKEN.
@@ -482,8 +483,7 @@
       entries = {};
       setBadge('down');
     }
-    duracionMinutos = await Config.obtenerDuracionMinutos(id);
-    document.getElementById('duracionInput').value = duracionMinutos;
+    await cargarConfigPaciente(id, true);
     actualizarDuracionHint(duracionMinutos);
     if (esPlanCompleto()) {
       try {
@@ -497,12 +497,29 @@
     if (!timerTick) timerTick = setInterval(renderTimer, 30000);
   }
 
+  // Duración del parche + indicaciones, premio y control del paciente. `rellenar`:
+  // volver a llenar el formulario (no se hace cuando el cambio llega en vivo desde
+  // otro dispositivo, para no pisar lo que se esté escribiendo).
+  async function cargarConfigPaciente(id, rellenar) {
+    const cfg = await Config.obtener(id);
+    duracionMinutos = cfg.duracion_minutos;
+    trat = { ...tratamientoPorDefecto(), ...(esPlanCompleto() && cfg.tratamiento ? cfg.tratamiento : {}) };
+    if (rellenar) {
+      document.getElementById('duracionInput').value = duracionMinutos;
+      rellenarFormTratamiento();
+    }
+  }
+
   function pararRealtime() {
     if (realtimeConn) { realtimeConn.cerrar(); realtimeConn = null; }
   }
   function suscribirRealtime(pacienteId) {
     realtimeConn = DB.suscribirRegistros(pacienteId, async () => {
-      try { entries = await DB.cargarRegistros(pacienteId); renderAll(); setBadge('ok'); }
+      try {
+        entries = await DB.cargarRegistros(pacienteId);
+        if (esPlanCompleto()) await cargarConfigPaciente(pacienteId, false);
+        renderAll(); setBadge('ok');
+      }
       catch (e) { setBadge('down'); }
     });
   }
@@ -515,6 +532,9 @@
     document.getElementById('duracionBloque').classList.toggle('hidden', !completo);
     document.getElementById('duracionUpsell').classList.toggle('hidden', completo);
 
+    document.getElementById('tratamientoBloque').classList.toggle('hidden', !completo);
+    document.getElementById('tratamientoUpsell').classList.toggle('hidden', completo);
+    document.getElementById('addFinBloque').classList.toggle('hidden', !completo);
     document.getElementById('juegoBloque').classList.toggle('hidden', !completo);
     document.getElementById('juegoUpsell').classList.toggle('hidden', completo);
     document.getElementById('openJuego').classList.toggle('hidden', !completo);
@@ -549,7 +569,9 @@
       await DB.guardarRegistro(pacienteActualId, id, side, horaISO);
       entries[id] = { fecha: id, ojo: side, hora: horaISO, registradoPor: perfil.id };
       renderAll();
-      showToast('Registrado: ojo ' + Utils.label(side).toLowerCase() + ' a las ' + Utils.fmtTime(horaISO));
+      const fueraDeIndicacion = esPlanCompleto() && trat.indicacion_ojo !== 'alternar' && trat.indicacion_ojo !== side;
+      showToast('Registrado: ojo ' + Utils.label(side).toLowerCase() + ' a las ' + Utils.fmtTime(horaISO) +
+        (fueraDeIndicacion ? ' — ojo: el oftalmólogo indicó el ' + trat.indicacion_ojo : ''));
     } catch (e) {
       showToast('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
     }
@@ -567,10 +589,19 @@
     document.getElementById('eyeDerecho').classList.toggle('patched', !!rec && rec.ojo === 'derecho');
     document.getElementById('eyeIzquierdo').classList.toggle('patched', !!rec && rec.ojo === 'izquierdo');
 
+    // "Se sacó el parche": tiempo real de uso (plan completo)
+    const sacar = document.getElementById('sacarBtn');
+    sacar.classList.toggle('hidden', !(esPlanCompleto() && rec));
+    sacar.classList.toggle('hecho', !!(rec && rec.horaFin));
+    sacar.textContent = rec && rec.horaFin ? '↩ Deshacer «se sacó el parche»' : '🧢 Se sacó el parche';
+
     if (rec) {
       const autor = personasCache[rec.registradoPor];
       line.innerHTML = '🩹 <span class="pill ' + rec.ojo + '">' + Utils.label(rec.ojo) + '</span> · puesto a las ' + Utils.fmtTime(rec.hora) +
         (autor ? '<span class="status-by">Registrado por ' + Utils.esc(autor.nombre) + '</span>' : '');
+      if (rec.horaFin) {
+        line.insertAdjacentHTML('beforeend', '<span class="status-by">🧢 Se sacó a las ' + Utils.fmtTime(rec.horaFin) + ' · lo usó ' + duracionTxt(usoMs(rec)) + '</span>');
+      }
       hint.innerHTML = '';
       undo.classList.remove('hidden');
     } else {
@@ -578,7 +609,11 @@
       undo.classList.add('hidden');
       const ids = Object.keys(entries).filter(k => k !== id).sort();
       const last = ids.length ? entries[ids[ids.length - 1]] : null;
-      if (last) {
+      if (esPlanCompleto() && !diaIndicado(today)) {
+        hint.innerHTML = '<span class="hint-chip">😴 Hoy es día de descanso según la indicación — no hace falta parche</span>';
+      } else if (esPlanCompleto() && trat.indicacion_ojo !== 'alternar') {
+        hint.innerHTML = '<span class="hint-chip">🩺 Según el oftalmólogo, hoy toca el ojo ' + trat.indicacion_ojo + '</span>';
+      } else if (last) {
         const suggestion = last.ojo === 'derecho' ? 'izquierdo' : 'derecho';
         hint.innerHTML = '<span class="hint-chip">💡 La última vez fue ojo ' + last.ojo + ' — hoy probablemente toca ' + suggestion + '</span>';
       } else {
@@ -596,14 +631,23 @@
     let streak = 0;
     const cursor = new Date();
     if (!entries[Utils.todayId()]) cursor.setDate(cursor.getDate() - 1);
-    while (entries[Utils.dateId(cursor)]) { streak++; cursor.setDate(cursor.getDate() - 1); }
+    for (let i = 0; i < 800; i++) {
+      if (entries[Utils.dateId(cursor)]) streak++;
+      else if (!diaIndicado(cursor)) { /* día de descanso: no corta la racha */ }
+      else break;
+      cursor.setDate(cursor.getDate() - 1);
+    }
 
     let constancia = 0;
     if (total > 0) {
       const first = Utils.parseId(ids[0]);
       const now = new Date();
-      const days = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(first.getFullYear(), first.getMonth(), first.getDate())) / 86400000) + 1;
-      constancia = Math.round(100 * total / Math.max(days, 1));
+      // solo cuentan los días en que el oftalmólogo indicó parche
+      let indicados = 0;
+      for (const d = new Date(first.getFullYear(), first.getMonth(), first.getDate()); d <= now; d.setDate(d.getDate() + 1)) {
+        if (diaIndicado(d)) indicados++;
+      }
+      constancia = Math.min(100, Math.round(100 * total / Math.max(indicados, 1)));
     }
     return { total, countD, countI, streak, constancia };
   }
@@ -641,9 +685,10 @@
       } else {
         const id = Utils.dateId(d);
         const rec = entries[id];
-        div.className = 'cal-cell' + (rec ? ' ' + rec.ojo : '') + (id === Utils.todayId() ? ' today' : '');
+        const descanso = !rec && !diaIndicado(d);
+        div.className = 'cal-cell' + (rec ? ' ' + rec.ojo : '') + (id === Utils.todayId() ? ' today' : '') + (descanso ? ' descanso' : '');
         div.textContent = d.getDate();
-        div.title = Utils.fmtShort(d) + (rec ? ' · ' + Utils.label(rec.ojo) + ' · ' + Utils.fmtTime(rec.hora) : ' · sin registro');
+        div.title = Utils.fmtShort(d) + (rec ? ' · ' + Utils.label(rec.ojo) + ' · ' + Utils.fmtTime(rec.hora) + (rec.horaFin ? ' · usó ' + duracionTxt(usoMs(rec)) : '') : descanso ? ' · día de descanso' : ' · sin registro');
       }
       grid.appendChild(div);
     }
@@ -673,14 +718,14 @@
         row.innerHTML =
           '<span class="side-dot ' + rec.ojo + '"></span>' +
           '<div class="txt"><div class="d1">' + Utils.fmtShort(Utils.parseId(id)) + ' · ' + Utils.label(rec.ojo) + '</div>' +
-          '<div class="d2">' + Utils.fmtTime(rec.hora) + (autor ? ' · ' + Utils.esc(autor.nombre) : '') + '</div></div>' +
+          '<div class="d2">' + Utils.fmtTime(rec.hora) + (rec.horaFin ? ' · usó ' + duracionTxt(usoMs(rec)) : '') + (autor ? ' · ' + Utils.esc(autor.nombre) : '') + '</div></div>' +
           '<button class="del" data-act="del" title="Eliminar">🗑</button>';
       }
       list.appendChild(row);
     });
   }
 
-  function renderAll() { renderToday(); renderStats(); renderCalendar(); renderList(); renderTimer(); }
+  function renderAll() { renderToday(); renderStats(); renderCalendar(); renderList(); renderTimer(); renderTratamiento(); }
 
   // ================= TEMPORIZADOR =================
   function actualizarDuracionHint(minutos) {
@@ -711,6 +756,14 @@
       sandTop.setAttribute('y', 26); sandTop.setAttribute('height', 110);
       sandBottom.setAttribute('y', 254); sandBottom.setAttribute('height', 0);
       text.textContent = 'Cuando registres el parche, aquí vas a ver cuánto falta ⏳';
+      return;
+    }
+
+    if (rec.horaFin) {
+      card.classList.remove('idle'); card.classList.add('done');
+      sandTop.setAttribute('y', 136); sandTop.setAttribute('height', 0);
+      sandBottom.setAttribute('y', 144); sandBottom.setAttribute('height', 110);
+      text.textContent = '🧢 Se sacó el parche a las ' + Utils.fmtTime(rec.horaFin) + ' · lo usó ' + duracionTxt(usoMs(rec)) + ' ✅';
       return;
     }
 
@@ -967,13 +1020,154 @@
     const timeVal = document.getElementById('addTime').value || '09:00';
     if (!dateVal) { showToast('Elige una fecha'); return; }
     const iso = new Date(dateVal + 'T' + timeVal + ':00').toISOString();
+    const finVal = esPlanCompleto() ? document.getElementById('addFin').value : '';
+    const finIso = finVal ? new Date(dateVal + 'T' + finVal + ':00').toISOString() : null;
+    if (finIso && new Date(finIso) <= new Date(iso)) { showToast('La hora en que se sacó debe ser después de la hora en que se puso'); return; }
     try {
       await DB.guardarRegistro(pacienteActualId, dateVal, chosenSide, iso);
-      entries[dateVal] = { fecha: dateVal, ojo: chosenSide, hora: iso, registradoPor: perfil.id };
+      entries[dateVal] = { fecha: dateVal, ojo: chosenSide, hora: iso, horaFin: null, registradoPor: perfil.id };
+      if (finIso) {
+        await DB.sacarParche(pacienteActualId, dateVal, finIso);
+        entries[dateVal].horaFin = finIso;
+      }
+      document.getElementById('addFin').value = '';
       renderAll();
       addForm.classList.remove('show');
       showToast('Registro guardado');
     } catch (e) { showToast('No se pudo guardar, intenta de nuevo'); }
+  });
+
+  // ================= CONTROL DEL TRATAMIENTO (plan completo) =================
+  // Portado de Ojitos de Mili: tiempo real de uso, indicación del oftalmólogo
+  // (qué ojo y qué días), premio por constancia, próximo control y resumen semanal.
+  function tratamientoPorDefecto() {
+    return {
+      indicacion_ojo: 'alternar', indicacion_dias: [0, 1, 2, 3, 4, 5, 6], premio_meta: null, premio_texto: null,
+      control_fecha: null, control_hora: null, control_detalle: null, control_preguntas: null, resumen_activo: 1,
+    };
+  }
+  function diaIndicado(d) { return trat.indicacion_dias.includes(d.getDay()); }
+  function usoMs(rec) { return rec && rec.horaFin ? new Date(rec.horaFin) - new Date(rec.hora) : 0; }
+  function duracionTxt(ms) {
+    const min = Math.max(1, Math.round(ms / 60000));
+    const h = Math.floor(min / 60), m = min % 60;
+    return h > 0 ? h + ' h' + (m ? ' ' + m + ' min' : '') : m + ' min';
+  }
+  function semanaActual() {
+    const hoy = new Date();
+    const lunes = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - ((hoy.getDay() + 6) % 7));
+    return [0, 1, 2, 3, 4, 5, 6].map(i => new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i));
+  }
+
+  function renderTratamiento() {
+    const card = document.getElementById('tratamientoCard');
+    if (!esPlanCompleto() || !pacienteActualId) { card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+    const $ = (id) => document.getElementById(id);
+
+    // --- esta semana ---
+    const dias = semanaActual();
+    const indicados = dias.filter(diaIndicado).length;
+    const usados = dias.filter(d => entries[Utils.dateId(d)]);
+    const conFin = usados.map(d => usoMs(entries[Utils.dateId(d)])).filter(ms => ms > 0);
+    let texto = 'Usó el parche ' + usados.length + ' de ' + indicados + ' días indicados';
+    if (conFin.length) texto += ' · promedio ' + duracionTxt(conFin.reduce((a, b) => a + b, 0) / conFin.length) + ' por día';
+    $('semanaTexto').textContent = texto + '.';
+
+    // --- premio por constancia ---
+    const meta = trat.premio_meta;
+    const barra = $('premioBarra'), pTexto = $('premioTexto');
+    if (meta) {
+      const cumplida = usados.length >= meta;
+      barra.classList.remove('hidden'); pTexto.classList.remove('hidden');
+      barra.classList.toggle('lleno', cumplida);
+      $('premioBarraRelleno').style.width = Math.min(100, Math.round(100 * usados.length / meta)) + '%';
+      const premio = trat.premio_texto ? ': ' + trat.premio_texto : '';
+      pTexto.textContent = cumplida
+        ? '🎉 ¡Meta de la semana cumplida! Premio' + premio
+        : '🎁 Faltan ' + (meta - usados.length) + (meta - usados.length === 1 ? ' día' : ' días') + ' para el premio' + premio;
+    } else { barra.classList.add('hidden'); pTexto.classList.add('hidden'); }
+
+    // --- próximo control ---
+    const ctl = $('controlBloque');
+    if (!trat.control_fecha) { ctl.classList.add('hidden'); return; }
+    ctl.classList.remove('hidden');
+    const f = Utils.parseId(trat.control_fecha);
+    const hoy0 = new Date(); hoy0.setHours(0, 0, 0, 0);
+    const diff = Math.round((f - hoy0) / 86400000);
+    const cuando = diff === 0 ? 'hoy' : diff === 1 ? 'mañana' : diff > 1 ? 'en ' + diff + ' días' : 'pasó hace ' + (-diff) + (diff === -1 ? ' día' : ' días');
+    $('controlFecha').textContent = Utils.fmtLong(f) + (trat.control_hora ? ', ' + trat.control_hora : '') + ' · ' + cuando + (diff < 0 ? ' — actualiza la fecha del próximo' : '');
+    ctl.classList.toggle('cerca', diff >= 0 && diff <= 1);
+    const det = $('controlDetalle');
+    det.textContent = trat.control_detalle || '';
+    det.classList.toggle('hidden', !trat.control_detalle);
+    const pr = $('controlPreguntas');
+    pr.textContent = trat.control_preguntas ? '📝 Para preguntar:\n' + trat.control_preguntas : '';
+    pr.classList.toggle('hidden', !trat.control_preguntas);
+  }
+
+  function rellenarFormTratamiento() {
+    const $ = (id) => document.getElementById(id);
+    document.querySelectorAll('#indOjoSeg button').forEach(b => b.classList.toggle('active', b.dataset.val === trat.indicacion_ojo));
+    document.querySelectorAll('#indDiasSeg button').forEach(b => b.classList.toggle('active', trat.indicacion_dias.includes(Number(b.dataset.dia))));
+    $('premioMeta').value = trat.premio_meta ? String(trat.premio_meta) : '';
+    $('premioTextoInput').value = trat.premio_texto || '';
+    $('controlFechaInput').value = trat.control_fecha || '';
+    $('controlHoraInput').value = trat.control_hora || '';
+    $('controlDetalleInput').value = trat.control_detalle || '';
+    $('controlPreguntasInput').value = trat.control_preguntas || '';
+    $('resumenActivo').checked = trat.resumen_activo !== 0;
+  }
+
+  document.getElementById('indOjoSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-val]');
+    if (b) document.querySelectorAll('#indOjoSeg button').forEach(x => x.classList.toggle('active', x === b));
+  });
+  document.getElementById('indDiasSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-dia]');
+    if (b) b.classList.toggle('active');
+  });
+  document.getElementById('tratamientoGuardar').addEventListener('click', async () => {
+    if (!pacienteActualId) return;
+    const $ = (id) => document.getElementById(id);
+    const ojoBtn = document.querySelector('#indOjoSeg button.active');
+    const dias = [...document.querySelectorAll('#indDiasSeg button.active')].map(b => Number(b.dataset.dia));
+    if (!dias.length) { showToast('Marca al menos un día de la semana'); return; }
+    const nuevo = {
+      indicacion_ojo: ojoBtn ? ojoBtn.dataset.val : 'alternar',
+      indicacion_dias: dias,
+      premio_meta: $('premioMeta').value ? Number($('premioMeta').value) : null,
+      premio_texto: $('premioTextoInput').value.trim() || null,
+      control_fecha: $('controlFechaInput').value || null,
+      control_hora: $('controlHoraInput').value || null,
+      control_detalle: $('controlDetalleInput').value.trim() || null,
+      control_preguntas: $('controlPreguntasInput').value.trim() || null,
+      resumen_activo: $('resumenActivo').checked ? 1 : 0,
+    };
+    try {
+      await Config.guardarTratamiento(pacienteActualId, nuevo);
+      trat = nuevo;
+      renderAll();
+      showToast('Tratamiento guardado');
+    } catch (e) { showToast(e.message || 'No se pudo guardar, intenta de nuevo'); }
+  });
+
+  document.getElementById('sacarBtn').addEventListener('click', async () => {
+    const id = Utils.todayId();
+    const rec = entries[id];
+    if (!rec || !pacienteActualId) return;
+    const nueva = rec.horaFin ? null : new Date().toISOString();
+    try {
+      await DB.sacarParche(pacienteActualId, id, nueva);
+      rec.horaFin = nueva;
+      renderAll();
+      showToast(nueva ? 'Anotado: se sacó el parche a las ' + Utils.fmtTime(nueva) : 'Listo, sigue con el parche puesto');
+    } catch (e) { showToast(e.message || 'No se pudo guardar, intenta de nuevo'); }
+  });
+
+  document.getElementById('controlEditar').addEventListener('click', () => {
+    openSheet(); refrescarEstadoAvisos();
+    setTimeout(() => document.getElementById('tratamientoSeccion').scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
   });
 
   // ================= arranque =================

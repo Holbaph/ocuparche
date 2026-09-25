@@ -538,3 +538,22 @@ body.jugando, body.con-camara{ overflow:hidden; }
 }
 .cam-cuenta.late{ animation:cam-cuenta 1s ease-out; }
 @keyframes cam-cuenta{ 0%{ transform:scale(1.8); opacity:0; } 25%{ transform:scale(1); opacity:1; } 100%{ transform:scale(.8); opacity:0; } }
+
+/* ---- control del tratamiento ---- */
+.btn-sacar{ margin-top:12px; padding:10px 16px; border-radius:12px; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); font-weight:800; font-size:13.5px; cursor:pointer; }
+.btn-sacar.hecho{ background:transparent; color:var(--ink-faint); font-weight:700; font-size:12.5px; border-style:dashed; }
+.trat-card .trat-titulo{ margin:0 0 6px; font-weight:800; font-size:14px; }
+.trat-card .trat-linea{ margin:4px 0; font-size:13.5px; color:var(--ink-soft); }
+.trat-barra{ height:12px; border-radius:99px; background:var(--line); overflow:hidden; margin:10px 0 4px; }
+.trat-barra > div{ height:100%; width:0; background:var(--brand); border-radius:99px; transition:width .5s; }
+.trat-barra.lleno > div{ background:var(--teal); }
+.trat-control{ margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
+.trat-detalle{ font-weight:700; color:var(--ink); }
+.trat-preguntas{ margin-top:8px; white-space:pre-wrap; font-size:13px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:10px 12px; color:var(--ink-soft); }
+.trat-control.cerca .trat-titulo{ color:var(--brand-dark); }
+.trat-sub{ font-size:12px; color:var(--ink-faint); margin:0 0 4px; }
+.trat-label{ display:block; margin:14px 0 6px; font-size:12.5px; font-weight:700; color:var(--ink-soft); }
+.trat-input{ width:100%; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); font-size:14px; font-family:inherit; }
+.trat-check{ display:flex; gap:8px; align-items:flex-start; margin-top:14px; font-size:12.5px; color:var(--ink-soft); }
+.cal-cell.descanso{ opacity:.45; }
+#indDiasSeg button{ flex:1 1 36px; padding:9px 2px; }

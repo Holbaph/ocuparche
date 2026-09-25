@@ -217,6 +217,7 @@
         <div class="status-date" id="statusDate">—</div>
         <div id="statusLine"></div>
         <div id="hintChip"></div>
+        <button class="btn-sacar hidden" id="sacarBtn">🧢 Se sacó el parche</button>
         <button class="undo-link hidden" id="undoBtn">Deshacer registro de hoy</button>
       </div>
     </div>
@@ -244,6 +245,23 @@
       <p class="timer-locked-note hidden" id="timerLockedNote">
         ⏳ y 🔔 son parte del plan completo — <a href="#" id="irAPrecios">actívalo desde $3.500 CLP</a>
       </p>
+    </div>
+
+    <!-- Control del tratamiento (plan completo): semana, premio y próximo control con el oftalmólogo -->
+    <div class="card trat-card hidden" id="tratamientoCard">
+      <div id="semanaBloque">
+        <p class="trat-titulo">📊 Esta semana</p>
+        <p class="trat-linea" id="semanaTexto"></p>
+        <div class="trat-barra hidden" id="premioBarra"><div id="premioBarraRelleno"></div></div>
+        <p class="trat-linea hidden" id="premioTexto"></p>
+      </div>
+      <div id="controlBloque" class="trat-control hidden">
+        <p class="trat-titulo">🩺 Próximo control</p>
+        <p class="trat-linea" id="controlFecha"></p>
+        <p class="trat-linea trat-detalle hidden" id="controlDetalle"></p>
+        <div class="trat-preguntas hidden" id="controlPreguntas"></div>
+        <button class="undo-link" id="controlEditar" style="margin-top:8px">✏️ Editar control y preguntas</button>
+      </div>
     </div>
 
     <div class="stats-row">
@@ -413,6 +431,10 @@
         <label for="addTime">Hora</label>
         <input type="time" id="addTime">
       </div>
+      <div id="addFinBloque" class="hidden">
+        <label for="addFin">Se sacó a las (opcional)</label>
+        <input type="time" id="addFin">
+      </div>
       <div class="row-btns">
         <button class="btn-save" id="addSave">Guardar</button>
         <button class="btn-cancel" id="addCancel">Cancelar</button>
@@ -435,6 +457,57 @@
     </div>
     <div id="duracionUpsell" class="upsell-box hidden">
       <p>El temporizador y los avisos automáticos son parte del <b>plan completo</b>.</p>
+      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+    </div>
+  </section>
+
+  <section class="block" id="tratamientoSeccion">
+    <p class="block-title">Tratamiento y controles</p>
+    <div id="tratamientoBloque">
+      <p class="trat-sub">Lo que indicó el oftalmólogo, el premio por constancia y el próximo control.</p>
+
+      <label class="trat-label">¿Qué ojo se tapa?</label>
+      <div class="seg" id="indOjoSeg">
+        <button type="button" data-val="alternar">Alternar</button>
+        <button type="button" data-val="derecho">Derecho</button>
+        <button type="button" data-val="izquierdo">Izquierdo</button>
+      </div>
+
+      <label class="trat-label">¿Qué días va el parche?</label>
+      <div class="seg wrap" id="indDiasSeg">
+        <button type="button" data-dia="1">Lu</button><button type="button" data-dia="2">Ma</button><button type="button" data-dia="3">Mi</button>
+        <button type="button" data-dia="4">Ju</button><button type="button" data-dia="5">Vi</button><button type="button" data-dia="6">Sá</button>
+        <button type="button" data-dia="0">Do</button>
+      </div>
+      <p class="trat-sub" style="margin:6px 0 0">Los días sin marcar son de descanso: no cuentan como falta.</p>
+
+      <label class="trat-label">🎁 Premio por constancia</label>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--ink-soft)">Meta:</span>
+        <select id="premioMeta" class="trat-input" style="width:auto">
+          <option value="">Sin premio</option>
+          <option value="1">1 día</option><option value="2">2 días</option><option value="3">3 días</option><option value="4">4 días</option>
+          <option value="5">5 días</option><option value="6">6 días</option><option value="7">7 días</option>
+        </select>
+        <span style="font-size:13px;color:var(--ink-soft)">a la semana</span>
+      </div>
+      <input type="text" id="premioTextoInput" class="trat-input" maxlength="60" placeholder="Premio (ej: helado, salir al parque)" style="margin-top:8px">
+
+      <label class="trat-label">🩺 Próximo control con el oftalmólogo</label>
+      <div style="display:flex;gap:8px">
+        <input type="date" id="controlFechaInput" class="trat-input">
+        <input type="time" id="controlHoraInput" class="trat-input" style="width:120px">
+      </div>
+      <input type="text" id="controlDetalleInput" class="trat-input" maxlength="80" placeholder="Con quién / dónde (ej: Dra. Pérez, Clínica…)" style="margin-top:8px">
+      <textarea id="controlPreguntasInput" class="trat-input" rows="4" maxlength="1500" placeholder="Preguntas para llevar al control, cambios que notaste, dudas…" style="margin-top:8px;resize:vertical"></textarea>
+      <p class="trat-sub" style="margin:4px 0 0">Te avisamos por notificación el día antes del control.</p>
+
+      <label class="trat-check"><input type="checkbox" id="resumenActivo"> Recibir un resumen de la semana por aviso (domingos por la tarde)</label>
+
+      <button class="btn-save small" id="tratamientoGuardar" style="margin-top:12px">Guardar</button>
+    </div>
+    <div id="tratamientoUpsell" class="upsell-box hidden">
+      <p>Las indicaciones del oftalmólogo, el premio, los controles y el resumen semanal son parte del <b>plan completo</b>.</p>
       <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
     </div>
   </section>
