@@ -68,17 +68,17 @@ const Juego = (function () {
 
   // ---------- armario: qué prendas hay y en qué colores ----------
   const TIPOS = {
-    arriba: { polera: 'Polera', 'manga-larga': 'Polera manga larga', top: 'Top', poleron: 'Polerón', blusa: 'Blusa bordada', 'top-concha': 'Top de conchitas', camisa: 'Camisa', futbol: 'Camiseta de fútbol', rayas: 'Polera a rayas', tirantes: 'Polera de tirantes', sweater: 'Sweater', crop: 'Top corto',
+    arriba: { polera: 'Polera', 'manga-larga': 'Polera manga larga', musculosa: 'Musculosa', top: 'Top', poleron: 'Polerón', blusa: 'Blusa bordada', 'top-concha': 'Top de conchitas', camisa: 'Camisa', futbol: 'Camiseta de fútbol', rayas: 'Polera a rayas', tirantes: 'Polera de tirantes', sweater: 'Sweater', crop: 'Top corto',
       'heroe-rayo': 'Traje de héroe (rayo)', 'heroe-estrella': 'Traje de héroe (estrella)', 'heroe-escudo': 'Traje de héroe (escudo)', 'heroe-corazon': 'Traje de héroe (corazón)' },
-    abajo: { jeans: 'Jeans', falda: 'Falda', short: 'Short', 'falda-larga': 'Falda larga', bombacho: 'Pantalón bombacho', 'cola-sirena': 'Cola de sirena', buzo: 'Buzo', bermuda: 'Bermuda', calzas: 'Calzas' },
-    vestido: { vestido: 'Vestido', 'vestido-largo': 'Vestido largo', 'vestido-princesa': 'Vestido de princesa', 'vestido-tutu': 'Vestido de tutú', 'vestido-flores': 'Vestido de flores', 'vestido-verano': 'Vestido de verano', 'vestido-fiesta': 'Vestido de fiesta', overol: 'Overol de jeans' },
-    encima: { chaqueta: 'Chaqueta', capa: 'Capa', chaleco: 'Chaleco', abrigo: 'Abrigo largo' },
+    abajo: { jeans: 'Jeans', falda: 'Falda', short: 'Short', 'falda-larga': 'Falda larga', bombacho: 'Pantalón bombacho', 'cola-sirena': 'Cola de sirena', buzo: 'Buzo', bermuda: 'Bermuda', calzas: 'Calzas', 'short-botones': 'Short con botones', jardinera: 'Jardinera' },
+    vestido: { vestido: 'Vestido', 'vestido-lunares': 'Vestido de lunares', 'vestido-largo': 'Vestido largo', 'vestido-princesa': 'Vestido de princesa', 'vestido-tutu': 'Vestido de tutú', 'vestido-flores': 'Vestido de flores', 'vestido-verano': 'Vestido de verano', 'vestido-fiesta': 'Vestido de fiesta', overol: 'Overol de jeans' },
+    encima: { chaqueta: 'Chaqueta', capa: 'Capa', chaleco: 'Chaleco', abrigo: 'Abrigo largo', ruana: 'Ruana' },
     zapatos: { zapatillas: 'Zapatillas', botas: 'Botas', botines: 'Botines', balerinas: 'Balerinas', sandalias: 'Sandalias', mocasines: 'Mocasines', tacos: 'Zapatos de fútbol' },
-    cabeza: { moño: 'Moño', collet: 'Collet', tiara: 'Tiara', flor: 'Flor', cintillo: 'Cintillo', gorro: 'Jockey', 'jockey-plano': 'Jockey plano', casco: 'Casco', corona: 'Corona', 'gorro-lana': 'Gorro de lana', sombrero: 'Sombrero', boina: 'Boina' },
+    cabeza: { moño: 'Moño', 'moño-lunares': 'Moño de lunares', 'corona-flores': 'Corona de flores', collet: 'Collet', tiara: 'Tiara', flor: 'Flor', cintillo: 'Cintillo', gorro: 'Jockey', 'jockey-plano': 'Jockey plano', casco: 'Casco', corona: 'Corona', 'gorro-lana': 'Gorro de lana', sombrero: 'Sombrero', boina: 'Boina' },
     cara: { lentes: 'Lentes de sol', 'lentes-corazon': 'Lentes de corazón', 'lentes-redondos': 'Lentes redondos', antifaz: 'Antifaz de héroe' },
-    cuello: { cadena: 'Cadena', collar: 'Collar de perlas', bufanda: 'Bufanda', mostacillas: 'Collar de mostacillas' },
+    cuello: { cadena: 'Cadena', collar: 'Collar de perlas', bufanda: 'Bufanda', mostacillas: 'Collar de mostacillas', concha: 'Collar de conchita', humita: 'Humita' },
     muneca: { reloj: 'Reloj', pulsera: 'Pulsera', guantes: 'Guantes' },
-    orejas: { aros: 'Aros', argollas: 'Argollas' },
+    orejas: { aros: 'Aros', argollas: 'Argollas', perlas: 'Perlitas', corazones: 'Aros de corazón', estrellas: 'Aros de estrella', largos: 'Aros largos' },
   };
   // Con estos, las botas van "metidas" (por encima del pantalón).
   const PANTALONES = ['jeans', 'bombacho', 'buzo', 'calzas'];
@@ -143,6 +143,8 @@ const Juego = (function () {
       ['corona', [C.dorado, C.plateado, C.rosado]],
       ['gorro-lana', [C.rojo, C.azul, C.negro, C.verde, C.amarillo]],
       ['moño', [C.rosado, C.rojo, C.celeste, C.morado], 'f'],
+      ['moño-lunares', [C.rojo, C.rosado], 'f'],
+      ['corona-flores', [C.rosado, C.amarillo, C.blanco], 'f'],
       ['collet', [C.amarillo, C.rosado, C.lila], 'f'],
       ['tiara', [C.dorado, C.plateado], 'f'],
       ['flor', [C.rojo, C.blanco, C.rosado, C.amarillo], 'f'],
@@ -163,6 +165,8 @@ const Juego = (function () {
       ['bufanda', [C.rojo, C.azul, C.amarillo, C.negro, C.verde]],
       ['collar', [C.blanco, C.rosado, C.dorado, C.turquesa], 'f'],
       ['mostacillas', [C.rosado, C.celeste, C.amarillo]],
+      ['concha', [C.turquesa]],
+      ['humita', [C.naranjo, C.rojo, C.negro]],
     ],
     muneca: [
       ['reloj', [C.negro, C.dorado, C.plateado, C.rojo, C.azul]],
@@ -172,6 +176,10 @@ const Juego = (function () {
     orejas: [
       ['aros', [C.dorado, C.plateado, C.rosado], 'f'],
       ['argollas', [C.dorado, C.plateado, C.negro], 'f'],
+      ['perlas', [C.dorado, C.plateado, C.blanco], 'f'],
+      ['corazones', [C.rosado, C.rojo], 'f'],
+      ['estrellas', [C.dorado, C.celeste], 'f'],
+      ['largos', [C.lila, C.dorado], 'f'],
     ],
   };
 
@@ -390,12 +398,96 @@ const Juego = (function () {
     { id: 'stitch', nombre: 'Stitch', grupo: 'Lilo y Stitch', especie: 'stitch', ropa: { cuello: { t: 'mostacillas', c: C.rosado } } },
     { id: 'angel', nombre: 'Ángel', grupo: 'Lilo y Stitch', especie: 'angel', ropa: { cabeza: { t: 'flor', c: C.amarillo } } },
   ];
+  // ---- de Ojitos de Mili: reyes de Arendelle, familia Madrigal, videos y Disney ----
+  PERSONAJES.push(
+    {
+      id: 'agnarr', nombre: 'Rey Agnarr', grupo: 'Frozen', piel: '#f6d7bd', ojos: '#4f7fb5', peloEstilo: 'corto', flequillo: 'lado', peloColor: '#8a5a3a',
+      ropa: { arriba: { t: 'camisa', c: '#2f5a4a' }, abajo: { t: 'jeans', c: '#2a2f3a' }, encima: { t: 'capa', c: '#2f4a7a' }, zapatos: { t: 'botas', c: C.negro }, cabeza: { t: 'corona', c: C.dorado } },
+    },
+    {
+      id: 'iduna', nombre: 'Reina Iduna', grupo: 'Frozen', piel: '#f6d7bd', ojos: '#4f7fb5', peloEstilo: 'tomate', peloColor: '#7a3e24',
+      ropa: { vestido: { t: 'vestido-largo', c: '#6b4c9a' }, cabeza: { t: 'tiara', c: C.dorado }, cuello: { t: 'cadena', c: C.dorado }, zapatos: { t: 'balerinas', c: C.dorado } },
+    },
+    {
+      id: 'alma', nombre: 'Abuela Alma', grupo: 'Encanto', piel: '#c98e64', ojos: '#4a3222', peloEstilo: 'tomate', flequillo: 'sin', peloColor: '#c9c9c9',
+      ropa: { vestido: { t: 'vestido-largo', c: '#3a2a4a' }, cuello: { t: 'collar', c: C.dorado }, orejas: { t: 'perlas', c: C.dorado }, zapatos: { t: 'balerinas', c: C.negro } },
+    },
+    {
+      id: 'isabela', nombre: 'Isabela', grupo: 'Encanto', piel: '#c98e64', ojos: '#4a3222', peloEstilo: 'ondas', peloColor: '#1f1a2c',
+      ropa: { vestido: { t: 'vestido-largo', c: C.lila }, cabeza: { t: 'corona-flores', c: C.rosado }, zapatos: { t: 'balerinas', c: C.lila } },
+    },
+    {
+      id: 'luisa', nombre: 'Luisa', grupo: 'Encanto', piel: '#b97d52', ojos: '#4a3222', peloEstilo: 'corto', flequillo: 'recto', peloColor: '#1f1a1c',
+      ropa: { arriba: { t: 'musculosa', c: C.celeste }, abajo: { t: 'falda', c: '#4a3a6a' }, zapatos: { t: 'sandalias', c: C.cafe }, orejas: { t: 'aros', c: C.dorado } },
+    },
+    {
+      id: 'pepa', nombre: 'Pepa', grupo: 'Encanto', piel: '#e9c3a0', ojos: '#4a3222', peloEstilo: 'trenza', peloColor: '#c9432a',
+      ropa: { vestido: { t: 'vestido', c: C.amarillo }, zapatos: { t: 'balerinas', c: C.naranjo }, orejas: { t: 'aros', c: C.dorado } },
+    },
+    {
+      id: 'dolores', nombre: 'Dolores', grupo: 'Encanto', piel: '#d9a57c', ojos: '#4a3222', peloEstilo: 'ondas', flequillo: 'cortina', peloColor: '#4a3222',
+      ropa: { vestido: { t: 'vestido', c: C.lila }, cuello: { t: 'collar', c: C.dorado }, zapatos: { t: 'balerinas', c: C.lila } },
+    },
+    {
+      id: 'camilo', nombre: 'Camilo', grupo: 'Encanto', piel: '#d9a57c', ojos: '#4a3222', peloEstilo: 'afro', peloColor: '#6b4428',
+      ropa: { arriba: { t: 'camisa', c: C.blanco }, encima: { t: 'ruana', c: C.amarillo }, abajo: { t: 'jeans', c: C.cafe }, zapatos: { t: 'sandalias', c: C.cafe } },
+    },
+    {
+      id: 'antonio', nombre: 'Antonio', grupo: 'Encanto', piel: '#b97d52', ojos: '#4a3222', peloEstilo: 'afro', peloColor: '#1f1a1c',
+      ropa: { arriba: { t: 'camisa', c: C.blanco }, encima: { t: 'ruana', c: '#4f9a6a' }, abajo: { t: 'short', c: C.cafe }, zapatos: { t: 'sandalias', c: C.cafe } },
+    },
+    {
+      id: 'bruno-madrigal', nombre: 'Bruno', grupo: 'Encanto', piel: '#c98e64', ojos: '#5f8a4c', peloEstilo: 'crespo', peloColor: '#2b2220',
+      ropa: { arriba: { t: 'manga-larga', c: C.negro }, abajo: { t: 'jeans', c: C.negro }, encima: { t: 'ruana', c: '#3f8a5a' }, zapatos: { t: 'botines', c: C.cafe } },
+    },
+    {
+      id: 'luli', nombre: 'Luli Pampín', grupo: 'Canciones', piel: '#fbe3ce', ojos: '#8b5e3c', peloEstilo: 'largo', flequillo: 'recto', peloColor: '#d9b46a',
+      ropa: { vestido: { t: 'vestido-tutu', c: C.rosado }, cabeza: { t: 'moño', c: C.fucsia }, zapatos: { t: 'zapatillas', c: C.rosado }, orejas: { t: 'corazones', c: C.rosado } },
+    },
+    {
+      id: 'blippi', nombre: 'Blippi', grupo: 'Videos', piel: '#fbe3ce', ojos: '#4f7fb5', peloEstilo: 'corto', flequillo: 'lado', peloColor: '#8a5a3a',
+      // camisa celeste, "suspensores" naranjos (la pechera de la jardinera), lentes y gorro
+      ropa: { arriba: { t: 'camisa', c: '#5aa6e0' }, abajo: { t: 'jardinera', c: C.naranjo }, zapatos: { t: 'zapatillas', c: C.naranjo }, cara: { t: 'lentes-redondos', c: C.naranjo }, cabeza: { t: 'gorro-lana', c: '#4a78c2' }, cuello: { t: 'humita', c: C.naranjo } },
+    },
+    // Mickey y Minnie: cabeza de ratón sobre el cuerpo normal (sí se visten)
+    {
+      id: 'mickey', nombre: 'Mickey', grupo: 'Disney', raton: true, piel: '#1f1a1c', ojos: '#1f1a1c', peloEstilo: 'corto', peloColor: '#1f1a1c',
+      ropa: { abajo: { t: 'short-botones', c: C.rojo }, zapatos: { t: 'zapatillas', c: C.amarillo } },
+    },
+    {
+      id: 'minnie', nombre: 'Minnie', grupo: 'Disney', raton: true, piel: '#1f1a1c', ojos: '#1f1a1c', peloEstilo: 'corto', peloColor: '#1f1a1c',
+      ropa: { vestido: { t: 'vestido-lunares', c: C.rojo }, cabeza: { t: 'moño-lunares', c: C.rojo }, zapatos: { t: 'balerinas', c: C.amarillo } },
+    }
+  );
+
+  // ---- de Ojitos de Mili: personajes más parecidos a los originales (pestañas, pecas, cejas y prendas típicas) ----
+  const RASGOS = {
+    rumi: { pestanas: true }, mira: { pestanas: true }, zoey: { pestanas: true }, elsa: { pestanas: true }, anna: { pestanas: true, pecas: true },
+    moana: { pestanas: true }, rapunzel: { pestanas: true }, ariel: { pestanas: true }, bella: { pestanas: true }, cenicienta: { pestanas: true },
+    mirabel: { pestanas: true }, merida: { pestanas: true, pecas: true }, tiana: { pestanas: true }, jasmine: { pestanas: true },
+    kristoff: { cejas: 'marcadas' }, agnarr: { cejas: 'marcadas' }, iduna: { pestanas: true }, alma: { pestanas: true }, isabela: { pestanas: true },
+    luisa: { pestanas: true, cejas: 'marcadas' }, pepa: { pestanas: true, pecas: true }, dolores: { pestanas: true }, camilo: { cejas: 'marcadas' },
+    'bruno-madrigal': { cejas: 'marcadas' }, luli: { pestanas: true }, blippi: { cejas: 'marcadas' }, minnie: { pestanas: true },
+  };
+  PERSONAJES.forEach((p) => { if (RASGOS[p.id]) p.rasgos = RASGOS[p.id]; });
+  const retocar = (id, f) => { const p = PERSONAJES.find((x) => x.id === id); if (p) f(p); };
+  retocar('moana', (p) => { p.ropa.cuello = { t: 'concha', c: C.turquesa }; });
+  retocar('ariel', (p) => { p.ropa.abajo = { t: 'cola-sirena', c: '#3fa66a' }; });
+  retocar('bella', (p) => { p.ropa.orejas = { t: 'perlas', c: C.dorado }; });
+  retocar('cenicienta', (p) => { p.ropa.orejas = { t: 'perlas', c: C.plateado }; });
+  retocar('mirabel', (p) => { p.ropa.orejas = { t: 'largos', c: C.lila }; });
+  retocar('jasmine', (p) => { p.ropa.orejas = { t: 'aros', c: C.dorado }; });
+  retocar('elsa', (p) => { p.flequillo = 'sin'; });
+
   const especieDe = (id) => (PERSONAJES.find((p) => p.id === id) || {}).especie || null;
   const CATS_ESPECIE = ['cabeza', 'cara', 'cuello']; // lo único que les sirve a los que no son personas
+  const esRaton = (id) => !!(PERSONAJES.find((p) => p.id === id) || {}).raton;
+  const SIN_PELO_NI_OJOS = ['peinado', 'flequillo', 'pelo', 'ojos'];
 
   // Género de cada personaje: 'f' niña, 'm' niño. Filtra qué ropa y peinados
   // se le ofrecen — a un niño solo le salen cosas de niño, y viceversa.
-  const HOMBRES = ['max', 'nico', 'dante', 'leo', 'teo', 'santi', 'bruno', 'tomas', 'mateo', 'sami', 'joaco', 'kai', 'simon', 'rayo', 'titan', 'capitan', 'kuro', 'halcon', 'kristoff', 'olaf', 'sven', 'stitch'];
+  const HOMBRES = ['max', 'nico', 'dante', 'leo', 'teo', 'santi', 'bruno', 'tomas', 'mateo', 'sami', 'joaco', 'kai', 'simon', 'rayo', 'titan', 'capitan', 'kuro', 'halcon', 'kristoff', 'olaf', 'sven', 'stitch',
+    'agnarr', 'camilo', 'antonio', 'bruno-madrigal', 'blippi', 'mickey'];
   PERSONAJES.forEach((p) => { p.g = HOMBRES.indexOf(p.id) >= 0 ? 'm' : 'f'; });
 
   // ---------- los avatares de los hij@s, como personajes del juego ----------
@@ -592,6 +684,46 @@ const Juego = (function () {
       case 'encima:capa':
         return { atras: `<path d="M118 288 L202 288 L252 432 Q160 444 68 432 Z" fill="${c}" opacity=".88"/>`, svg: '' };
 
+      // ---- de Ojitos de Mili: personajes más parecidos ----
+      case 'arriba:musculosa':
+        return {
+          svg: `<path d="M128 290 L192 290 Q206 304 208 318 L208 350 L112 350 L112 318 Q114 304 128 290 Z" fill="${c}"/>` +
+            `<path d="M132 292 L128 282 M188 292 L192 282" stroke="${c}" stroke-width="6" stroke-linecap="round"/>`,
+          manga: '',
+        };
+      case 'abajo:short-botones':
+        return {
+          svg: `<path d="M108 340 L212 340 L214 378 L166 378 L160 362 L154 378 L106 378 Z" fill="${c}"/>` +
+            `<ellipse cx="138" cy="352" rx="7" ry="9" fill="#fff"/><ellipse cx="182" cy="352" rx="7" ry="9" fill="#fff"/>`,
+        };
+      case 'abajo:jardinera':
+        return {
+          svg: `<path d="M108 338 L212 338 L214 380 L166 380 L160 364 L154 380 L106 380 Z" fill="${c}"/>`,
+          sobre: `<rect x="130" y="302" width="60" height="40" rx="4" fill="${c}"/>` +
+            `<path d="M134 306 L124 286 M186 306 L196 286" stroke="${c}" stroke-width="7" stroke-linecap="round"/>` +
+            `<rect x="146" y="314" width="28" height="16" rx="3" fill="${o}"/>` +
+            `<circle cx="137" cy="311" r="3" fill="#f7f5f2"/><circle cx="183" cy="311" r="3" fill="#f7f5f2"/>`,
+        };
+      case 'vestido:vestido-lunares': {
+        const id = 'lun' + c.slice(1);
+        return {
+          svg: `<defs><pattern id="${id}" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="${c}"/><circle cx="6" cy="6" r="3.6" fill="#fff"/><circle cx="17" cy="17" r="3.6" fill="#fff"/></pattern></defs>` +
+            `<path d="M122 284 L198 284 Q206 300 210 318 L236 388 Q160 404 84 388 L110 318 Q114 300 122 284 Z" fill="url(#${id})"/>`,
+          manga: mangas('globo', c),
+        };
+      }
+      case 'encima:ruana': {
+        // la ruana (poncho) de los Madrigal: con franjas y flecos
+        const franja = contraste(c);
+        return {
+          svg: `<path d="M110 292 Q160 280 210 292 L238 364 L82 364 Z" fill="${c}"/>` +
+            `<path d="M100 330 L220 330 M94 346 L226 346" stroke="${franja}" stroke-width="5" opacity=".8"/>` +
+            `<path d="${[...Array(14).keys()].map((i) => `M${88 + i * 11} 364 l0 10`).join(' ')}" stroke="${o}" stroke-width="3" stroke-linecap="round"/>` +
+            `<path d="M146 290 L160 306 L174 290" fill="none" stroke="${o}" stroke-width="3"/>`,
+          manga: '',
+        };
+      }
+
       // ---- prendas nuevas ----
       case 'arriba:camisa': {
         const botones = [312, 326, 340].map((y) => `<circle cx="160" cy="${y}" r="2.3" fill="${d}"/>`).join('');
@@ -775,6 +907,14 @@ const Juego = (function () {
     return `<g${op}><path d="M${sx} ${sy}${medio} L${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="${m.c}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="${sx}" cy="${sy}" rx="14" ry="12" fill="${m.c}"/></g>`;
   }
 
+  function estrella(x, y, r, c, borde) {
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r;
+      pts.push((x + rr * Math.cos(a)).toFixed(1) + ',' + (y + rr * Math.sin(a)).toFixed(1));
+    }
+    return `<polygon points="${pts.join(' ')}" fill="${c}"${borde ? ` stroke="${borde}" stroke-width="1.2" stroke-linejoin="round"` : ''}/>`;
+  }
   function pathCorazon(x, y, k) {
     const p = (dx, dy) => `${(x + dx * k).toFixed(1)} ${(y + dy * k).toFixed(1)}`;
     return `M${p(0, 1)} C${p(-0.33, 0.73)} ${p(-1.33, 0.2)} ${p(-1.27, -0.4)} C${p(-1.2, -1)} ${p(-0.4, -1.07)} ${p(0, -0.53)} ` +
@@ -808,6 +948,15 @@ const Juego = (function () {
           perlas += `<circle cx="${(u * u * 128 + 2 * t * u * 160 + t * t * 192).toFixed(1)}" cy="${(u * u * 290 + 2 * t * u * 336 + t * t * 290).toFixed(1)}" r="4.6" fill="${c}" stroke="${o}" stroke-width="1"/>`;
         }
         return perlas;
+      }
+      if (acc.t === 'concha') {
+        return `<path d="M128 290 Q160 336 192 290" fill="none" stroke="#6b4428" stroke-width="2.4"/>` +
+          `<circle cx="160" cy="318" r="11" fill="#3fb8b0" stroke="#1f7a74" stroke-width="1.5"/>` +
+          `<path d="M160 318 m0 -6 a6 6 0 1 1 -6 6 a4 4 0 1 1 4 -4" fill="none" stroke="#e8fbf8" stroke-width="1.6"/>`;
+      }
+      if (acc.t === 'humita') {
+        return `<path d="M160 302 L136 290 L136 314 Z M160 302 L184 290 L184 314 Z" fill="${c}" stroke="${o}" stroke-width="1.5" stroke-linejoin="round"/>` +
+          `<rect x="153" y="295" width="14" height="14" rx="4" fill="${o}"/>`;
       }
       if (acc.t === 'mostacillas') {
         const cols = ['#e8605a', '#f2cf5b', '#6fbf73', '#7cc4ea', '#b392d6', c];
@@ -851,6 +1000,18 @@ const Juego = (function () {
       }
       if (acc.t === 'argollas') {
         return [46, 274].map((x) => `<circle cx="${x}" cy="216" r="10" fill="none" stroke="${c}" stroke-width="3.4"/>`).join('');
+      }
+      if (acc.t === 'perlas') {
+        return [46, 274].map((x) => `<circle cx="${x}" cy="218" r="7" fill="#fbf6ee" stroke="${c}" stroke-width="2"/><circle cx="${x - 2}" cy="216" r="2" fill="#fff"/>`).join('');
+      }
+      if (acc.t === 'corazones') {
+        return [46, 274].map((x) => `<path d="M${x} 210 L${x} 216" stroke="${o}" stroke-width="2"/><path d="${pathCorazon(x, 224, 9)}" fill="${c}" stroke="${o}" stroke-width="1"/>`).join('');
+      }
+      if (acc.t === 'estrellas') {
+        return [46, 274].map((x) => `<path d="M${x} 210 L${x} 216" stroke="${o}" stroke-width="2"/>` + estrella(x, 225, 10, c, o)).join('');
+      }
+      if (acc.t === 'largos') {
+        return [46, 274].map((x) => `<path d="M${x} 210 L${x} 236" stroke="${o}" stroke-width="2"/><ellipse cx="${x}" cy="242" rx="6" ry="9" fill="${c}" stroke="${o}" stroke-width="1"/><circle cx="${x}" cy="216" r="3" fill="${c}"/>`).join('');
       }
     }
     return '';
@@ -1033,6 +1194,20 @@ const Juego = (function () {
         if (puntos.length) return puntos.map((p) => P.collet(p.x, p.y, p.s + 0.2, c)).join('');
         return `<path d="M160 54 Q138 22 148 10 Q157 28 160 30 Q163 28 172 10 Q182 22 160 54 Z" fill="${st.peloColor}"/>` + P.collet(160, 52, 1, c);
       case 'flor': return puntos.length ? puntos.map((p) => P.flor(p.x, p.y, p.s, c)).join('') : P.flor(222, 72, 1, c);
+      case 'moño-lunares': {
+        const conLunares = (x, y, sc) => P.moño(x, y, sc, c) +
+          [[-22, -6], [-14, 8], [-28, 6], [22, -6], [14, 8], [28, 6]].map(([dx, dy]) => `<circle cx="${x + dx * sc}" cy="${y + dy * sc}" r="${3 * sc}" fill="#fff"/>`).join('');
+        return puntos.length ? puntos.map((pt) => conLunares(pt.x, pt.y, pt.s)).join('') : conLunares(160, 40, 1.35);
+      }
+      case 'corona-flores': {
+        const l = aclarar(c, 0.45);
+        const arco = (n, fn) => [...Array(n).keys()].map((i) => {
+          const a = Math.PI * (1.12 + 0.76 * i / (n - 1));
+          return fn(160 + 124 * Math.cos(a), 176 + 124 * Math.sin(a), i);
+        }).join('');
+        return arco(9, (x, y, i) => `<ellipse cx="${x.toFixed(1)}" cy="${(y + 10).toFixed(1)}" rx="10" ry="5" fill="#6fbf73" transform="rotate(${i * 20 - 80} ${x.toFixed(1)} ${(y + 10).toFixed(1)})"/>`) +
+          arco(8, (x, y, i) => P.flor(x, y, 0.75, i % 2 ? c : l));
+      }
       case 'cintillo': return `<path d="M42 140 A124 124 0 0 1 278 140" fill="none" stroke="${c}" stroke-width="12" stroke-linecap="round"/>`;
       default: return '';
     }
@@ -1066,11 +1241,36 @@ const Juego = (function () {
       `<path d="M92 156 L104 152 M188 156 L200 152" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>`;
   }
 
-  function ojos(color) {
-    return [112, 208].map((x) =>
-      `<circle cx="${x}" cy="168" r="27" fill="#fff"/><circle cx="${x}" cy="168" r="13" fill="${color}"/>` +
-      `<circle cx="${x}" cy="168" r="5.5" fill="#2a2740"/><circle cx="${x - 5}" cy="163" r="3" fill="#fff"/>`
-    ).join('');
+  function ojos(color, pestanas) {
+    return [112, 208].map((x) => {
+      const afuera = x < 160 ? -1 : 1;
+      const p = pestanas
+        ? `<path d="M${x + afuera * 18} ${148} l${afuera * 8} -8 M${x + afuera * 24} ${155} l${afuera * 10} -5 M${x + afuera * 27} ${163} l${afuera * 10} -1" stroke="#2a2740" stroke-width="3" stroke-linecap="round"/>`
+        : '';
+      return `<circle cx="${x}" cy="168" r="27" fill="#fff"/><circle cx="${x}" cy="168" r="13" fill="${color}"/>` +
+        `<circle cx="${x}" cy="168" r="5.5" fill="#2a2740"/><circle cx="${x - 5}" cy="163" r="3" fill="#fff"/>` + p;
+    }).join('');
+  }
+
+  // ---------- Mickey y Minnie: cabeza de ratón sobre el cuerpo normal (sí se visten) ----------
+  const CARITA_RATON = '#f3cfa6';
+  function ratonOrejas(piel) {
+    return `<circle cx="66" cy="70" r="58" fill="${piel}"/><circle cx="254" cy="70" r="58" fill="${piel}"/>`;
+  }
+  function ratonCara(piel) {
+    return `<circle cx="160" cy="176" r="118" fill="${piel}"/>` +
+      `<g fill="${CARITA_RATON}"><ellipse cx="116" cy="170" rx="46" ry="60"/><ellipse cx="204" cy="170" rx="46" ry="60"/><ellipse cx="160" cy="240" rx="100" ry="62"/></g>` +
+      `<ellipse cx="160" cy="222" rx="22" ry="15" fill="#1f1a1c"/><ellipse cx="153" cy="217" rx="6" ry="3.5" fill="#fff" opacity=".5"/>` +
+      `<path d="M112 246 Q160 300 208 246" fill="#7a2a2a" stroke="#1f1a1c" stroke-width="5" stroke-linecap="round"/>` +
+      `<path d="M140 272 Q160 290 180 272 Q160 262 140 272 Z" fill="#e8605a"/>`;
+  }
+  function ratonOjos(pestanas) {
+    return [112, 208].map((x) => {
+      const afuera = x < 160 ? -1 : 1;
+      return `<ellipse cx="${x}" cy="164" rx="20" ry="30" fill="#fff" stroke="#1f1a1c" stroke-width="2"/>` +
+        `<ellipse cx="${x + 3}" cy="174" rx="9" ry="16" fill="#1f1a1c"/><circle cx="${x + 5}" cy="166" r="3" fill="#fff"/>` +
+        (pestanas ? `<path d="M${x + afuera * 12} 138 l${afuera * 9} -10 M${x + afuera * 18} 146 l${afuera * 11} -6 M${x + afuera * 21} 156 l${afuera * 11} -2" stroke="#1f1a1c" stroke-width="3.5" stroke-linecap="round"/>` : '');
+    }).join('');
   }
 
   // ---------- personajes que no son personas ----------
@@ -1166,10 +1366,13 @@ const Juego = (function () {
   function figura(id, st, o) {
     o = o || {};
     const esp = especieDe(id);
+    const raton = esRaton(id);
+    const rasgos = personaje(id).rasgos || {};
     if (esp) return especie(esp, st).figura + (o.parche === 'derecho' || o.parche === 'izquierdo' ? parcheOjo(o.parche) : '');
     const pose = o.pose && o.pose !== 'normal' ? POSES[o.pose] : (o.sinBrazo ? POSES.normal : null);
     const piel = st.piel || personaje(id).piel;
-    const ap = { piel, peloColor: st.peloColor };
+    const ap = { piel, peloColor: st.peloColor, rasgos };
+    const manoC = raton ? '#ffffff' : piel; // Mickey y Minnie: guantes blancos
     const partes = {};
     ['vestido', 'arriba', 'abajo', 'encima'].forEach((k) => { if (st[k]) partes[k] = prenda(k, st[k]); });
 
@@ -1199,16 +1402,18 @@ const Juego = (function () {
     if (!pose) {
       c += `<path d="M114 292 C106 300 103 326 102 350 C101 358 101 364 103 370 L115 372 C116 352 118 330 126 306 Z" fill="${piel}"/>` +
         `<path d="M206 292 C214 300 217 326 218 350 C219 358 219 364 217 370 L205 372 C204 352 202 330 194 306 Z" fill="${piel}"/>` +
-        `<ellipse cx="108" cy="371" rx="10" ry="12" fill="${piel}"/><ellipse cx="212" cy="371" rx="10" ry="12" fill="${piel}"/>`;
+        `<ellipse cx="108" cy="371" rx="10" ry="12" fill="${manoC}"/><ellipse cx="212" cy="371" rx="10" ry="12" fill="${manoC}"/>`;
     }
 
     // ropa (o la ropa interior blanca si no tiene nada puesto)
     const blanco = '#f4f1ee';
     if (partes.vestido) c += partes.vestido.svg;
     else {
-      c += partes.abajo ? partes.abajo.svg : `<path d="M110 338 L210 338 L210 362 L166 362 L160 356 L154 362 L110 362 Z" fill="${blanco}"/>`;
+      // (Mickey y Minnie van sin ropa interior)
+      c += partes.abajo ? partes.abajo.svg : raton ? '' : `<path d="M110 338 L210 338 L210 362 L166 362 L160 356 L154 362 L110 362 Z" fill="${blanco}"/>`;
       c += partes.arriba ? partes.arriba.svg
-        : `<path d="M126 292 L194 292 L200 342 L120 342 Z" fill="${blanco}"/><path d="M130 294 L126 284 M190 294 L194 284" stroke="${blanco}" stroke-width="5" stroke-linecap="round"/>`;
+        : raton ? '' : `<path d="M126 292 L194 292 L200 342 L120 342 Z" fill="${blanco}"/><path d="M130 294 L126 284 M190 294 L194 284" stroke="${blanco}" stroke-width="5" stroke-linecap="round"/>`;
+      if (partes.abajo && partes.abajo.sobre) c += partes.abajo.sobre; // la pechera de la jardinera, sobre la polera
     }
     if (botasMetidas) c += zapatos(st.zapatos, piel, true);
     if (partes.encima) c += partes.encima.svg;
@@ -1231,7 +1436,7 @@ const Juego = (function () {
         const d = 'M' + pts.map(([x, y]) => `${x} ${y}`).join(' L');
         let b = `<path d="${d}" fill="none" stroke="${contorno}" stroke-width="17.5" stroke-linecap="round" stroke-linejoin="round"/>` +
           `<path d="${d}" fill="none" stroke="${piel}" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>` +
-          `<circle cx="${hx}" cy="${hy}" r="9.5" fill="${piel}" stroke="${contorno}" stroke-width="1.2"/>`;
+          `<circle cx="${hx}" cy="${hy}" r="${raton ? 11 : 9.5}" fill="${manoC}" stroke="${raton ? '#b9b9c0' : contorno}" stroke-width="1.2"/>`;
         if (o.pose === 'victoria' && lado === 'der') {
           b += `<path d="M${hx - 3} ${hy - 6} l-5 -15 M${hx + 3} ${hy - 6} l5 -15" stroke="${piel}" stroke-width="5.5" stroke-linecap="round"/>`;
         }
@@ -1249,8 +1454,10 @@ const Juego = (function () {
     const k = ESCALA_CUERPO[st.cuerpo] || 1;
     const cuerpo = k === 1 ? c : `<g transform="translate(160 0) scale(${k} 1) translate(-160 0)">${c}</g>`;
 
-    return peloAtras(st) + cuerpo +
-      peloDelante(st) + P.cara(ap) + ojos(st.ojos) + (o.parche === 'derecho' || o.parche === 'izquierdo' ? parcheOjo(o.parche) : '') + flequilloDe(st, ap) + joya('orejas', st.orejas) + cabeza(st.cabeza, st) + cara(st.cara);
+    return (raton ? ratonOrejas(piel) : peloAtras(st)) + cuerpo +
+      (raton ? ratonCara(piel) : peloDelante(st) + P.cara(ap)) + (raton ? ratonOjos(rasgos.pestanas) : ojos(st.ojos, rasgos.pestanas)) +
+      (o.parche === 'derecho' || o.parche === 'izquierdo' ? parcheOjo(o.parche) : '') +
+      (raton ? '' : flequilloDe(st, ap)) + joya('orejas', st.orejas) + cabeza(st.cabeza, raton ? { peloEstilo: 'corto', peloColor: piel } : st) + cara(st.cara);
   }
 
   // Ícono de cada cosa del armario (la prenda sola, recortada con el viewBox).
@@ -1274,15 +1481,15 @@ const Juego = (function () {
     } else if (cat === 'cabeza') {
       const s2 = { peloEstilo: 'melena', peloColor: '#b9a597' };
       dentro = cabeza(valor, s2);
-      caja = { moño: '122 14 76 64', collet: '124 2 72 70', tiara: '110 28 100 54', flor: '194 44 56 56', cintillo: '30 40 260 110', gorro: '62 24 196 112', 'jockey-plano': '40 30 240 110', sombrero: '20 10 280 130', boina: '56 20 210 90', casco: '44 24 232 112', corona: '96 18 128 66', 'gorro-lana': '60 20 200 112' }[valor.t] || caja;
+      caja = { moño: '122 14 76 64', 'moño-lunares': '112 6 96 72', 'corona-flores': '30 4 260 130', collet: '124 2 72 70', tiara: '110 28 100 54', flor: '194 44 56 56', cintillo: '30 40 260 110', gorro: '62 24 196 112', 'jockey-plano': '40 30 240 110', sombrero: '20 10 280 130', boina: '56 20 210 90', casco: '44 24 232 112', corona: '96 18 128 66', 'gorro-lana': '60 20 200 112' }[valor.t] || caja;
     } else if (cat === 'cara') {
       dentro = cara(valor);
     } else if (cat === 'cuello' || cat === 'muneca' || cat === 'orejas') {
       dentro = joya(cat, valor);
       caja = {
-        cadena: '116 284 88 56', collar: '118 284 84 56', mostacillas: '118 284 84 56', bufanda: '104 282 112 90',
+        cadena: '116 284 88 56', collar: '118 284 84 56', mostacillas: '118 284 84 56', concha: '118 284 84 56', humita: '124 284 72 40', bufanda: '104 282 112 90',
         reloj: '84 344 34 24', pulsera: '82 346 156 20', guantes: '82 346 156 40',
-        aros: '32 198 28 40', argollas: '30 202 32 30',
+        aros: '32 198 28 40', argollas: '30 202 32 30', perlas: '32 202 28 32', corazones: '32 202 28 40', estrellas: '32 202 28 40', largos: '32 202 28 50',
       }[valor.t] || caja;
     } else {
       const pr = prenda(cat, valor);
@@ -1427,6 +1634,7 @@ const Juego = (function () {
     const esp = !!especieDe(actual);
     return CATEGORIAS.filter((c) => {
       if (esp) return CATS_ESPECIE.indexOf(c.id) >= 0;
+      if (esRaton(actual) && SIN_PELO_NI_OJOS.indexOf(c.id) >= 0) return false;
       if (['pelo', 'ojos', 'cuerpo', 'piel', 'flequillo'].indexOf(c.id) >= 0) return true;
       if (c.id === 'peinado') return PEINADOS.some((p) => paraGenero(g, p.g));
       return ARMARIO[c.id].some((it) => paraGenero(g, it[2]));

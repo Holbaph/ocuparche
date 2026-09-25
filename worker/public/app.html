@@ -247,22 +247,9 @@
       </p>
     </div>
 
-    <!-- Control del tratamiento (plan completo): semana, premio y próximo control con el oftalmólogo -->
-    <div class="card trat-card hidden" id="tratamientoCard">
-      <div id="semanaBloque">
-        <p class="trat-titulo">📊 Esta semana</p>
-        <p class="trat-linea" id="semanaTexto"></p>
-        <div class="trat-barra hidden" id="premioBarra"><div id="premioBarraRelleno"></div></div>
-        <p class="trat-linea hidden" id="premioTexto"></p>
-      </div>
-      <div id="controlBloque" class="trat-control hidden">
-        <p class="trat-titulo">🩺 Próximo control</p>
-        <p class="trat-linea" id="controlFecha"></p>
-        <p class="trat-linea trat-detalle hidden" id="controlDetalle"></p>
-        <div class="trat-preguntas hidden" id="controlPreguntas"></div>
-        <button class="undo-link" id="controlEditar" style="margin-top:8px">✏️ Editar control y preguntas</button>
-      </div>
-    </div>
+    <!-- premio por constancia de la semana y próximo control (plan completo; se configuran en el historial) -->
+    <div class="card premio-card hidden" id="premioCard" aria-live="polite"></div>
+    <button class="control-card hidden" id="controlCard"></button>
 
     <div class="stats-row">
       <div class="stat"><div class="num" id="statRacha">0</div><div class="lbl">días seguidos</div></div>
@@ -286,6 +273,17 @@
   </div>
 
   <footer class="note">Ocuparche — hecho desde la experiencia real de un tratamiento 🩹</footer>
+</div>
+
+<!-- Informe para el doctor (js/tratamiento.js) -->
+<div class="informe hidden" id="informe" role="dialog" aria-label="Informe para el doctor">
+  <div class="informe-barra">
+    <button class="icon-btn" id="infCerrar" aria-label="Cerrar">✕</button>
+    <strong>Informe</strong>
+    <button class="btn-save small" id="infCompartir">📤 Compartir</button>
+    <button class="btn-save small" id="infImprimir">🖨️ PDF</button>
+  </div>
+  <article class="informe-hoja" id="infHoja"></article>
 </div>
 
 <div class="scrim" id="avatarScrim"></div>
@@ -398,6 +396,12 @@
     <div class="balance-legend"><span id="balDerechoLbl">Derecho 0</span><span id="balIzquierdoLbl">Izquierdo 0</span></div>
   </section>
 
+  <section class="block" id="semanaBloque">
+    <p class="block-title">Esta semana</p>
+    <div class="semana" id="semanaGraf"></div>
+    <p class="trat-sub" id="semanaResumen" style="margin-top:8px"></p>
+  </section>
+
   <section class="block">
     <p class="block-title">Últimos 28 días</p>
     <div class="cal-grid cal-heads">
@@ -461,6 +465,26 @@
     </div>
   </section>
 
+  <section class="block" id="informeSeccion">
+    <p class="block-title">Informe para el doctor</p>
+    <div id="informeBloque">
+      <div style="display:flex;align-items:center;gap:8px">
+        <select id="infPeriodo" class="trat-input" style="flex:1">
+          <option value="14">Últimas 2 semanas</option>
+          <option value="28" selected>Últimas 4 semanas</option>
+          <option value="56">Últimas 8 semanas</option>
+          <option value="91">Últimos 3 meses</option>
+        </select>
+        <button class="btn-save small" id="infVer">Ver informe</button>
+      </div>
+      <p class="trat-sub" style="margin-top:8px">Días, horas de uso y constancia, listo para imprimir, guardar en PDF o mandar por WhatsApp antes del control.</p>
+    </div>
+    <div id="informeUpsell" class="upsell-box hidden">
+      <p>El informe para el doctor es parte del <b>plan completo</b>.</p>
+      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+    </div>
+  </section>
+
   <section class="block" id="tratamientoSeccion">
     <p class="block-title">Tratamiento y controles</p>
     <div id="tratamientoBloque">
@@ -500,9 +524,9 @@
       </div>
       <input type="text" id="controlDetalleInput" class="trat-input" maxlength="80" placeholder="Con quién / dónde (ej: Dra. Pérez, Clínica…)" style="margin-top:8px">
       <textarea id="controlPreguntasInput" class="trat-input" rows="4" maxlength="1500" placeholder="Preguntas para llevar al control, cambios que notaste, dudas…" style="margin-top:8px;resize:vertical"></textarea>
-      <p class="trat-sub" style="margin:4px 0 0">Te avisamos por notificación el día antes del control.</p>
+      <p class="trat-sub" style="margin:4px 0 0">El día antes, a las 7 de la tarde, llega un aviso a los dispositivos con avisos activados.</p>
 
-      <label class="trat-check"><input type="checkbox" id="resumenActivo"> Recibir un resumen de la semana por aviso (domingos por la tarde)</label>
+      <label class="trat-check"><input type="checkbox" id="resumenActivo"> Resumen semanal por aviso los domingos a las 7 de la tarde</label>
 
       <button class="btn-save small" id="tratamientoGuardar" style="margin-top:12px">Guardar</button>
     </div>
@@ -677,6 +701,7 @@
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/core.js"></script>
+<script src="js/tratamiento.js"></script>
 <script src="js/avatar.js"></script>
 <script src="js/juego-piezas.js"></script>
 <script src="js/ar.js"></script>

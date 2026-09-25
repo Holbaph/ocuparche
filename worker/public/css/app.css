@@ -539,21 +539,83 @@ body.jugando, body.con-camara{ overflow:hidden; }
 .cam-cuenta.late{ animation:cam-cuenta 1s ease-out; }
 @keyframes cam-cuenta{ 0%{ transform:scale(1.8); opacity:0; } 25%{ transform:scale(1); opacity:1; } 100%{ transform:scale(.8); opacity:0; } }
 
-/* ---- control del tratamiento ---- */
-.btn-sacar{ margin-top:12px; padding:10px 16px; border-radius:12px; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); font-weight:800; font-size:13.5px; cursor:pointer; }
-.btn-sacar.hecho{ background:transparent; color:var(--ink-faint); font-weight:700; font-size:12.5px; border-style:dashed; }
-.trat-card .trat-titulo{ margin:0 0 6px; font-weight:800; font-size:14px; }
-.trat-card .trat-linea{ margin:4px 0; font-size:13.5px; color:var(--ink-soft); }
-.trat-barra{ height:12px; border-radius:99px; background:var(--line); overflow:hidden; margin:10px 0 4px; }
-.trat-barra > div{ height:100%; width:0; background:var(--brand); border-radius:99px; transition:width .5s; }
-.trat-barra.lleno > div{ background:var(--teal); }
-.trat-control{ margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
-.trat-detalle{ font-weight:700; color:var(--ink); }
-.trat-preguntas{ margin-top:8px; white-space:pre-wrap; font-size:13px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:10px 12px; color:var(--ink-soft); }
-.trat-control.cerca .trat-titulo{ color:var(--brand-dark); }
+/* ---- control del tratamiento (portado de Ojitos de Mili) ---- */
+.btn-sacar{ display:block; margin:12px auto 0; padding:10px 18px; border-radius:14px; border:none; cursor:pointer; background:var(--success); color:#fff; font-weight:800; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,.12); }
+.btn-sacar:active{ transform:scale(.97); }
+.btn-sacar.hecho{ background:transparent; color:var(--ink-faint); font-weight:700; font-size:12.5px; border:1px dashed var(--line); box-shadow:none; }
 .trat-sub{ font-size:12px; color:var(--ink-faint); margin:0 0 4px; }
 .trat-label{ display:block; margin:14px 0 6px; font-size:12.5px; font-weight:700; color:var(--ink-soft); }
 .trat-input{ width:100%; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); font-size:14px; font-family:inherit; }
 .trat-check{ display:flex; gap:8px; align-items:flex-start; margin-top:14px; font-size:12.5px; color:var(--ink-soft); }
-.cal-cell.descanso{ opacity:.45; }
 #indDiasSeg button{ flex:1 1 36px; padding:9px 2px; }
+.cal-cell.libre{ background:repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 4px, transparent 4px, transparent 8px); color:var(--ink-faint); }
+
+/* premio de la semana */
+.premio-card{ padding:16px 16px 14px; text-align:center; background:linear-gradient(135deg, #fff6d6, #ffe3ef); border-color:#f3d58a; color:#5a4630; }
+.premio-card.logrado{ background:linear-gradient(135deg, #e3f8e5, #fff6d6); border-color:#9bd4a0; animation:premio-brillo 2.4s ease-in-out infinite; }
+@keyframes premio-brillo{ 50%{ box-shadow:0 0 0 6px rgba(155,212,160,.35), var(--shadow); } }
+.pr-titulo{ font-family:'Baloo 2'; font-weight:800; font-size:17px; line-height:1.2; }
+.pr-sub{ font-size:12.5px; font-weight:700; opacity:.8; margin-top:2px; }
+.pr-dias{ display:flex; justify-content:center; gap:6px; margin-top:10px; }
+.pr-dia{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+.pr-dia i{ width:32px; height:32px; border-radius:50%; display:grid; place-items:center; font-style:normal; font-size:17px; background:rgba(255,255,255,.75); border:2px dashed #e2c37a; }
+.pr-dia.hecho i{ border-style:solid; border-color:#f2c14e; background:#fff; }
+.pr-dia.libre i{ border-color:transparent; background:rgba(255,255,255,.35); }
+.pr-dia.hoy i{ box-shadow:0 0 0 2px #e8578a; }
+.pr-dia b{ font-size:10.5px; font-weight:800; opacity:.75; }
+.pr-dia.futuro{ opacity:.55; }
+
+/* aviso del próximo control */
+.control-card{ display:block; width:100%; text-align:left; cursor:pointer; padding:12px 14px; border-radius:18px; margin-bottom:14px; background:var(--teal-soft); color:var(--teal-dark); border:1px solid var(--line); font-family:inherit; font-weight:800; font-size:13.5px; }
+.control-card.pronto{ background:var(--brand-soft); color:var(--brand-dark); }
+
+/* esta semana */
+.semana{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; align-items:end; }
+.sem-dia{ display:flex; flex-direction:column; align-items:center; gap:3px; }
+.sem-barra{ position:relative; width:100%; max-width:34px; height:88px; background:var(--surface-2); border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+.sem-barra span{ position:absolute; left:0; right:0; bottom:0; background:var(--success); border-radius:7px 7px 0 0; transition:height .4s ease; }
+.sem-dia.derecho .sem-barra span{ background:var(--brand); }
+.sem-dia.izquierdo .sem-barra span{ background:var(--teal); }
+.sem-dia.estimado .sem-barra span{ opacity:.45; }
+.sem-dia.encurso .sem-barra span{ animation:sem-late 1.6s ease-in-out infinite; }
+@keyframes sem-late{ 50%{ opacity:.6; } }
+.sem-barra i{ position:absolute; left:0; right:0; border-top:2px dashed var(--ink-faint); z-index:1; }
+.sem-dia.libre .sem-barra{ background:repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 4px, transparent 4px, transparent 8px); }
+.sem-dia b{ font-size:11px; font-weight:800; color:var(--ink-soft); }
+.sem-dia.hoy b{ color:var(--ink); text-decoration:underline; }
+.sem-dia small{ font-size:10px; font-weight:700; color:var(--ink-faint); min-height:12px; }
+.sem-dia.futuro{ opacity:.5; }
+
+/* informe para el doctor */
+.informe{ position:fixed; inset:0; z-index:90; background:#e9e6e1; display:flex; flex-direction:column; }
+.informe-barra{ display:flex; align-items:center; gap:8px; padding:calc(env(safe-area-inset-top) + 10px) 12px 10px; background:var(--surface); border-bottom:1px solid var(--line); }
+.informe-barra strong{ flex:1; font-family:'Baloo 2'; font-size:18px; color:var(--ink); }
+.informe-barra .btn-save.small{ margin-left:0; }
+.informe-hoja{ flex:1; overflow-y:auto; margin:12px auto; width:calc(100% - 24px); max-width:720px; padding:22px 20px; background:#fff; color:#222; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,.12); font-size:13px; line-height:1.45; }
+.inf-cab h1{ font-family:'Baloo 2'; font-size:22px; margin:0; color:#222; }
+.inf-cab p{ margin:2px 0 12px; color:#555; font-weight:600; }
+.inf-ind{ background:#f4f1ec; padding:8px 10px; border-radius:8px; margin:0 0 12px; }
+.inf-cifras{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+.inf-cifras div{ border:1px solid #ddd; border-radius:8px; padding:8px 6px; text-align:center; }
+.inf-cifras b{ display:block; font-size:18px; font-family:'Baloo 2'; color:#2f7d4a; }
+.inf-cifras span{ font-size:11px; color:#555; line-height:1.25; display:block; }
+@media (max-width:480px){ .inf-cifras{ grid-template-columns:repeat(2,1fr); } }
+.inf-nota{ font-size:12px; color:#555; margin:0 0 6px; }
+.informe-hoja h2{ font-family:'Baloo 2'; font-size:16px; margin:16px 0 6px; color:#222; }
+.inf-tabla{ width:100%; border-collapse:collapse; font-size:12px; }
+.inf-tabla th, .inf-tabla td{ border-bottom:1px solid #e5e5e5; padding:5px 6px; text-align:left; }
+.inf-tabla th{ background:#f4f1ec; font-weight:800; }
+.inf-tabla tr.falta td{ color:#b0413e; }
+.inf-tabla small{ color:#888; }
+.inf-preg{ margin:4px 0; padding-left:20px; }
+.inf-pie{ margin-top:18px; font-size:11px; color:#888; border-top:1px solid #eee; padding-top:8px; }
+body.con-informe{ overflow:hidden; }
+@media print{
+  body > *:not(#informe){ display:none !important; }
+  body{ background:#fff !important; }
+  .informe{ position:static; display:block !important; background:#fff; }
+  .informe-barra{ display:none; }
+  .informe-hoja{ box-shadow:none; margin:0; width:100%; max-width:none; padding:0; overflow:visible; }
+  .inf-tabla tr{ break-inside:avoid; }
+}
+@media (prefers-reduced-motion: reduce){ .premio-card.logrado, .sem-dia.encurso .sem-barra span{ animation:none; } }

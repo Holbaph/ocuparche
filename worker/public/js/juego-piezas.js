@@ -80,15 +80,23 @@ const JuegoPiezas = (function () {
     return `<g transform="translate(${x} ${y}) scale(${s})">${petalos}<circle r="6" fill="#f6d26b"/></g>`;
   }
 
+  // ap.rasgos = { pecas, pestanas, cejas: 'marcadas' } (para parecerse a cada personaje)
   function cara(ap) {
+    const rasgos = ap.rasgos || {};
     const linea = oscurecer(ap.piel, 0.12);
     const rubor = mezclar(ap.piel, '#ee6f6f', 0.45);
-    const ceja = oscurecer(ap.peloColor, 0.1);
+    const marcadas = rasgos.cejas === 'marcadas';
+    const ceja = oscurecer(ap.peloColor, marcadas ? 0.25 : 0.1);
+    const gCeja = marcadas ? 7 : 4;
+    const pecas = rasgos.pecas
+      ? [[82, 204], [92, 198], [100, 208], [88, 214], [106, 200], [238, 204], [228, 198], [220, 208], [232, 214], [214, 200]]
+        .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.2" fill="${oscurecer(ap.piel, 0.3)}" opacity=".6"/>`).join('')
+      : '';
     return `<circle cx="160" cy="176" r="118" fill="${ap.piel}" stroke="${linea}" stroke-width="2"/>` +
-      `<ellipse cx="94" cy="212" rx="19" ry="11" fill="${rubor}" opacity=".55"/>` +
-      `<ellipse cx="226" cy="212" rx="19" ry="11" fill="${rubor}" opacity=".55"/>` +
-      `<path d="M92 130 q20 -14 40 -2" fill="none" stroke="${ceja}" stroke-width="4" stroke-linecap="round" opacity=".7"/>` +
-      `<path d="M188 128 q20 -12 40 2" fill="none" stroke="${ceja}" stroke-width="4" stroke-linecap="round" opacity=".7"/>` +
+      `<ellipse cx="94" cy="212" rx="19" ry="11" fill="${rubor}" opacity="${marcadas ? '.3' : '.55'}"/>` +
+      `<ellipse cx="226" cy="212" rx="19" ry="11" fill="${rubor}" opacity="${marcadas ? '.3' : '.55'}"/>` + pecas +
+      `<path d="M92 130 q20 -14 40 -2" fill="none" stroke="${ceja}" stroke-width="${gCeja}" stroke-linecap="round" opacity=".75"/>` +
+      `<path d="M188 128 q20 -12 40 2" fill="none" stroke="${ceja}" stroke-width="${gCeja}" stroke-linecap="round" opacity=".75"/>` +
       `<path d="M158 168 q-4 20 -10 26 q6 6 14 2" fill="none" stroke="${linea}" stroke-width="3" stroke-linecap="round"/>` +
       `<path d="M136 232 q24 22 48 0" fill="none" stroke="#c9607a" stroke-width="6" stroke-linecap="round"/>`;
   }

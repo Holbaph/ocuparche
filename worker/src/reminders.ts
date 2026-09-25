@@ -3,7 +3,7 @@
 //  1. "Ya se puede sacar el parche": para cada paciente, cuando su registro de
 //     hoy ya cumplió SU tiempo de parche (cada paciente puede tener una
 //     duración distinta). Si ya anotaron que se lo sacó, no avisa.
-//  2. Control con el oftalmólogo: el día antes (desde las 9:00, hora de Chile).
+//  2. Control con el oftalmólogo: el día antes a las 19:00 (hora de Chile).
 //  3. Resumen de la semana: los domingos por la tarde.
 import { buildPushHTTPRequest } from '@pushforge/builder';
 import type { Env } from './types';
@@ -138,7 +138,7 @@ export async function revisarTratamiento(env: Env): Promise<{ controles: number;
   const controlesAvisados: string[] = [];
   const resumenesEnviados: string[] = [];
 
-  // --- control: el día antes desde las 9:00 (o el mismo día, si se cargó tarde) ---
+  // --- control: el día antes a las 19:00 (o el mismo día desde las 7:00, si se cargó tarde) ---
   const manana = sumarDias(hoy, 1);
   const { results: controles } = await env.DB.prepare(
     `SELECT c.paciente_id, c.control_fecha, c.control_hora, c.control_detalle, c.control_preguntas, p.nombre, p.cuenta_id
@@ -152,7 +152,7 @@ export async function revisarTratamiento(env: Env): Promise<{ controles: number;
   }>();
   for (const c of controles ?? []) {
     const esHoy = c.control_fecha === hoy;
-    if (esHoy ? hora < 7 : hora < 9) continue;
+    if (esHoy ? hora < 7 : hora < 19) continue;
     const cuando = esHoy ? 'hoy' : 'mañana';
     mensajes.push({
       cuentaId: c.cuenta_id,

@@ -535,6 +535,8 @@
     document.getElementById('tratamientoBloque').classList.toggle('hidden', !completo);
     document.getElementById('tratamientoUpsell').classList.toggle('hidden', completo);
     document.getElementById('addFinBloque').classList.toggle('hidden', !completo);
+    document.getElementById('informeBloque').classList.toggle('hidden', !completo);
+    document.getElementById('informeUpsell').classList.toggle('hidden', completo);
     document.getElementById('juegoBloque').classList.toggle('hidden', !completo);
     document.getElementById('juegoUpsell').classList.toggle('hidden', completo);
     document.getElementById('openJuego').classList.toggle('hidden', !completo);
@@ -623,33 +625,8 @@
   }
 
   function computeStats() {
-    const ids = Object.keys(entries).sort();
-    const total = ids.length;
-    let countD = 0, countI = 0;
-    ids.forEach(id => { if (entries[id].ojo === 'derecho') countD++; else countI++; });
-
-    let streak = 0;
-    const cursor = new Date();
-    if (!entries[Utils.todayId()]) cursor.setDate(cursor.getDate() - 1);
-    for (let i = 0; i < 800; i++) {
-      if (entries[Utils.dateId(cursor)]) streak++;
-      else if (!diaIndicado(cursor)) { /* día de descanso: no corta la racha */ }
-      else break;
-      cursor.setDate(cursor.getDate() - 1);
-    }
-
-    let constancia = 0;
-    if (total > 0) {
-      const first = Utils.parseId(ids[0]);
-      const now = new Date();
-      // solo cuentan los días en que el oftalmólogo indicó parche
-      let indicados = 0;
-      for (const d = new Date(first.getFullYear(), first.getMonth(), first.getDate()); d <= now; d.setDate(d.getDate() + 1)) {
-        if (diaIndicado(d)) indicados++;
-      }
-      constancia = Math.min(100, Math.round(100 * total / Math.max(indicados, 1)));
-    }
-    return { total, countD, countI, streak, constancia };
+    const e = Tratamiento.estadisticas(entries, confT());
+    return { total: e.total, countD: e.countD, countI: e.countI, streak: e.racha, constancia: e.constancia };
   }
 
   function renderStats() {
@@ -686,9 +663,9 @@
         const id = Utils.dateId(d);
         const rec = entries[id];
         const descanso = !rec && !diaIndicado(d);
-        div.className = 'cal-cell' + (rec ? ' ' + rec.ojo : '') + (id === Utils.todayId() ? ' today' : '') + (descanso ? ' descanso' : '');
+        div.className = 'cal-cell' + (rec ? ' ' + rec.ojo : '') + (id === Utils.todayId() ? ' today' : '') + (descanso ? ' libre' : '');
         div.textContent = d.getDate();
-        div.title = Utils.fmtShort(d) + (rec ? ' · ' + Utils.label(rec.ojo) + ' · ' + Utils.fmtTime(rec.hora) + (rec.horaFin ? ' · usó ' + duracionTxt(usoMs(rec)) : '') : descanso ? ' · día de descanso' : ' · sin registro');
+        div.title = Utils.fmtShort(d) + (rec ? ' · ' + Utils.label(rec.ojo) + ' · ' + Utils.fmtTime(rec.hora) + (rec.horaFin ? ' · usó ' + duracionTxt(usoMs(rec)) : '') : descanso ? ' · día libre de parche' : ' · sin registro');
       }
       grid.appendChild(div);
     }
@@ -1053,57 +1030,65 @@
     const h = Math.floor(min / 60), m = min % 60;
     return h > 0 ? h + ' h' + (m ? ' ' + m + ' min' : '') : m + ' min';
   }
-  function semanaActual() {
-    const hoy = new Date();
-    const lunes = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - ((hoy.getDay() + 6) % 7));
-    return [0, 1, 2, 3, 4, 5, 6].map(i => new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i));
+  // Config del tratamiento en el formato de js/tratamiento.js (cuentas y informe).
+  function confT() { return Tratamiento.desdeApi(trat, duracionMinutos); }
+
+  function durCorta(min) {
+    min = Math.round(min);
+    const h = Math.floor(min / 60), m = min % 60;
+    return h ? h + 'h' + (m ? String(m).padStart(2, '0') : '') : m + 'm';
   }
 
+  // Premio de la semana, próximo control y gráfico "Esta semana".
   function renderTratamiento() {
-    const card = document.getElementById('tratamientoCard');
-    if (!esPlanCompleto() || !pacienteActualId) { card.classList.add('hidden'); return; }
-    card.classList.remove('hidden');
     const $ = (id) => document.getElementById(id);
+    const completo = esPlanCompleto() && !!pacienteActualId;
+    const conf = confT();
 
-    // --- esta semana ---
-    const dias = semanaActual();
-    const indicados = dias.filter(diaIndicado).length;
-    const usados = dias.filter(d => entries[Utils.dateId(d)]);
-    const conFin = usados.map(d => usoMs(entries[Utils.dateId(d)])).filter(ms => ms > 0);
-    let texto = 'Usó el parche ' + usados.length + ' de ' + indicados + ' días indicados';
-    if (conFin.length) texto += ' · promedio ' + duracionTxt(conFin.reduce((a, b) => a + b, 0) / conFin.length) + ' por día';
-    $('semanaTexto').textContent = texto + '.';
-
-    // --- premio por constancia ---
-    const meta = trat.premio_meta;
-    const barra = $('premioBarra'), pTexto = $('premioTexto');
-    if (meta) {
-      const cumplida = usados.length >= meta;
-      barra.classList.remove('hidden'); pTexto.classList.remove('hidden');
-      barra.classList.toggle('lleno', cumplida);
-      $('premioBarraRelleno').style.width = Math.min(100, Math.round(100 * usados.length / meta)) + '%';
-      const premio = trat.premio_texto ? ': ' + trat.premio_texto : '';
-      pTexto.textContent = cumplida
-        ? '🎉 ¡Meta de la semana cumplida! Premio' + premio
-        : '🎁 Faltan ' + (meta - usados.length) + (meta - usados.length === 1 ? ' día' : ' días') + ' para el premio' + premio;
-    } else { barra.classList.add('hidden'); pTexto.classList.add('hidden'); }
+    // --- premio por constancia (tarjeta de la pantalla principal) ---
+    const card = $('premioCard');
+    const p = completo ? Tratamiento.premio(entries, conf) : null;
+    if (!p) card.classList.add('hidden');
+    else {
+      card.classList.remove('hidden');
+      card.classList.toggle('logrado', p.logrado);
+      const texto = Utils.esc(p.texto);
+      const dias = p.dias.map((x) => '<span class="pr-dia' + (x.rec ? ' hecho' : '') + (x.futuro ? ' futuro' : '') + (!x.indicado ? ' libre' : '') + (x.hoy ? ' hoy' : '') + '">' +
+        '<i>' + (x.rec ? '⭐' : '') + '</i><b>' + x.corto + '</b></span>').join('');
+      card.innerHTML =
+        '<div class="pr-titulo">' + (p.logrado ? '🎉 ¡Lo lograste! Ganó: ' + texto : '🏆 Premio de la semana: ' + texto) + '</div>' +
+        '<div class="pr-sub">' + (p.logrado ? p.hechos + ' días con parche esta semana 💖' : p.hechos + ' de ' + p.meta + ' días · ¡faltan' + (p.faltan > 1 ? ' ' : ' ') + p.faltan + '!') + '</div>' +
+        '<div class="pr-dias">' + dias + '</div>';
+    }
 
     // --- próximo control ---
-    const ctl = $('controlBloque');
-    if (!trat.control_fecha) { ctl.classList.add('hidden'); return; }
-    ctl.classList.remove('hidden');
-    const f = Utils.parseId(trat.control_fecha);
-    const hoy0 = new Date(); hoy0.setHours(0, 0, 0, 0);
-    const diff = Math.round((f - hoy0) / 86400000);
-    const cuando = diff === 0 ? 'hoy' : diff === 1 ? 'mañana' : diff > 1 ? 'en ' + diff + ' días' : 'pasó hace ' + (-diff) + (diff === -1 ? ' día' : ' días');
-    $('controlFecha').textContent = Utils.fmtLong(f) + (trat.control_hora ? ', ' + trat.control_hora : '') + ' · ' + cuando + (diff < 0 ? ' — actualiza la fecha del próximo' : '');
-    ctl.classList.toggle('cerca', diff >= 0 && diff <= 1);
-    const det = $('controlDetalle');
-    det.textContent = trat.control_detalle || '';
-    det.classList.toggle('hidden', !trat.control_detalle);
-    const pr = $('controlPreguntas');
-    pr.textContent = trat.control_preguntas ? '📝 Para preguntar:\n' + trat.control_preguntas : '';
-    pr.classList.toggle('hidden', !trat.control_preguntas);
+    const b = $('controlCard');
+    const c = completo ? Tratamiento.control(conf) : null;
+    if (!c) b.classList.add('hidden');
+    else {
+      b.classList.remove('hidden');
+      b.classList.toggle('pronto', c.dias <= 1);
+      b.textContent = '👁️ Control con el oftalmólogo ' + c.cuando + ' · ' + c.fecha;
+    }
+
+    // --- esta semana (gráfico del historial) ---
+    const dias = Tratamiento.semana(entries, conf);
+    const tope = Math.max(conf.duracion * 1.25, ...dias.map(x => (x.uso ? x.uso.min : 0)));
+    const meta = Math.round(100 * conf.duracion / tope);
+    $('semanaGraf').innerHTML = dias.map((x) => {
+      const min = x.uso ? x.uso.min : 0;
+      const cls = 'sem-dia' + (x.hoy ? ' hoy' : '') + (!x.indicado ? ' libre' : '') + (x.futuro ? ' futuro' : '') +
+        (x.rec ? ' ' + x.rec.ojo : '') + (x.uso && x.uso.estimado ? ' estimado' : '') + (x.uso && x.uso.enCurso ? ' encurso' : '');
+      const etq = x.rec ? durCorta(min) : (!x.indicado ? 'libre' : (x.futuro || x.hoy ? '' : '—'));
+      return '<div class="' + cls + '"><div class="sem-barra"><i style="bottom:' + meta + '%"></i><span style="height:' + Math.round(100 * min / tope) + '%"></span></div>' +
+        '<b>' + x.corto + '</b><small>' + etq + '</small></div>';
+    }).join('');
+    const indicados = dias.filter(x => x.indicado && !x.futuro).length;
+    const hechos = dias.filter(x => x.rec && x.indicado).length;
+    const total = dias.reduce((sum, x) => sum + (x.uso ? x.uso.min : 0), 0);
+    const estimados = dias.filter(x => x.uso && x.uso.estimado).length;
+    $('semanaResumen').textContent = hechos + ' de ' + indicados + ' días hasta hoy · ' + Tratamiento.fmtDur(total) + ' con el parche' +
+      (estimados ? ' (' + estimados + ' día' + (estimados > 1 ? 's' : '') + ' sin hora de sacado: se estimó la duración indicada)' : '') + '.';
   }
 
   function rellenarFormTratamiento() {
@@ -1165,9 +1150,34 @@
     } catch (e) { showToast(e.message || 'No se pudo guardar, intenta de nuevo'); }
   });
 
-  document.getElementById('controlEditar').addEventListener('click', () => {
+  document.getElementById('controlCard').addEventListener('click', () => {
     openSheet(); refrescarEstadoAvisos();
     setTimeout(() => document.getElementById('tratamientoSeccion').scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
+  });
+
+  // --- informe para el doctor ---
+  let informeActual = null;
+  document.getElementById('infVer').addEventListener('click', () => {
+    if (!pacienteActualId) return;
+    const dias = parseInt(document.getElementById('infPeriodo').value, 10) || 28;
+    const desde = new Date(); desde.setDate(desde.getDate() - (dias - 1));
+    informeActual = Tratamiento.informe(entries, confT(), Utils.dateId(desde), Utils.todayId(), (pacienteActual() || {}).nombre);
+    document.getElementById('infHoja').innerHTML = informeActual.html;
+    document.getElementById('informe').classList.remove('hidden');
+    document.body.classList.add('con-informe');
+  });
+  document.getElementById('infCerrar').addEventListener('click', () => {
+    document.getElementById('informe').classList.add('hidden');
+    document.body.classList.remove('con-informe');
+  });
+  document.getElementById('infImprimir').addEventListener('click', () => window.print());
+  document.getElementById('infCompartir').addEventListener('click', async () => {
+    if (!informeActual) return;
+    try {
+      if (navigator.share) { await navigator.share({ title: informeActual.titulo, text: informeActual.texto }); return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(informeActual.texto); showToast('Informe copiado: pégalo en WhatsApp o en un correo'); }
+    catch (e) { showToast('No se pudo compartir: usa "PDF"'); }
   });
 
   // ================= arranque =================
