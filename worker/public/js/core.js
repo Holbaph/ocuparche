@@ -6,6 +6,12 @@ const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', '
   'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
 const Utils = {
+  // Escapa texto antes de meterlo con innerHTML (nombres de personas e hij@s los
+  // escribe cualquiera: sin esto, un nombre con <img onerror=…> ejecutaba código en la
+  // pantalla de toda la familia, incluida la de la persona administradora).
+  esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  },
   dateId(d) {
     const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;

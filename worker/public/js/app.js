@@ -83,7 +83,7 @@
       const err = document.getElementById('signupError');
       err.classList.add('hidden');
       if (!nombre || !email || !password) { err.textContent = 'Completa todos los campos.'; err.classList.remove('hidden'); return; }
-      if (password.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres.'; err.classList.remove('hidden'); return; }
+      if (password.length < 8) { err.textContent = 'La contraseña debe tener al menos 8 caracteres.'; err.classList.remove('hidden'); return; }
       try {
         await Auth.registrarse(email, password, nombre);
         await arrancarSesion();
@@ -113,7 +113,7 @@
       const p2 = document.getElementById('newPassword2').value;
       const err = document.getElementById('setPasswordError');
       err.classList.add('hidden');
-      if (p1.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres.'; err.classList.remove('hidden'); return; }
+      if (p1.length < 8) { err.textContent = 'La contraseña debe tener al menos 8 caracteres.'; err.classList.remove('hidden'); return; }
       if (p1 !== p2) { err.textContent = 'Las contraseñas no coinciden.'; err.classList.remove('hidden'); return; }
       try {
         if (authTokenMode === 'invite') await Auth.aceptarInvitacion(authToken, p1);
@@ -366,6 +366,7 @@
     const p = pacienteActual();
     if (!p) return;
     avatarBorrador = normalizarAvatar(p.avatar);
+    document.getElementById('avatarNombre').value = p.nombre;
     avTab = 'general';
     prepararPreview();
     renderPickersAvatar();
@@ -409,11 +410,18 @@
   document.getElementById('avatarGuardar').addEventListener('click', async () => {
     const p = pacienteActual();
     if (!p) return;
+    const nombre = document.getElementById('avatarNombre').value.trim();
+    if (!nombre) { showToast('El nombre no puede quedar vacío'); return; }
     try {
       await Pacientes.actualizarAvatar(p.id, avatarBorrador);
       p.avatar = avatarBorrador;
+      if (nombre !== p.nombre) {
+        await Pacientes.renombrar(p.id, nombre);
+        p.nombre = nombre;
+        renderPatientTabs();
+      }
       aplicarAvatar(p.avatar);
-      showToast('¡Apariencia guardada!');
+      showToast('¡Guardado!');
       cerrarAvatarSheet();
     } catch (e) {
       showToast('No se pudo guardar, intenta de nuevo');
@@ -562,7 +570,7 @@
     if (rec) {
       const autor = personasCache[rec.registradoPor];
       line.innerHTML = '🩹 <span class="pill ' + rec.ojo + '">' + Utils.label(rec.ojo) + '</span> · puesto a las ' + Utils.fmtTime(rec.hora) +
-        (autor ? '<span class="status-by">Registrado por ' + autor.nombre + '</span>' : '');
+        (autor ? '<span class="status-by">Registrado por ' + Utils.esc(autor.nombre) + '</span>' : '');
       hint.innerHTML = '';
       undo.classList.remove('hidden');
     } else {
@@ -665,7 +673,7 @@
         row.innerHTML =
           '<span class="side-dot ' + rec.ojo + '"></span>' +
           '<div class="txt"><div class="d1">' + Utils.fmtShort(Utils.parseId(id)) + ' · ' + Utils.label(rec.ojo) + '</div>' +
-          '<div class="d2">' + Utils.fmtTime(rec.hora) + (autor ? ' · ' + autor.nombre : '') + '</div></div>' +
+          '<div class="d2">' + Utils.fmtTime(rec.hora) + (autor ? ' · ' + Utils.esc(autor.nombre) : '') + '</div></div>' +
           '<button class="del" data-act="del" title="Eliminar">🗑</button>';
       }
       list.appendChild(row);
@@ -853,7 +861,7 @@
     personas.forEach(p => { personasCache[p.id] = p; });
     const list = document.getElementById('peopleList');
     list.innerHTML = personas.map(p =>
-      '<div class="person-row"><span class="p-name">' + p.nombre + '</span>' +
+      '<div class="person-row"><span class="p-name">' + Utils.esc(p.nombre) + '</span>' +
       (p.role === 'admin' ? '<span class="badge-admin">Admin</span>' : '') +
       '</div>'
     ).join('');

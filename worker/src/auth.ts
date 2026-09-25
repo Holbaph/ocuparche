@@ -1,18 +1,22 @@
 // auth.ts — cookie de sesión y helper para exigir sesión en una ruta.
 import { randomToken, sha256Hex } from './crypto';
+import { AHORA_SQL } from './helpers';
 import type { Env } from './types';
 
-const COOKIE_NAME = 'oc_session';
+// "__Host-" obliga al navegador a aceptar la cookie solo si es Secure, de
+// Path=/ y sin Domain: ningún subdominio ni sitio hermano puede pisarla.
+// SameSite=Strict: la app y la API son el mismo sitio, así que la cookie
+// nunca viaja en peticiones que empiezan en otra página (defensa contra CSRF).
+const COOKIE_NAME = '__Host-oc_session';
 const SESSION_DIAS = 30;
+const SESSION_ADMIN_HORAS = 8; // el panel de administrador dura mucho menos
 
 export function sessionCookie(token: string, maxAgeSeconds: number): string {
-  // SameSite=None + Secure: la cookie viaja "cross-site" mientras el
-  // frontend (GitHub Pages) y la API (Workers) sean orígenes distintos.
-  return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=${maxAgeSeconds}`;
+  return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAgeSeconds}`;
 }
 
 export function clearSessionCookie(): string {
-  return `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=0`;
+  return `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
 }
 
 function getCookie(request: Request, name: string): string | null {
@@ -25,14 +29,17 @@ function getCookie(request: Request, name: string): string | null {
   return null;
 }
 
-export async function crearSesion(env: Env, userId: string): Promise<{ token: string; cookie: string }> {
+// admin2fa: solo el paso 2 del login del panel (código del authenticator) lo
+// pone en true; esas sesiones valen para /api/admin/* y duran 8 horas.
+export async function crearSesion(env: Env, userId: string, admin2fa = false): Promise<{ token: string; cookie: string }> {
   const token = randomToken();
   const tokenHash = await sha256Hex(token);
-  const expiresAt = new Date(Date.now() + SESSION_DIAS * 86400000).toISOString();
-  await env.DB.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)')
-    .bind(tokenHash, userId, expiresAt)
+  const segundos = admin2fa ? SESSION_ADMIN_HORAS * 3600 : SESSION_DIAS * 86400;
+  const expiresAt = new Date(Date.now() + segundos * 1000).toISOString();
+  await env.DB.prepare('INSERT INTO sessions (token_hash, user_id, expires_at, admin_2fa) VALUES (?, ?, ?, ?)')
+    .bind(tokenHash, userId, expiresAt, admin2fa ? 1 : 0)
     .run();
-  return { token, cookie: sessionCookie(token, SESSION_DIAS * 86400) };
+  return { token, cookie: sessionCookie(token, segundos) };
 }
 
 export type Perfil = {
@@ -42,6 +49,7 @@ export type Perfil = {
   nombre: string;
   role: string;
   es_dueño: number;
+  admin_2fa: number; // 1 = sesión del panel de administrador (pasó el authenticator)
 };
 
 export async function perfilDesdeSesion(request: Request, env: Env): Promise<Perfil | null> {
@@ -49,9 +57,9 @@ export async function perfilDesdeSesion(request: Request, env: Env): Promise<Per
   if (!token) return null;
   const tokenHash = await sha256Hex(token);
   const row = await env.DB.prepare(
-    `SELECT p.id, p.cuenta_id, p.email, p.nombre, p.role, p.es_dueño
+    `SELECT p.id, p.cuenta_id, p.email, p.nombre, p.role, p.es_dueño, s.admin_2fa
      FROM sessions s JOIN profiles p ON p.id = s.user_id
-     WHERE s.token_hash = ? AND s.expires_at > datetime('now')`
+     WHERE s.token_hash = ? AND s.expires_at > ${AHORA_SQL}`
   ).bind(tokenHash).first<Perfil>();
   return row ?? null;
 }

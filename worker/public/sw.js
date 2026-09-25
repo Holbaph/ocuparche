@@ -1,6 +1,6 @@
 // Service worker de la app (app.html) — cachea el cascarón estático y maneja
 // los avisos push del temporizador. La landing (index.html) no lo usa.
-const CACHE_NAME = 'ocuparche-v14';
+const CACHE_NAME = 'ocuparche-v15';
 const ASSETS = [
   './app.html',
   './manifest.json',
@@ -15,6 +15,7 @@ const ASSETS = [
   './js/juego.js',
   './js/ar.js',
   './js/camara.js',
+  './js/sw-register.js',
   './js/app.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -37,11 +38,17 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // NUNCA se cachea la API: lleva datos personales de niños y de la cuenta, y una copia en el
+  // dispositivo seguiría ahí después de cerrar sesión (otra persona del mismo teléfono la vería).
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
         return response;
       })
       .catch(() => caches.match(event.request))

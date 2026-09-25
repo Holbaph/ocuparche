@@ -37,7 +37,9 @@ export const guardarJuego: Handler = async (request, env, origin) => {
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
   const body = await readJson<{ paciente_id?: string; juego?: unknown }>(request);
   const pacienteId = body?.paciente_id;
-  if (!pacienteId || body?.juego === undefined) return json({ ok: false, error: 'Datos inválidos' }, origin, { status: 400 });
+  if (typeof pacienteId !== 'string' || body?.juego === null || typeof body?.juego !== 'object') return json({ ok: false, error: 'Datos inválidos' }, origin, { status: 400 });
+  const guardado = JSON.stringify(body.juego);
+  if (guardado.length > 60_000) return json({ ok: false, error: 'Demasiado grande' }, origin, { status: 413 });
   if (!(await pacienteDeLaCuenta(env, pacienteId, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
   if (!(await esPlanCompleto(env, perfil.cuenta_id))) {
     return json({ ok: false, error: 'El juego de vestir es parte del plan completo' }, origin, { status: 403 });
@@ -46,7 +48,7 @@ export const guardarJuego: Handler = async (request, env, origin) => {
   await env.DB.prepare(
     `INSERT INTO configuracion (paciente_id, juego, updated_at) VALUES (?, ?, datetime('now'))
      ON CONFLICT(paciente_id) DO UPDATE SET juego = excluded.juego, updated_at = datetime('now')`
-  ).bind(pacienteId, JSON.stringify(body.juego)).run();
+  ).bind(pacienteId, guardado).run();
   return json({ ok: true }, origin);
 };
 
@@ -55,8 +57,8 @@ export const guardarJuegoMinutos: Handler = async (request, env, origin) => {
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
   const body = await readJson<{ paciente_id?: string; minutos?: number }>(request);
   const pacienteId = body?.paciente_id;
-  const minutos = Number(body?.minutos);
-  if (!pacienteId || Number.isNaN(minutos) || minutos < 0) return json({ ok: false, error: 'Datos inválidos' }, origin, { status: 400 });
+  const minutos = Math.round(Number(body?.minutos));
+  if (typeof pacienteId !== 'string' || Number.isNaN(minutos) || minutos < 0 || minutos > 1440) return json({ ok: false, error: 'Datos inválidos' }, origin, { status: 400 });
   if (!(await pacienteDeLaCuenta(env, pacienteId, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
   if (!(await esPlanCompleto(env, perfil.cuenta_id))) {
     return json({ ok: false, error: 'El juego de vestir es parte del plan completo' }, origin, { status: 403 });

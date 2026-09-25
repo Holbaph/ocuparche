@@ -329,6 +329,10 @@ function cuerpoAvatar(a) {
   ).join('');
   s += `<path d="${PECHO_AV}" fill="${piel}"/>`;
 
+  // brazos: van DETRÁS del torso y de la ropa, así la parte que se mete bajo la
+  // ropa queda tapada y no asoma piel dentro de la polera o el vestido
+  s += `<path d="${BRAZO_I}" fill="${mangaLarga ? cr : piel}"/><path d="${BRAZO_D}" fill="${mangaLarga ? cr : piel}"/>`;
+
   // ropa de abajo (no si lleva vestido)
   if (!vestido) s += pantalonAv(a.pantalon, cp, oP);
 
@@ -362,7 +366,6 @@ function cuerpoAvatar(a) {
   }
 
   // brazos (con mangas según la ropa) y manos
-  s += `<path d="${BRAZO_I}" fill="${mangaLarga ? cr : piel}"/><path d="${BRAZO_D}" fill="${mangaLarga ? cr : piel}"/>`;
   if (!mangaLarga && (a.ropa === 'polera' || vestido)) {
     s += `<path d="M102 306 C82 312 68 334 63 368 C74 376 90 376 100 370 C102 350 110 336 122 330 Z" fill="${cr}"/>` +
       `<path d="M218 306 C238 312 252 334 257 368 C246 376 230 376 220 370 C218 350 210 336 198 330 Z" fill="${cr}"/>`;

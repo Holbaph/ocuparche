@@ -65,7 +65,7 @@
     </div>
     <div class="field">
       <label for="signupPassword">Contraseña</label>
-      <input type="password" id="signupPassword" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+      <input type="password" id="signupPassword" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
     </div>
     <button class="btn-primary" id="btnSignup">Crear cuenta gratis</button>
     <button class="btn-link" id="btnVolverLoginDesdeSignup">Ya tengo cuenta</button>
@@ -97,7 +97,7 @@
     <p class="auth-error hidden" id="setPasswordError"></p>
     <div class="field">
       <label for="newPassword">Contraseña nueva</label>
-      <input type="password" id="newPassword" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+      <input type="password" id="newPassword" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
     </div>
     <div class="field">
       <label for="newPassword2">Repite la contraseña</label>
@@ -287,6 +287,11 @@
   <div class="avatar-tabs" id="avatarTabs" role="tablist"></div>
 
   <div class="av-pane" data-pane="general">
+    <section class="block">
+      <p class="block-title">Nombre</p>
+      <input type="text" id="avatarNombre" maxlength="40" autocomplete="off" placeholder="Nombre de tu hij@" style="width:100%">
+    </section>
+
     <section class="block">
       <p class="block-title">¿Niña o niño?</p>
       <div class="seg" id="generoAvatarSeg">
@@ -605,10 +610,6 @@
 <script src="js/camara.js"></script>
 <script src="js/juego.js"></script>
 <script src="js/app.js"></script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-  }
-</script>
+<script src="js/sw-register.js"></script>
 </body>
 </html>

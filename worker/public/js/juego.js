@@ -1194,6 +1194,14 @@ const Juego = (function () {
     }
     c += `<path d="${TORSO}" fill="${piel}" transform="translate(160 0) scale(.93 1) translate(-160 0)"/>`;
 
+    // brazos (sin pose): van DETRÁS de la ropa, así lo que se mete bajo la polera
+    // queda tapado y no asoma piel dentro de la prenda
+    if (!pose) {
+      c += `<path d="M112 292 C100 300 96 326 94 350 C93 358 93 364 95 370 L109 372 C110 352 114 330 124 306 Z" fill="${piel}"/>` +
+        `<path d="M208 292 C220 300 224 326 226 350 C227 358 227 364 225 370 L211 372 C210 352 206 330 196 306 Z" fill="${piel}"/>` +
+        `<ellipse cx="102" cy="370" rx="10" ry="12" fill="${piel}"/><ellipse cx="218" cy="370" rx="10" ry="12" fill="${piel}"/>`;
+    }
+
     // ropa (o la ropa interior blanca si no tiene nada puesto)
     const blanco = '#f4f1ee';
     if (partes.vestido) c += partes.vestido.svg;
@@ -1209,9 +1217,6 @@ const Juego = (function () {
     const deArriba = partes.vestido || partes.arriba;
     const mangaEncima = partes.encima && partes.encima.manga;
     if (!pose) {
-      c += `<path d="M112 292 C100 300 96 326 94 350 C93 358 93 364 95 370 L109 372 C110 352 114 330 124 306 Z" fill="${piel}"/>` +
-        `<path d="M208 292 C220 300 224 326 226 350 C227 358 227 364 225 370 L211 372 C210 352 206 330 196 306 Z" fill="${piel}"/>` +
-        `<ellipse cx="102" cy="370" rx="10" ry="12" fill="${piel}"/><ellipse cx="218" cy="370" rx="10" ry="12" fill="${piel}"/>`;
       if (deArriba && deArriba.manga && !mangaEncima) c += deArriba.manga; // la chaqueta las tapa
       if (mangaEncima) c += mangaEncima;
     } else {
@@ -1384,8 +1389,8 @@ const Juego = (function () {
 
   function renderPersonajes() {
     $('juegoPersonajes').innerHTML = listaVisible().map((p) =>
-      `<button class="jpersonaje${p.id === actual ? ' activo' : ''}" data-id="${p.id}" aria-label="${p.nombre}">` +
-      `<svg viewBox="22 18 276 276">${figura(p.id, estados[p.id])}</svg><span>${p.nombre}</span></button>`
+      `<button class="jpersonaje${p.id === actual ? ' activo' : ''}" data-id="${Utils.esc(p.id)}" aria-label="${Utils.esc(p.nombre)}">` +
+      `<svg viewBox="22 18 276 276">${figura(p.id, estados[p.id])}</svg><span>${Utils.esc(p.nombre)}</span></button>`
     ).join('');
   }
 

@@ -71,16 +71,18 @@ async function hotp(secret: Uint8Array, contador: number): Promise<string> {
 // Verifica un código de 6 dígitos contra el secreto, con una ventana de
 // ±1 paso (30s) para tolerar que el reloj del celular ande un poco
 // desfasado del servidor.
-export async function verificarTotp(secretBase32: string, codigo: string, ventana = 1): Promise<boolean> {
+// Devuelve el número de paso (ventana de 30 s) que coincidió, o null si el código no vale — quien llama
+// guarda ese paso para no aceptar el mismo código dos veces.
+export async function verificarTotp(secretBase32: string, codigo: string, ventana = 1): Promise<number | null> {
   const secret = base32Decode(secretBase32);
   const paso = Math.floor(Date.now() / 1000 / PASO_SEGUNDOS);
   const limpio = codigo.replace(/\s+/g, '');
-  if (!/^\d{6}$/.test(limpio)) return false;
+  if (!/^\d{6}$/.test(limpio)) return null;
   for (let i = -ventana; i <= ventana; i++) {
     const esperado = await hotp(secret, paso + i);
-    if (esperado === limpio) return true;
+    if (esperado === limpio) return paso + i;
   }
-  return false;
+  return null;
 }
 
 // URI estándar otpauth:// — algunas apps de escritorio permiten pegarlo

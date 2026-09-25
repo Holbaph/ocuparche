@@ -6,11 +6,12 @@
 // TODOS los clientes, así que ninguna ruta nueva puede saltarse el chequeo.
 import { json } from './cors';
 import { perfilDesdeSesion, crearSesion } from './auth';
-import { verifyPassword, randomCodigoActivacion } from './crypto';
+import { verifyPassword, hashPassword, randomCodigoActivacion } from './crypto';
+import { permitir, ipDe, demasiadosIntentos } from './ratelimit';
 import { enviarCorreo, correoCodigoActivacion } from './email';
 import { generarSecretoBase32, verificarTotp, otpauthUri } from './totp';
 import { limitarAvatarSegunPlan } from './routes-pacientes';
-import { uuid, readJson } from './helpers';
+import { uuid, readJson, texto, emailValido, AHORA_SQL } from './helpers';
 import type { Env } from './types';
 
 type Handler = (request: Request, env: Env, origin: string | null) => Promise<Response>;
@@ -22,6 +23,10 @@ async function exigirDueño(request: Request, env: Env) {
   const perfil = await perfilDesdeSesion(request, env);
   if (!perfil) return { error: 'No autenticado' as const, status: 401 as const };
   if (!perfil.es_dueño) return { error: 'No autorizado' as const, status: 403 as const };
+  // Solo vale una sesión creada al pasar el código del authenticator. Con la
+  // sesión del login normal (solo contraseña) no se entra al panel: así el
+  // segundo factor no se puede saltar llamando a la API directamente.
+  if (!perfil.admin_2fa) return { error: 'Inicia sesión desde el panel de administrador' as const, status: 403 as const };
   return { perfil };
 }
 
@@ -38,10 +43,15 @@ async function exigirDueño(request: Request, env: Env) {
 // pasa DESPUÉS de comprobar la contraseña.
 export const loginPaso1: Handler = async (request, env, origin) => {
   const body = await readJson<{ email?: string; password?: string }>(request);
-  const email = (body?.email || '').trim().toLowerCase();
-  const password = body?.password || '';
+  const email = texto(body?.email, 254).toLowerCase();
+  const password = typeof body?.password === 'string' ? body.password.slice(0, 200) : '';
   const credencialesInvalidas = () => json({ ok: false, error: 'Correo o contraseña incorrectos' }, origin, { status: 401 });
   if (!email || !password) return credencialesInvalidas();
+
+  // Fuerza bruta contra la contraseña del dueño: pocos intentos por IP y un tope global.
+  if (!(await permitir(env, `admin-login:ip:${ipDe(request)}`, 6, 900)) || !(await permitir(env, 'admin-login:global', 30, 3600))) {
+    return demasiadosIntentos(origin);
+  }
 
   const user = await env.DB.prepare(
     'SELECT id, email, password_hash, password_salt, es_dueño, totp_secret, totp_confirmado FROM profiles WHERE email = ?'
@@ -49,7 +59,10 @@ export const loginPaso1: Handler = async (request, env, origin) => {
     id: string; email: string; password_hash: string; password_salt: string;
     es_dueño: number; totp_secret: string | null; totp_confirmado: number;
   }>();
-  if (!user || !user.es_dueño) return credencialesInvalidas();
+  if (!user || !user.es_dueño) {
+    await hashPassword(password); // mismo costo que un intento real
+    return credencialesInvalidas();
+  }
 
   const valido = await verifyPassword(password, user.password_hash, user.password_salt);
   if (!valido) return credencialesInvalidas();
@@ -78,15 +91,18 @@ export const loginPaso1: Handler = async (request, env, origin) => {
 // ---------- login del panel, paso 2: código del authenticator ----------
 export const loginPaso2: Handler = async (request, env, origin) => {
   const body = await readJson<{ pendiente?: string; codigo?: string }>(request);
-  const pendienteId = (body?.pendiente || '').trim();
-  const codigo = (body?.codigo || '').trim();
+  const pendienteId = texto(body?.pendiente, 100);
+  const codigo = texto(body?.codigo, 20);
   if (!pendienteId || !codigo) return json({ ok: false, error: 'Faltan datos' }, origin, { status: 400 });
+  if (!(await permitir(env, `admin-otp:ip:${ipDe(request)}`, 15, 900)) || !(await permitir(env, 'admin-otp:global', 40, 3600))) {
+    return demasiadosIntentos(origin);
+  }
 
   const row = await env.DB.prepare(
-    `SELECT ap.id, ap.user_id, ap.intentos, p.totp_secret
+    `SELECT ap.id, ap.user_id, ap.intentos, p.totp_secret, p.totp_ultimo_paso
      FROM admin_login_pendiente ap JOIN profiles p ON p.id = ap.user_id
-     WHERE ap.id = ? AND ap.expires_at > datetime('now')`
-  ).bind(pendienteId).first<{ id: string; user_id: string; intentos: number; totp_secret: string | null }>();
+     WHERE ap.id = ? AND ap.expires_at > ${AHORA_SQL}`
+  ).bind(pendienteId).first<{ id: string; user_id: string; intentos: number; totp_secret: string | null; totp_ultimo_paso: number }>();
   if (!row || !row.totp_secret) return json({ ok: false, error: 'La sesión de login venció — vuelve a iniciar sesión' }, origin, { status: 400 });
 
   if (row.intentos >= MAX_INTENTOS) {
@@ -94,7 +110,9 @@ export const loginPaso2: Handler = async (request, env, origin) => {
     return json({ ok: false, error: 'Demasiados intentos — vuelve a iniciar sesión' }, origin, { status: 400 });
   }
 
-  const valido = await verificarTotp(row.totp_secret, codigo);
+  const paso = await verificarTotp(row.totp_secret, codigo);
+  // un código ya usado (mismo paso o anterior) no vale: si alguien lo viera por encima del hombro, no le sirve
+  const valido = paso !== null && paso > row.totp_ultimo_paso;
   if (!valido) {
     await env.DB.prepare('UPDATE admin_login_pendiente SET intentos = intentos + 1 WHERE id = ?').bind(row.id).run();
     return json({ ok: false, error: 'Código incorrecto' }, origin, { status: 400 });
@@ -102,9 +120,9 @@ export const loginPaso2: Handler = async (request, env, origin) => {
 
   await env.DB.batch([
     env.DB.prepare('DELETE FROM admin_login_pendiente WHERE id = ?').bind(row.id),
-    env.DB.prepare('UPDATE profiles SET totp_confirmado = 1 WHERE id = ?').bind(row.user_id),
+    env.DB.prepare('UPDATE profiles SET totp_confirmado = 1, totp_ultimo_paso = ? WHERE id = ?').bind(paso, row.user_id),
   ]);
-  const { cookie } = await crearSesion(env, row.user_id);
+  const { cookie } = await crearSesion(env, row.user_id, true); // sesión de administrador (8 h)
   return json({ ok: true }, origin, { headers: { 'Set-Cookie': cookie } });
 };
 
@@ -249,10 +267,10 @@ export const crearSolicitud: Handler = async (request, env, origin) => {
   if ('error' in chequeo) return json({ ok: false, error: chequeo.error }, origin, { status: chequeo.status });
 
   const body = await readJson<{ nombre?: string; email?: string; nota?: string }>(request);
-  const nombre = (body?.nombre || '').trim();
-  const email = (body?.email || '').trim().toLowerCase();
-  const nota = (body?.nota || '').trim();
-  if (!nombre || !email) return json({ ok: false, error: 'Falta nombre o correo' }, origin, { status: 400 });
+  const nombre = texto(body?.nombre, 80);
+  const email = texto(body?.email, 254).toLowerCase();
+  const nota = texto(body?.nota, 300);
+  if (!nombre || !emailValido(email)) return json({ ok: false, error: 'Falta nombre o correo' }, origin, { status: 400 });
 
   await env.DB.prepare('INSERT INTO solicitudes_codigo (id, nombre, email, nota) VALUES (?, ?, ?, ?)')
     .bind(uuid(), nombre, email, nota || null).run();

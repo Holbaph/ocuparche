@@ -85,6 +85,8 @@
 
     if (!sesion) { showOverlay('panelLoginPaso1'); return; }
     if (!sesion.perfil.es_dueño) { showOverlay('panelSinAcceso'); return; }
+    // una sesión de la app normal (solo contraseña) no vale acá: hay que pasar por el authenticator
+    if (!sesion.perfil.admin_2fa) { showOverlay('panelLoginPaso1'); return; }
 
     showDashboard();
     cargarTodo();

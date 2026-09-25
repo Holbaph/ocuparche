@@ -101,7 +101,7 @@ export const crearPaciente: Handler = async (request, env, origin) => {
   const perfil = await perfilDesdeSesion(request, env);
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
   const body = await readJson<{ nombre?: string; avatar?: unknown }>(request);
-  const nombre = (body?.nombre || '').trim();
+  const nombre = (typeof body?.nombre === 'string' ? body.nombre : '').trim().slice(0, 40);
   if (!nombre) return json({ ok: false, error: 'Escribe un nombre' }, origin, { status: 400 });
 
   const cuenta = await env.DB.prepare('SELECT plan FROM cuentas WHERE id = ?').bind(perfil.cuenta_id).first<{ plan: string }>();
@@ -128,7 +128,7 @@ export const actualizarPaciente: Handler = async (request, env, origin) => {
   if (!id) return json({ ok: false, error: 'Faltan datos' }, origin, { status: 400 });
   if (!(await pacienteDeLaCuenta(env, id, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
 
-  const nombre = body?.nombre !== undefined ? body.nombre.trim() : undefined;
+  const nombre = typeof body?.nombre === 'string' ? body.nombre.trim().slice(0, 40) : undefined;
   if (nombre !== undefined && !nombre) return json({ ok: false, error: 'El nombre no puede quedar vacío' }, origin, { status: 400 });
 
   let avatarJson: string | undefined;
@@ -183,10 +183,15 @@ export const guardarRegistro: Handler = async (request, env, origin) => {
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
   const body = await readJson<{ paciente_id?: string; fecha?: string; ojo?: string; hora?: string }>(request);
   const pacienteId = body?.paciente_id, fecha = body?.fecha, ojo = body?.ojo;
-  const hora = body?.hora || new Date().toISOString();
-  if (!pacienteId || !fecha || (ojo !== 'derecho' && ojo !== 'izquierdo')) {
+  const horaRaw = typeof body?.hora === 'string' && body.hora ? body.hora : new Date().toISOString();
+  const horaMs = Date.parse(horaRaw);
+  if (
+    typeof pacienteId !== 'string' || typeof fecha !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(fecha) ||
+    (ojo !== 'derecho' && ojo !== 'izquierdo') || Number.isNaN(horaMs)
+  ) {
     return json({ ok: false, error: 'Datos inválidos' }, origin, { status: 400 });
   }
+  const hora = new Date(horaMs).toISOString(); // siempre ISO normalizado (el cron y la app lo parsean)
   if (!(await pacienteDeLaCuenta(env, pacienteId, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
 
   await env.DB.prepare(
@@ -247,8 +252,8 @@ export const guardarConfig: Handler = async (request, env, origin) => {
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
   const body = await readJson<{ paciente_id?: string; duracion_minutos?: number }>(request);
   const pacienteId = body?.paciente_id;
-  const minutos = Number(body?.duracion_minutos);
-  if (!pacienteId || !minutos || minutos <= 0) return json({ ok: false, error: 'Datos inválidos' }, origin, { status: 400 });
+  const minutos = Math.round(Number(body?.duracion_minutos));
+  if (typeof pacienteId !== 'string' || !(minutos >= 1 && minutos <= 1440)) return json({ ok: false, error: 'Datos inválidos' }, origin, { status: 400 });
   if (!(await pacienteDeLaCuenta(env, pacienteId, perfil.cuenta_id))) return json({ ok: false, error: 'No encontrado' }, origin, { status: 404 });
 
   const cuenta = await env.DB.prepare('SELECT plan FROM cuentas WHERE id = ?').bind(perfil.cuenta_id).first<{ plan: string }>();

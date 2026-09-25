@@ -49,6 +49,10 @@ export async function enviarCorreo(env: Env, to: string, subject: string, html: 
   }
 }
 
+function esc(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+}
+
 export function correoRecuperar(link: string): string {
   return `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
@@ -63,7 +67,7 @@ export function correoInvitacion(link: string, cuentaNombre: string): string {
   return `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
       <h2>Te invitaron a Ocuparche</h2>
-      <p>${cuentaNombre} te invitó a ayudar con el tratamiento de parche ocular. Toca el botón para crear tu contraseña y entrar.</p>
+      <p>${esc(cuentaNombre)} te invitó a ayudar con el tratamiento de parche ocular. Toca el botón para crear tu contraseña y entrar.</p>
       <p><a href="${link}" style="background:#e1673f;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;display:inline-block">Aceptar invitación</a></p>
       <p style="color:#888;font-size:12px">Este enlace vence en 3 días.</p>
     </div>`;
