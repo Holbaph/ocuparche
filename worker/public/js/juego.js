@@ -478,11 +478,11 @@ const Juego = (function () {
     return out;
   }
   function mangasSvg(tipo, c) {
-    if (tipo === 'corta') return `<ellipse cx="118" cy="298" rx="15" ry="13" fill="${c}"/><ellipse cx="202" cy="298" rx="15" ry="13" fill="${c}"/>`;
+    if (tipo === 'corta') return `<ellipse cx="117" cy="301" rx="17" ry="16" fill="${c}"/><ellipse cx="203" cy="301" rx="17" ry="16" fill="${c}"/>`;
     if (tipo === 'globo') return `<ellipse cx="116" cy="298" rx="20" ry="16" fill="${c}"/><ellipse cx="204" cy="298" rx="20" ry="16" fill="${c}"/>`;
     if (tipo === 'larga' || tipo === 'velo') {
       const op = tipo === 'velo' ? ' opacity=".75"' : '';
-      return `<g${op}><path d="M118 298 L103 354 M202 298 L217 354" stroke="${c}" stroke-width="18" stroke-linecap="round"/>` +
+      return `<g${op}><path d="M118 298 L108 354 M202 298 L212 354" stroke="${c}" stroke-width="18" stroke-linecap="round"/>` +
         `<ellipse cx="118" cy="298" rx="14" ry="12" fill="${c}"/><ellipse cx="202" cy="298" rx="14" ry="12" fill="${c}"/></g>`;
     }
     return '';
@@ -1197,9 +1197,9 @@ const Juego = (function () {
     // brazos (sin pose): van DETRÁS de la ropa, así lo que se mete bajo la polera
     // queda tapado y no asoma piel dentro de la prenda
     if (!pose) {
-      c += `<path d="M112 292 C100 300 96 326 94 350 C93 358 93 364 95 370 L109 372 C110 352 114 330 124 306 Z" fill="${piel}"/>` +
-        `<path d="M208 292 C220 300 224 326 226 350 C227 358 227 364 225 370 L211 372 C210 352 206 330 196 306 Z" fill="${piel}"/>` +
-        `<ellipse cx="102" cy="370" rx="10" ry="12" fill="${piel}"/><ellipse cx="218" cy="370" rx="10" ry="12" fill="${piel}"/>`;
+      c += `<path d="M114 292 C106 300 103 326 102 350 C101 358 101 364 103 370 L115 372 C116 352 118 330 126 306 Z" fill="${piel}"/>` +
+        `<path d="M206 292 C214 300 217 326 218 350 C219 358 219 364 217 370 L205 372 C204 352 202 330 194 306 Z" fill="${piel}"/>` +
+        `<ellipse cx="108" cy="371" rx="10" ry="12" fill="${piel}"/><ellipse cx="212" cy="371" rx="10" ry="12" fill="${piel}"/>`;
     }
 
     // ropa (o la ropa interior blanca si no tiene nada puesto)
