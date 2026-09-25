@@ -5,7 +5,7 @@
 // ocultar el botón en el frontend, y esto es lo único que protege datos de
 // TODOS los clientes, así que ninguna ruta nueva puede saltarse el chequeo.
 import { json } from './cors';
-import { perfilDesdeSesion, crearSesion } from './auth';
+import { perfilDesdeSesion, crearSesion, cerrarSesion, clearSessionCookie } from './auth';
 import { verifyPassword, hashPassword, randomCodigoActivacion } from './crypto';
 import { permitir, ipDe, demasiadosIntentos } from './ratelimit';
 import { enviarCorreo, correoCodigoActivacion } from './email';
@@ -20,7 +20,7 @@ const PENDIENTE_MINUTOS = 10;
 const MAX_INTENTOS = 5;
 
 async function exigirDueño(request: Request, env: Env) {
-  const perfil = await perfilDesdeSesion(request, env);
+  const perfil = await perfilDesdeSesion(request, env, true); // cookie del panel (no la de la app familiar)
   if (!perfil) return { error: 'No autenticado' as const, status: 401 as const };
   if (!perfil.es_dueño) return { error: 'No autorizado' as const, status: 403 as const };
   // Solo vale una sesión creada al pasar el código del authenticator. Con la
@@ -124,6 +124,21 @@ export const loginPaso2: Handler = async (request, env, origin) => {
   ]);
   const { cookie } = await crearSesion(env, row.user_id, true); // sesión de administrador (8 h)
   return json({ ok: true }, origin, { headers: { 'Set-Cookie': cookie } });
+};
+
+// ---------- sesión del panel ----------
+// El panel tiene su propia cookie, así que pregunta por su propia sesión
+// (/api/me responde por la de la app familiar).
+export const adminMe: Handler = async (request, env, origin) => {
+  const chequeo = await exigirDueño(request, env);
+  if ('error' in chequeo) return json({ ok: false, error: chequeo.error }, origin, { status: chequeo.status });
+  const { id, email, nombre } = chequeo.perfil;
+  return json({ ok: true, perfil: { id, email, nombre } }, origin);
+};
+
+export const adminLogout: Handler = async (request, env, origin) => {
+  await cerrarSesion(request, env, true);
+  return json({ ok: true }, origin, { headers: { 'Set-Cookie': clearSessionCookie(true) } });
 };
 
 // ---------- estadísticas ----------

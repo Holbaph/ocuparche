@@ -67,30 +67,50 @@
     });
 
     document.getElementById('btnSalirSinAcceso').addEventListener('click', async () => {
-      await Auth.logout();
+      await Admin.logout();
       showOverlay('panelLoginPaso1');
     });
 
     document.getElementById('btnLogout').addEventListener('click', async () => {
-      await Auth.logout();
+      await Admin.logout();
       showOverlay('panelLoginPaso1');
+    });
+
+    document.getElementById('btnRefrescar').addEventListener('click', async () => {
+      await refrescar();
+      showToast('Datos actualizados');
     });
   }
 
   // ================= ARRANQUE =================
   async function arrancar() {
     showOverlay('panelLoading');
-    let sesion = null;
-    try { sesion = await Auth.getSesionYPerfil(); } catch (e) { console.error(e); }
-
-    if (!sesion) { showOverlay('panelLoginPaso1'); return; }
-    if (!sesion.perfil.es_dueño) { showOverlay('panelSinAcceso'); return; }
-    // una sesión de la app normal (solo contraseña) no vale acá: hay que pasar por el authenticator
-    if (!sesion.perfil.admin_2fa) { showOverlay('panelLoginPaso1'); return; }
+    // sesión propia del panel (cookie aparte de la app familiar, con authenticator)
+    let perfil = null;
+    try { perfil = await Admin.me(); } catch (e) { console.error(e); }
+    if (!perfil) { showOverlay('panelLoginPaso1'); return; }
 
     showDashboard();
     cargarTodo();
+    iniciarAutoRefresco();
   }
+
+  // El panel no se enteraba de lo que pasaba después de abrirlo (un código canjeado, una
+  // cuenta nueva…): se vuelve a cargar solo cada 30 s y al volver a la pestaña. Si la
+  // sesión venció, vuelve al login en vez de quedarse mostrando datos viejos.
+  let refrescoTimer = null;
+  async function refrescar() {
+    let perfil = null;
+    try { perfil = await Admin.me(); } catch (e) { console.error(e); }
+    if (!perfil) { detenerAutoRefresco(); showOverlay('panelLoginPaso1'); showToast('Tu sesión venció — vuelve a entrar'); return; }
+    await cargarTodo();
+  }
+  function iniciarAutoRefresco() {
+    detenerAutoRefresco();
+    refrescoTimer = setInterval(() => { if (!document.hidden) refrescar(); }, 30000);
+  }
+  function detenerAutoRefresco() { clearInterval(refrescoTimer); refrescoTimer = null; }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && refrescoTimer) refrescar(); });
 
   async function cargarTodo() {
     await Promise.all([cargarStats(), cargarSolicitudes(), cargarClientes(), cargarCodigos()]);
@@ -370,6 +390,7 @@
     list.innerHTML = codigos.map(c =>
       '<div class="codigo-item" data-id="' + c.id + '"><code>' + escapeHtml(c.codigo) + '</code>' +
       (c.nota ? '<span style="color:var(--ink-faint)">' + escapeHtml(c.nota) + '</span>' : '') +
+      (c.usado ? '<span style="color:var(--ink-faint)">→ ' + escapeHtml(c.usado_por_nombre || '') + (c.usado_por_email ? ' (' + escapeHtml(c.usado_por_email) + ')' : '') + '</span>' : '') +
       '<span class="estado ' + (c.usado ? 'usado' : 'libre') + '">' + (c.usado ? 'Usado' : 'Libre') + '</span>' +
       '<button class="codigo-del" data-act="del-codigo" title="Eliminar código">🗑️</button></div>'
     ).join('');

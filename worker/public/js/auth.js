@@ -76,6 +76,14 @@ const Auth = {
 // ================= PANEL DE PLATAFORMA (dueño) =================
 // Usado por panel.html — completamente aparte de la app familiar.
 const Admin = {
+  // El panel tiene su propia sesión (cookie aparte de la app familiar).
+  async me() {
+    const { data } = await api('/admin/me');
+    return data?.ok ? data.perfil : null;
+  },
+  async logout() {
+    await api('/admin/logout', { method: 'POST', body: {} });
+  },
   async loginPaso1(email, password) {
     const { data } = await api('/admin/login', { method: 'POST', body: { email, password } });
     if (!data?.ok) throw new Error(data?.error || 'Correo o contraseña incorrectos');

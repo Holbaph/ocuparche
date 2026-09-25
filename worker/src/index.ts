@@ -264,6 +264,8 @@ export default {
       'POST /api/push-subscriptions': cuenta.guardarPushSubscription,
       'DELETE /api/push-subscriptions': cuenta.eliminarPushSubscription,
 
+      'GET /api/admin/me': admin.adminMe,
+      'POST /api/admin/logout': admin.adminLogout,
       'POST /api/admin/login': admin.loginPaso1,
       'POST /api/admin/verify-otp': admin.loginPaso2,
       'GET /api/admin/stats': admin.estadisticas,

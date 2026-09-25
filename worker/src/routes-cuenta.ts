@@ -109,7 +109,7 @@ export const canjearCodigo: Handler = async (request, env, origin) => {
 // endpoint nuevo que toque codigos_activacion debe repetirla) ----------
 
 export const generarCodigo: Handler = async (request, env, origin) => {
-  const perfil = await perfilDesdeSesion(request, env);
+  const perfil = await perfilDesdeSesion(request, env, true); // cookie del panel
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
   if (!perfil.es_dueño || !perfil.admin_2fa) return json({ ok: false, error: 'No autorizado' }, origin, { status: 403 });
 
@@ -121,12 +121,16 @@ export const generarCodigo: Handler = async (request, env, origin) => {
 };
 
 export const listarCodigos: Handler = async (request, env, origin) => {
-  const perfil = await perfilDesdeSesion(request, env);
+  const perfil = await perfilDesdeSesion(request, env, true); // cookie del panel
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
   if (!perfil.es_dueño || !perfil.admin_2fa) return json({ ok: false, error: 'No autorizado' }, origin, { status: 403 });
 
   const { results } = await env.DB.prepare(
-    'SELECT id, codigo, usado, usado_en, nota, creado_en FROM codigos_activacion ORDER BY creado_en DESC LIMIT 200'
+    `SELECT k.id, k.codigo, k.usado, k.usado_en, k.nota, k.creado_en,
+            (SELECT p.email FROM profiles p WHERE p.id = c.admin_id) AS usado_por_email,
+            (SELECT p.nombre FROM profiles p WHERE p.id = c.admin_id) AS usado_por_nombre
+     FROM codigos_activacion k LEFT JOIN cuentas c ON c.id = k.usado_por_cuenta
+     ORDER BY k.creado_en DESC LIMIT 200`
   ).all();
   return json({ ok: true, codigos: results }, origin);
 };

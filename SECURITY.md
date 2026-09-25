@@ -12,7 +12,7 @@ panel de administración con acceso a todos los clientes, así que el listón es
 
 | # | Sev. | Hallazgo | Corrección |
 |---|------|----------|------------|
-| 1 | **Crítica** | El segundo factor del panel (TOTP) **se podía saltar**: `/api/admin/*` solo miraba `es_dueño`, y el dueño puede iniciar sesión por el login normal (solo contraseña). | Las sesiones llevan `admin_2fa`; solo `verify-otp` la activa. `exigirDueño` y los endpoints de códigos la exigen. Sesión de panel: 8 h. |
+| 1 | **Crítica** | El segundo factor del panel (TOTP) **se podía saltar**: `/api/admin/*` solo miraba `es_dueño`, y el dueño puede iniciar sesión por el login normal (solo contraseña). | Las sesiones llevan `admin_2fa`; solo `verify-otp` la activa. `exigirDueño` y los endpoints de códigos la exigen. Sesión de panel: 8 h, en una cookie propia (`__Host-oc_admin`) para no pisar la de la app familiar. |
 | 2 | **Alta** | Sin límite de intentos en ningún endpoint: fuerza bruta de contraseñas, del código TOTP, de códigos de activación y correos masivos (recuperar contraseña / invitar). | `ratelimit.ts` (D1): login por correo+IP, IP y correo; panel admin por IP y global; canjear código; forgot; signup; invitar; reset. HTTP 429. |
 | 2b | Alta | Código TOTP reutilizable durante su ventana. | Se guarda el último paso usado (`totp_ultimo_paso`). |
 | 3 | **Alta** | **XSS almacenado**: los nombres de personas e hij@s se insertaban con `innerHTML` sin escapar; una persona invitada podía ejecutar código en la pantalla de la administradora. | `Utils.esc()` en todos los puntos; nombres limitados a 40–60 caracteres en el servidor. |
