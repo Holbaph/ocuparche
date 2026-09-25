@@ -339,6 +339,9 @@
     document.getElementById('peinadoSeg').innerHTML = peinadosDe(genero).map(p =>
       '<button type="button" data-val="' + p.v + '"' + (p.v === avatarBorrador.peinado ? ' class="active"' : '') + '>' + p.n + '</button>'
     ).join('');
+    document.getElementById('flequilloSeg').innerHTML = FLEQUILLOS_LISTA.map(f =>
+      '<button type="button" data-val="' + f.v + '"' + (f.v === avatarBorrador.flequillo ? ' class="active"' : '') + '>' + f.n + '</button>'
+    ).join('');
     document.querySelectorAll('#generoAvatarSeg button').forEach(b => b.classList.toggle('active', b.dataset.val === genero));
     // el moño es cosa de niñas
     document.getElementById('monoBlock').classList.toggle('hidden', genero === 'niño');
@@ -372,6 +375,11 @@
     document.getElementById('eliminarPacienteConfirm').classList.add('hidden');
     abrirAvatarSheet();
   });
+  document.getElementById('flequilloSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-val]');
+    if (!b) return;
+    avatarBorrador.flequillo = b.dataset.val; cambioAvatar();
+  });
   document.getElementById('peinadoSeg').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-val]');
     if (!b) return;
@@ -387,7 +395,7 @@
     const base = avatarPorDefecto(g);
     const previo = avatarBorrador;
     avatarBorrador = esPlanCompleto()
-      ? { ...previo, genero: g, peinado: base.peinado, moño: base.moño, ropa: base.ropa, pantalon: base.pantalon }
+      ? { ...previo, genero: g, peinado: base.peinado, flequillo: base.flequillo, moño: base.moño, ropa: base.ropa, pantalon: base.pantalon }
       : { ...base };
     cambioAvatar();
   });

@@ -203,6 +203,7 @@
               <path d="M236 142 q14 -30 -6 -58" fill="none" stroke="var(--patch)" stroke-width="7" stroke-linecap="round"/>
             </g>
           </g>
+          <g id="hairFront" data-capa="flequillo" pointer-events="none"></g>
           <g id="bowLayer" data-capa="arriba"></g>
         </svg>
       </div>
@@ -297,6 +298,11 @@
     <section class="block">
       <p class="block-title">Peinado</p>
       <div class="seg wrap" id="peinadoSeg"></div>
+    </section>
+
+    <section class="block">
+      <p class="block-title">Flequillo (lo que tapa la frente)</p>
+      <div class="seg wrap" id="flequilloSeg"></div>
     </section>
 
     <section class="block" style="margin-top:8px">
@@ -532,6 +538,7 @@
   <div class="camara hidden" id="camara">
     <div class="cam-vista" id="camVista">
       <video id="camVideo" playsinline autoplay muted></video>
+      <canvas id="camRA" class="cam-ra hidden"></canvas>
       <div class="cam-sin hidden" id="camSin">
         <p>No se pudo abrir la cámara 📷<br><small>Igual puedes sacar la foto con este fondo de colores. Para usar la cámara, da permiso en los ajustes del celular.</small></p>
       </div>
@@ -539,6 +546,7 @@
         <svg id="camPersonajeSvg" viewBox="0 0 320 440" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
       </div>
       <div class="cam-flash" id="camFlash"></div>
+      <div class="cam-cuenta hidden" id="camCuenta" aria-live="assertive"></div>
     </div>
     <div class="cam-top">
       <button class="cam-btn" id="camCerrar" aria-label="Cerrar la cámara">✕</button>
@@ -547,8 +555,9 @@
     </div>
     <div class="cam-abajo">
       <div class="cam-poses" id="camPoses" aria-label="Poses"></div>
+      <div class="cam-poses cam-efectos" id="camEfectos" aria-label="Efectos con IA"></div>
       <div class="cam-extras">
-        <button class="cam-chip" id="camIA" aria-label="La IA ubica al personaje junto a tu cara">🤖 IA</button>
+        <button class="cam-chip" id="camCuentaBtn" aria-label="Esperar 3 segundos antes de sacar la foto">⏱ Al tiro</button>
         <button class="cam-chip hidden" id="camParche" aria-label="Ponerle o sacarle el parche">🩹 Sin parche</button>
       </div>
       <label class="cam-tamano"><span>🔍</span><input type="range" id="camTamano" min="25" max="95" value="45" aria-label="Tamaño del personaje"></label>
@@ -592,6 +601,7 @@
 <script src="js/core.js"></script>
 <script src="js/avatar.js"></script>
 <script src="js/juego-piezas.js"></script>
+<script src="js/ar.js"></script>
 <script src="js/camara.js"></script>
 <script src="js/juego.js"></script>
 <script src="js/app.js"></script>

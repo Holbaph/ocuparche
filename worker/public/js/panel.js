@@ -207,6 +207,9 @@
           '<button type="button" data-val="' + p.v + '">' + p.n + '</button>'
         ).join('') +
       '</div>' +
+      '<div class="seg wrap" data-role="flequillo" style="margin-top:8px">' +
+        FLEQUILLOS_LISTA.map(f => '<button type="button" data-val="' + f.v + '">' + f.n + '</button>').join('') +
+      '</div>' +
       '<div class="swatch-row" data-role="pelo" style="margin-top:8px"></div>' +
       '<div class="seg" style="margin-top:8px">' +
         '<button type="button" data-role="mono-on">Con moño</button>' +
@@ -223,6 +226,7 @@
   function pintarEditor(el, pid) {
     const a = avatarEditores[pid];
     el.querySelectorAll('[data-role="peinado"] button').forEach(b => b.classList.toggle('active', b.dataset.val === a.peinado));
+    el.querySelectorAll('[data-role="flequillo"] button').forEach(b => b.classList.toggle('active', b.dataset.val === a.flequillo));
     el.querySelector('[data-role="mono-on"]').classList.toggle('active', a.moño);
     el.querySelector('[data-role="mono-off"]').classList.toggle('active', !a.moño);
     const monoColorRow = el.querySelector('[data-role="mono-color"]');
@@ -241,6 +245,9 @@
       pintarEditor(el, pid);
       el.querySelectorAll('[data-role="peinado"] button').forEach((b) => {
         b.addEventListener('click', () => { avatarEditores[pid].peinado = b.dataset.val; pintarEditor(el, pid); });
+      });
+      el.querySelectorAll('[data-role="flequillo"] button').forEach((b) => {
+        b.addEventListener('click', () => { avatarEditores[pid].flequillo = b.dataset.val; pintarEditor(el, pid); });
       });
       el.querySelector('[data-role="mono-on"]').addEventListener('click', () => { avatarEditores[pid].moño = true; pintarEditor(el, pid); });
       el.querySelector('[data-role="mono-off"]').addEventListener('click', () => { avatarEditores[pid].moño = false; pintarEditor(el, pid); });

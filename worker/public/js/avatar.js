@@ -18,12 +18,12 @@ const HEX_AV = /^#[0-9a-f]{6}$/i;
 
 const AVATAR_POR_DEFECTO = {
   niña: {
-    genero: 'niña', peinado: 'largo', colorPelo: '#6b4a34', moño: true, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#c9525a',
+    genero: 'niña', peinado: 'largo', flequillo: 'ondas', colorPelo: '#6b4a34', moño: true, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#c9525a',
     piel: '#f6e0c8', cuerpo: 'normal', ropa: 'vestido', pantalon: 'falda', colorPantalon: '#5b7c9e', colorZapatos: '#3a3540',
     sombrero: 'ninguno', colorSombrero: '#e1673f', lentes: 'ninguno', reloj: false, collar: 'ninguno', aros: false,
   },
   niño: {
-    genero: 'niño', peinado: 'corto', colorPelo: '#2b2420', moño: false, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#5b8fae',
+    genero: 'niño', peinado: 'corto', flequillo: 'sin', colorPelo: '#2b2420', moño: false, colorMoño: '#c96f8f', colorOjos: '#8b5e3c', colorRopa: '#5b8fae',
     piel: '#f6e0c8', cuerpo: 'normal', ropa: 'polera', pantalon: 'jeans', colorPantalon: '#5b7c9e', colorZapatos: '#3a3540',
     sombrero: 'ninguno', colorSombrero: '#e1673f', lentes: 'ninguno', reloj: false, collar: 'ninguno', aros: false,
   },
@@ -52,16 +52,57 @@ const COLLARES_AV = [{ v: 'ninguno', n: 'Ninguno' }, { v: 'cadena', n: 'Cadena' 
 
 function opcionesDe(lista, genero) { return lista.filter((o) => !o.g || o.g === genero); }
 
-// Cada peinado son formas simples (círculos/óvalos) dibujadas DETRÁS de la
-// cabeza — como esa capa se pinta antes que el círculo de piel, cualquier
-// parte que quede "por dentro" del contorno de la cara se tapa sola, sin
-// necesitar recortes (clip-path) exactos.
+// Los peinados son los de Ojitos de Mili: cada uno es el pelo que se ve
+// DETRÁS de la cabeza (se dibuja antes que el círculo de la cara) y, por
+// separado, el flequillo, que se dibuja DELANTE de la frente (si no, a las
+// niñas se les ve demasiada frente). Las formas de Mili están pensadas para
+// una cabeza 8 px más abajo, por eso se dibujan dentro de translate(0 -8).
+// Cada función recibe (h = color del pelo, o = un tono más oscuro).
+const CASQUETE_AV = 'M35.6 200 A128 128 0 1 1 284.4 200 Z';
+const DESPLAZA_MILI = 'translate(0 -8)';
 const PEINADOS = {
-  corto: () => `<ellipse cx="160" cy="106" rx="112" ry="64"/>`,
-  largo: () => `
-    <ellipse cx="160" cy="106" rx="112" ry="64"/>
-    <ellipse cx="56" cy="212" rx="28" ry="92"/>
-    <ellipse cx="264" cy="212" rx="28" ry="92"/>`,
+  melena: (h) => `<path d="M30 172 A130 130 0 0 1 290 172 L292 262 Q278 278 256 268 L64 268 Q42 278 28 262 Z" fill="${h}"/>`,
+  largo: (h) => `<path d="M30 172 A130 130 0 0 1 290 172 L298 306 Q302 342 270 340 Q246 326 232 300 L88 300 Q74 326 50 340 Q18 342 22 306 Z" fill="${h}"/>`,
+  ondas: (h, o) => `<path d="M30 172 A130 130 0 0 1 290 172 Q306 210 292 240 Q280 270 298 300 Q312 334 276 344 Q252 330 240 304 L80 304 Q68 330 44 344 Q8 334 22 300 Q40 270 28 240 Q14 210 30 172 Z" fill="${h}"/>` +
+    `<path d="M40 230 Q52 262 36 292 M280 230 Q268 262 284 292" fill="none" stroke="${o}" stroke-width="3" opacity=".5"/>`,
+  'muy-largo': (h, o) => `<path d="M30 172 A130 130 0 0 1 290 172 L300 330 Q308 414 274 438 L46 438 Q12 414 20 330 Z" fill="${h}"/>` +
+    `<path d="M36 250 Q30 330 50 420 M284 250 Q290 330 270 420" fill="none" stroke="${o}" stroke-width="3" opacity=".5"/>`,
+  corto: (h) => `<path d="${CASQUETE_AV}" fill="${h}"/>`,
+  pixie: (h) => `<path d="M40 188 A122 122 0 1 1 280 188 Q274 168 262 160 L58 160 Q46 168 40 188 Z" fill="${h}"/>`,
+  afro: (h) => {
+    let t = `<circle cx="160" cy="160" r="142" fill="${h}"/>`;
+    for (let a = 0; a < 360; a += 24) {
+      const r = (a * Math.PI) / 180;
+      t += `<circle cx="${(160 + 138 * Math.cos(r)).toFixed(1)}" cy="${(160 + 132 * Math.sin(r)).toFixed(1)}" r="26" fill="${h}"/>`;
+    }
+    return t;
+  },
+  crespo: (h) => {
+    let t = `<path d="M24 190 A136 136 0 0 1 296 190 L296 316 Q160 350 24 316 Z" fill="${h}"/>`;
+    for (let a = -25; a <= 205; a += 23) {
+      const r = (a * Math.PI) / 180;
+      t += `<circle cx="${(160 + 146 * Math.cos(r)).toFixed(1)}" cy="${(196 - 150 * Math.sin(r)).toFixed(1)}" r="30" fill="${h}"/>`;
+    }
+    [[36, 300], [284, 300], [60, 330], [260, 330]].forEach(([x, y]) => { t += `<circle cx="${x}" cy="${y}" r="28" fill="${h}"/>`; });
+    return t;
+  },
+  colitas: (h) => `<path d="${CASQUETE_AV}" fill="${h}"/>` +
+    `<ellipse cx="30" cy="200" rx="22" ry="50" transform="rotate(16 30 200)" fill="${h}"/>` +
+    `<ellipse cx="290" cy="200" rx="22" ry="50" transform="rotate(-16 290 200)" fill="${h}"/>`,
+  'colitas-altas': (h) => `<path d="${CASQUETE_AV}" fill="${h}"/>` +
+    `<path d="M70 70 Q14 40 10 110 Q8 170 36 206 Q30 140 52 100 Z" fill="${h}"/>` +
+    `<path d="M250 70 Q306 40 310 110 Q312 170 284 206 Q290 140 268 100 Z" fill="${h}"/>`,
+  cola: (h) => `<path d="${CASQUETE_AV}" fill="${h}"/>` + `<path d="M250 90 Q318 104 308 196 Q302 240 276 258 Q290 204 274 152 Q264 120 240 106 Z" fill="${h}"/>`,
+  'cola-alta': (h) => `<path d="${CASQUETE_AV}" fill="${h}"/>` + `<path d="M176 52 Q252 18 294 90 Q320 162 290 254 Q282 182 258 132 Q234 92 190 82 Z" fill="${h}"/>`,
+  'cola-baja': (h) => `<path d="${CASQUETE_AV}" fill="${h}"/>` +
+    `<path d="M250 196 Q302 236 296 312 Q292 372 270 424 Q256 364 250 304 Q244 252 232 214 Z" fill="${h}"/>` +
+    [260, 318, 376].map((y, i) => `<ellipse cx="${277 - i * 3}" cy="${y}" rx="${12 - i * 2}" ry="4" fill="${oscurecerHex(h, 0.3)}"/>`).join(''),
+  tomate: (h) => `<path d="${CASQUETE_AV}" fill="${h}"/><circle cx="160" cy="40" r="28" fill="${h}"/>`,
+  'moños-dobles': (h, o) => `<path d="${CASQUETE_AV}" fill="${h}"/><circle cx="86" cy="56" r="30" fill="${h}"/><circle cx="234" cy="56" r="30" fill="${h}"/>` +
+    `<path d="M70 44 Q86 34 100 48 M218 48 Q234 34 250 44" fill="none" stroke="${o}" stroke-width="3" opacity=".6"/>`,
+  trenza: (h) => `<path d="${CASQUETE_AV}" fill="${h}"/>`,
+  'dos-trenzas': (h) => `<path d="${CASQUETE_AV}" fill="${h}"/>`,
+  // los de niño y el rizado siguen con formas propias (heredan el color del grupo)
   rizado: () => `
     <ellipse cx="160" cy="112" rx="106" ry="58"/>
     <circle cx="70" cy="98" r="30"/>
@@ -69,23 +110,6 @@ const PEINADOS = {
     <circle cx="160" cy="54" r="34"/>
     <circle cx="208" cy="66" r="32"/>
     <circle cx="250" cy="98" r="30"/>`,
-  coleta: () => `
-    <ellipse cx="160" cy="100" rx="100" ry="54"/>
-    <ellipse cx="258" cy="132" rx="34" ry="46" transform="rotate(25 258 132)"/>`,
-  bob: () => `
-    <ellipse cx="160" cy="106" rx="112" ry="64"/>
-    <ellipse cx="62" cy="190" rx="30" ry="62"/>
-    <ellipse cx="258" cy="190" rx="30" ry="62"/>`,
-  chongos: () => `
-    <ellipse cx="160" cy="106" rx="108" ry="60"/>
-    <circle cx="70" cy="64" r="32"/>
-    <circle cx="250" cy="64" r="32"/>`,
-  trenzas: () => `
-    <ellipse cx="160" cy="106" rx="110" ry="62"/>
-    <ellipse cx="60" cy="230" rx="22" ry="84"/>
-    <ellipse cx="260" cy="230" rx="22" ry="84"/>
-    <circle cx="60" cy="318" r="12"/>
-    <circle cx="260" cy="318" r="12"/>`,
   mohicano: () => `
     <ellipse cx="160" cy="104" rx="100" ry="46" opacity=".3"/>
     <ellipse cx="160" cy="56" rx="24" ry="58"/>`,
@@ -97,22 +121,124 @@ const PEINADOS = {
     <ellipse cx="160" cy="106" rx="112" ry="64"/>
     <ellipse cx="120" cy="64" rx="86" ry="34" transform="rotate(-8 120 64)"/>`,
 };
+// los que vienen de Mili van desplazados; los propios (niño) no
+const PEINADOS_DE_MILI = new Set(['melena', 'largo', 'ondas', 'muy-largo', 'corto', 'pixie', 'afro', 'crespo', 'colitas', 'colitas-altas', 'cola', 'cola-alta', 'cola-baja', 'tomate', 'moños-dobles', 'trenza', 'dos-trenzas']);
+// nombres de la primera versión → su equivalente actual
+const PEINADO_ANTIGUO = { coleta: 'cola', bob: 'melena', chongos: 'moños-dobles', trenzas: 'dos-trenzas' };
 
 // g: 'niña' / 'niño' = solo ese género; sin g = los dos
 const PEINADOS_LISTA = [
-  { v: 'corto', n: 'Corto' },
+  { v: 'corto', n: 'Cortito' },
+  { v: 'pixie', n: 'Muy cortito' },
   { v: 'rizado', n: 'Rizado' },
-  { v: 'largo', n: 'Largo', g: 'niña' },
-  { v: 'coleta', n: 'Coleta', g: 'niña' },
-  { v: 'bob', n: 'Bob', g: 'niña' },
-  { v: 'chongos', n: 'Chongos', g: 'niña' },
-  { v: 'trenzas', n: 'Trenzas', g: 'niña' },
+  { v: 'afro', n: 'Afro' },
+  { v: 'melena', n: 'Melena', g: 'niña' },
+  { v: 'largo', n: 'Pelo largo', g: 'niña' },
+  { v: 'ondas', n: 'Ondas', g: 'niña' },
+  { v: 'muy-largo', n: 'Larguísimo', g: 'niña' },
+  { v: 'crespo', n: 'Crespo largo', g: 'niña' },
+  { v: 'colitas', n: 'Dos colitas', g: 'niña' },
+  { v: 'colitas-altas', n: 'Colitas altas', g: 'niña' },
+  { v: 'cola', n: 'Cola al lado', g: 'niña' },
+  { v: 'cola-alta', n: 'Cola alta', g: 'niña' },
+  { v: 'cola-baja', n: 'Cola larga', g: 'niña' },
+  { v: 'tomate', n: 'Tomate', g: 'niña' },
+  { v: 'moños-dobles', n: 'Dos moñitos', g: 'niña' },
+  { v: 'trenza', n: 'Trenza', g: 'niña' },
+  { v: 'dos-trenzas', n: 'Dos trenzas', g: 'niña' },
   { v: 'copete', n: 'Copete', g: 'niño' },
   { v: 'lado', n: 'De lado', g: 'niño' },
   { v: 'mohicano', n: 'Mohicano', g: 'niño' },
   { v: 'rapado', n: 'Rapado', g: 'niño' },
 ];
 function peinadosDe(genero) { return PEINADOS_LISTA.filter((p) => !p.g || p.g === genero); }
+
+// El flequillo es lo que tapa la frente. 'sin' no es "pelo pegado a la cabeza":
+// deja la línea del nacimiento del pelo (una franja arriba), como en Mili.
+const FLEQUILLOS_LISTA = [
+  { v: 'ondas', n: 'Ondulado' }, { v: 'recto', n: 'Recto' }, { v: 'lado', n: 'De lado' },
+  { v: 'cortina', n: 'Abierto al medio' }, { v: 'sin', n: 'Sin flequillo' },
+];
+function flequilloSvg(tipo, h) {
+  const o = oscurecerHex(h, 0.25);
+  const mechas = `<path d="M160 62 Q150 82 146 100 M120 70 Q106 88 100 104 M200 70 Q214 88 220 104" fill="none" stroke="${o}" stroke-width="2.5" stroke-linecap="round" opacity=".45"/>`;
+  switch (tipo) {
+    case 'recto':
+      return `<path d="M42 152 A121 121 0 0 1 278 152 Q270 124 262 112 Q160 104 58 112 Q50 124 42 152 Z" fill="${h}"/>` +
+        `<path d="M100 72 L96 108 M140 64 L138 106 M180 64 L182 106 M220 72 L224 108" stroke="${o}" stroke-width="2" opacity=".35"/>`;
+    case 'lado':
+      return `<path d="M42 152 A121 121 0 0 1 278 152 Q270 118 250 98 Q180 70 70 128 Q54 136 42 152 Z" fill="${h}"/>` +
+        `<path d="M90 110 Q160 76 240 96 M120 90 Q180 70 230 80" fill="none" stroke="${o}" stroke-width="2.5" opacity=".4"/>`;
+    case 'cortina':
+      return `<path d="M42 152 A121 121 0 0 1 278 152 Q268 116 232 104 Q190 92 162 70 Q130 92 88 104 Q52 116 42 152 Z" fill="${h}"/>` + mechas;
+    case 'sin':
+      return `<path d="M44 150 A121 121 0 0 1 276 150 Q262 104 214 80 Q160 64 106 80 Q58 104 44 150 Z" fill="${h}"/>`;
+    default: // ondas
+      return `<path d="M42 152 A121 121 0 0 1 278 152 Q266 118 238 106 Q220 122 196 104 Q176 120 160 102 Q144 120 124 104 Q100 122 82 106 Q54 118 42 152 Z" fill="${h}"/>` + mechas;
+  }
+}
+
+// Las trenzas caen por delante del cuerpo (van en la capa de delante).
+function trenzaAv(x0, dx, largo, grosor, h) {
+  const o = oscurecerHex(h, 0.2);
+  let t = '';
+  for (let i = 0; i < largo; i++) {
+    const cx = x0 + dx * i, cy = 216 + i * 22, rx = grosor - i * 0.8;
+    t += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="14" transform="rotate(${i % 2 ? 22 : -22} ${cx} ${cy})" fill="${h}" stroke="${o}" stroke-width="1.2"/>`;
+  }
+  const fx = x0 + dx * largo, fy = 216 + largo * 22 - 4;
+  return t + `<path d="M${fx - 7} ${fy} Q${fx} ${fy + 26} ${fx + 7} ${fy} Z" fill="${h}"/>` +
+    `<ellipse cx="${fx}" cy="${fy - 2}" rx="7" ry="4.5" fill="${o}"/>`;
+}
+function peloDelanteAv(peinado, h) {
+  if (peinado === 'trenza') return trenzaAv(274, -3, 7, 18, h);
+  if (peinado === 'dos-trenzas') return trenzaAv(46, 2.5, 6, 15, h) + trenzaAv(274, -2.5, 6, 15, h);
+  return '';
+}
+// dónde se amarra el pelo (ahí van el moño o la ligita)
+function amarresAv(peinado) {
+  switch (peinado) {
+    case 'colitas': return [{ x: 44, y: 150, s: 0.7 }, { x: 276, y: 150, s: 0.7 }];
+    case 'colitas-altas': return [{ x: 66, y: 78, s: 0.65 }, { x: 254, y: 78, s: 0.65 }];
+    case 'cola': return [{ x: 252, y: 98, s: 0.75 }];
+    case 'cola-alta': return [{ x: 190, y: 66, s: 0.75 }];
+    case 'cola-baja': return [{ x: 250, y: 206, s: 0.6 }];
+    case 'tomate': return [{ x: 160, y: 66, s: 0.8 }];
+    case 'moños-dobles': return [{ x: 98, y: 82, s: 0.6 }, { x: 222, y: 82, s: 0.6 }];
+    case 'trenza': return [{ x: 272, y: 206, s: 0.6 }];
+    case 'dos-trenzas': return [{ x: 48, y: 206, s: 0.55 }, { x: 272, y: 206, s: 0.55 }];
+    default: return [];
+  }
+}
+function moñoMili(x, y, s, c) {
+  const o = oscurecerHex(c, 0.18);
+  return `<g transform="translate(${x} ${y}) scale(${s})">` +
+    `<path d="M-3 0 Q-18 -26 -32 -14 Q-38 0 -32 14 Q-18 26 -3 0 Z" fill="${c}"/>` +
+    `<path d="M3 0 Q18 -26 32 -14 Q38 0 32 14 Q18 26 3 0 Z" fill="${c}"/>` +
+    `<circle r="9" fill="${o}"/></g>`;
+}
+// pelo de atrás ya con su color y su posición
+function peloAtrasAv(a) {
+  const h = a.colorPelo, o = oscurecerHex(h, 0.18);
+  const f = PEINADOS[a.peinado] || PEINADOS.corto;
+  return PEINADOS_DE_MILI.has(a.peinado) ? `<g transform="${DESPLAZA_MILI}">${f(h, o)}</g>` : `<g fill="${h}">${f(h, o)}</g>`;
+}
+// lo que va por delante de la cara: flequillo (salvo mohicano / rapado) y trenzas
+function peloDelanteCapa(a) {
+  const conFlequillo = a.peinado !== 'mohicano' && a.peinado !== 'rapado';
+  return (conFlequillo ? `<g transform="${DESPLAZA_MILI}">${flequilloSvg(a.flequillo, a.colorPelo)}</g>` : '') +
+    `<g transform="${DESPLAZA_MILI}">${peloDelanteAv(a.peinado, a.colorPelo)}</g>`;
+}
+// moño (o la ligita del pelo) en cada amarre; sin amarres, el moño va arriba
+function moñosAv(a) {
+  const puntos = amarresAv(a.peinado);
+  if (!a.moño) {
+    return puntos.length ? `<g transform="${DESPLAZA_MILI}">${puntos.map((p) => `<ellipse cx="${p.x}" cy="${p.y}" rx="${9 * p.s}" ry="${6 * p.s}" fill="${oscurecerHex(a.colorPelo, 0.35)}"/>`).join('')}</g>` : '';
+  }
+  return puntos.length
+    ? `<g transform="${DESPLAZA_MILI}">${puntos.map((p) => moñoMili(p.x, p.y, p.s, a.colorMoño)).join('')}</g>`
+    : `<g fill="${a.colorMoño}">${moñoSvg()}</g>`;
+}
 
 function moñoSvg() {
   return `
@@ -140,7 +266,9 @@ function normalizarAvatar(avatar) {
   ['colorPelo', 'colorMoño', 'colorOjos', 'colorRopa', 'piel', 'colorPantalon', 'colorZapatos', 'colorSombrero'].forEach((k) => {
     if (typeof raw[k] === 'string' && HEX_AV.test(raw[k])) a[k] = raw[k].toLowerCase();
   });
-  if (PEINADOS[raw.peinado]) a.peinado = raw.peinado;
+  const peinadoRaw = PEINADO_ANTIGUO[raw.peinado] || raw.peinado;
+  if (Object.prototype.hasOwnProperty.call(PEINADOS, peinadoRaw)) a.peinado = peinadoRaw;
+  if (FLEQUILLOS_LISTA.some((f) => f.v === raw.flequillo)) a.flequillo = raw.flequillo;
   const enLista = (lista, v) => lista.some((o) => o.v === v);
   if (enLista(CUERPOS_AV, raw.cuerpo)) a.cuerpo = raw.cuerpo;
   if (enLista(ROPAS_AV, raw.ropa)) a.ropa = raw.ropa;
@@ -331,7 +459,16 @@ function aplicarAvatar(avatar, svgRaiz) {
   const capa = (n) => svg.querySelector('[data-capa="' + n + '"]');
   svg.style.setProperty('--skin', a.piel);
   svg.style.setProperty('--skin-line', oscurecerHex(a.piel, 0.12));
-  capa('pelo').innerHTML = `<g fill="${a.colorPelo}">${(PEINADOS[a.peinado] || PEINADOS.corto)()}</g>`;
+  capa('pelo').innerHTML = peloAtrasAv(a);
+  // el flequillo va por delante de la cara y no debe tapar los ojos al tocar
+  let delante = capa('flequillo');
+  if (!delante) {
+    delante = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    delante.setAttribute('data-capa', 'flequillo');
+    svg.insertBefore(delante, capa('arriba'));
+  }
+  delante.setAttribute('pointer-events', 'none');
+  delante.innerHTML = peloDelanteCapa(a);
   const cuerpo = capa('cuerpo');
   if (cuerpo) cuerpo.innerHTML = cuerpoAvatar(a);
   // esta capa no debe tapar los ojos (se tocan para registrar el parche)
@@ -340,7 +477,7 @@ function aplicarAvatar(avatar, svgRaiz) {
   arriba.innerHTML =
     lentesAv(a.lentes) +
     (a.aros ? arosAv() : '') +
-    (a.moño ? `<g fill="${a.colorMoño}">${moñoSvg()}</g>` : '') +
+    moñosAv(a) +
     sombreroAv(a.sombrero, a.colorSombrero);
   svg.querySelectorAll('.iris-circle').forEach(el => el.setAttribute('fill', a.colorOjos));
 }

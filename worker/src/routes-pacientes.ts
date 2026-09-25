@@ -36,10 +36,15 @@ const BASE_COMUN = {
   sombrero: 'ninguno', colorSombrero: '#e1673f', lentes: 'ninguno', reloj: false, collar: 'ninguno', aros: false,
 };
 const AVATAR_POR_DEFECTO: Record<string, Record<string, unknown>> = {
-  niña: { ...BASE_COMUN, genero: 'niña', peinado: 'largo', colorPelo: '#6b4a34', moño: true, colorRopa: '#c9525a', ropa: 'vestido', pantalon: 'falda' },
-  niño: { ...BASE_COMUN, genero: 'niño', peinado: 'corto', colorPelo: '#2b2420', moño: false, colorRopa: '#5b8fae', ropa: 'polera', pantalon: 'jeans' },
+  niña: { ...BASE_COMUN, genero: 'niña', peinado: 'largo', flequillo: 'ondas', colorPelo: '#6b4a34', moño: true, colorRopa: '#c9525a', ropa: 'vestido', pantalon: 'falda' },
+  niño: { ...BASE_COMUN, genero: 'niño', peinado: 'corto', flequillo: 'sin', colorPelo: '#2b2420', moño: false, colorRopa: '#5b8fae', ropa: 'polera', pantalon: 'jeans' },
 };
-const PEINADOS_VALIDOS = new Set(['corto', 'largo', 'rizado', 'coleta', 'bob', 'chongos', 'trenzas', 'mohicano', 'copete', 'rapado', 'lado']);
+const PEINADOS_VALIDOS = new Set([
+  'corto', 'largo', 'rizado', 'coleta', 'bob', 'chongos', 'trenzas', 'mohicano', 'copete', 'rapado', 'lado',
+  'melena', 'ondas', 'muy-largo', 'pixie', 'afro', 'crespo', 'colitas', 'colitas-altas', 'cola', 'cola-alta',
+  'cola-baja', 'tomate', 'moños-dobles', 'trenza', 'dos-trenzas',
+]);
+const FLEQUILLOS_VALIDOS = new Set(['ondas', 'recto', 'lado', 'cortina', 'sin']);
 
 const HEX = /^#[0-9a-f]{6}$/i;
 const CAMPOS_COLOR = ['colorPelo', 'colorMoño', 'colorOjos', 'colorRopa', 'piel', 'colorPantalon', 'colorZapatos', 'colorSombrero'];
@@ -59,13 +64,14 @@ const CAMPOS_BOOL = ['moño', 'reloj', 'aros'];
 function sanearAvatar(a: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (typeof a.peinado === 'string' && PEINADOS_VALIDOS.has(a.peinado)) out.peinado = a.peinado;
+  if (typeof a.flequillo === 'string' && FLEQUILLOS_VALIDOS.has(a.flequillo)) out.flequillo = a.flequillo;
   for (const k of CAMPOS_COLOR) if (typeof a[k] === 'string' && HEX.test(a[k] as string)) out[k] = (a[k] as string).toLowerCase();
   for (const k of Object.keys(CAMPOS_ENUM)) if (typeof a[k] === 'string' && CAMPOS_ENUM[k].has(a[k] as string)) out[k] = a[k];
   for (const k of CAMPOS_BOOL) if (typeof a[k] === 'boolean') out[k] = a[k];
   return out;
 }
 
-// El plan gratis solo deja elegir género y peinado — todo lo demás (colores,
+// El plan gratis solo deja elegir género, peinado y flequillo — todo lo demás (colores,
 // ropa, cuerpo, gorros, joyas…) se fuerza al valor por defecto de ese género,
 // aunque alguien mande otra cosa a mano pegándole directo a la API. Esto se
 // comprueba acá — no alcanza con ocultar los selectores en el frontend.
@@ -77,7 +83,8 @@ export function limitarAvatarSegunPlan(avatar: unknown, plan: string | undefined
   const limpio = sanearAvatar(a);
   if (plan === 'completo') return { ...base, ...limpio, genero };
   const peinado = typeof limpio.peinado === 'string' ? limpio.peinado : base.peinado;
-  return { ...base, genero, peinado };
+  const flequillo = typeof limpio.flequillo === 'string' ? limpio.flequillo : base.flequillo;
+  return { ...base, genero, peinado, flequillo };
 }
 
 export const listarPacientes: Handler = async (request, env, origin) => {
