@@ -38,6 +38,11 @@ const Auth = {
     if (!data?.ok) throw new Error(data?.error || 'No se pudo aceptar la invitación');
   },
 
+  async quitarAcceso(id) {
+    const { data } = await api('/personas?id=' + encodeURIComponent(id), { method: 'DELETE' });
+    if (!data?.ok) throw new Error(data?.error || 'No se pudo quitar el acceso');
+  },
+
   async listarPersonas() {
     const { data } = await api('/personas');
     return data?.ok ? data.personas : [];

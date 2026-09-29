@@ -821,3 +821,8 @@ body.con-informe{ overflow:hidden; }
 }
 .jp-tecla.pop{ animation:jp-tecla-pop .26s ease forwards; }
 @keyframes jp-tecla-pop{ to{ opacity:0; filter:brightness(1.6); scale:1.25; } }
+
+/* quitar acceso (solo admin) */
+.p-quitar{ font-size:11.5px; font-weight:800; color:var(--danger); background:transparent; border:1px solid var(--danger); padding:4px 10px; border-radius:99px; cursor:pointer; }
+.p-quitar.confirmar{ background:var(--danger); color:#fff; }
+.p-quitar:disabled{ opacity:.6; cursor:default; }

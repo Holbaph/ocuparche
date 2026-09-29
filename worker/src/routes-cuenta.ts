@@ -33,6 +33,33 @@ export const listarPersonas: Handler = async (request, env, origin) => {
   return json({ ok: true, personas: results }, origin);
 };
 
+// Quita el acceso a una persona invitada de la cuenta (portado de Ojitos de
+// Mili). Solo la administradora/or; no se puede quitar a sí misma/o ni a
+// otra persona admin. D1 no aplica ON DELETE CASCADE, así que se borra a
+// mano lo que le pertenece; sus registros anteriores quedan (solo se pierde
+// el "registrado por", igual que si esa persona nunca hubiera existido).
+export const eliminarPersona: Handler = async (request, env, origin) => {
+  const perfil = await perfilDesdeSesion(request, env);
+  if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });
+  if (perfil.role !== 'admin') return json({ ok: false, error: 'Solo la administradora/or de la cuenta puede quitar acceso' }, origin, { status: 403 });
+
+  const id = new URL(request.url).searchParams.get('id');
+  if (!id) return json({ ok: false, error: 'Falta el id' }, origin, { status: 400 });
+  if (id === perfil.id) return json({ ok: false, error: 'No puedes quitarte el acceso a ti misma/o' }, origin, { status: 400 });
+
+  const objetivo = await env.DB.prepare('SELECT id, role FROM profiles WHERE id = ? AND cuenta_id = ?')
+    .bind(id, perfil.cuenta_id).first<{ id: string; role: string }>();
+  if (!objetivo) return json({ ok: false, error: 'No existe esa persona' }, origin, { status: 404 });
+  if (objetivo.role === 'admin') return json({ ok: false, error: 'No se puede quitar a la administradora/or' }, origin, { status: 400 });
+
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM profiles WHERE id = ?').bind(id),
+  ]);
+  return json({ ok: true }, origin);
+};
+
 export const actualizarMiNombre: Handler = async (request, env, origin) => {
   const perfil = await perfilDesdeSesion(request, env);
   if (!perfil) return json({ ok: false, error: 'No autenticado' }, origin, { status: 401 });

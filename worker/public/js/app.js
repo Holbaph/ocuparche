@@ -898,13 +898,40 @@
     personasCache = {};
     personas.forEach(p => { personasCache[p.id] = p; });
     const list = document.getElementById('peopleList');
+    const esAdmin = perfil.role === 'admin';
     list.innerHTML = personas.map(p =>
       '<div class="person-row"><span class="p-name">' + Utils.esc(p.nombre) + '</span>' +
-      (p.role === 'admin' ? '<span class="badge-admin">Admin</span>' : '') +
+      (p.role === 'admin' ? '<span class="badge-admin">Admin</span>'
+        : esAdmin ? '<button class="p-quitar" data-id="' + p.id + '" aria-label="Quitar el acceso a ' + Utils.esc(p.nombre) + '">Quitar acceso</button>' : '') +
       '</div>'
     ).join('');
     renderToday(); renderList();
   }
+
+  // Quitar acceso (solo admin): pide un segundo toque para confirmar.
+  let confirmarQuitar = null;
+  document.getElementById('peopleList').addEventListener('click', async (e) => {
+    const b = e.target.closest('button.p-quitar');
+    if (!b || !perfil || perfil.role !== 'admin') return;
+    const id = b.dataset.id;
+    if (!confirmarQuitar || confirmarQuitar.id !== id) {
+      if (confirmarQuitar) { clearTimeout(confirmarQuitar.t); confirmarQuitar.btn.textContent = 'Quitar acceso'; confirmarQuitar.btn.classList.remove('confirmar'); }
+      b.textContent = '¿Seguro? Toca otra vez';
+      b.classList.add('confirmar');
+      confirmarQuitar = { id, btn: b, t: setTimeout(() => { confirmarQuitar = null; b.textContent = 'Quitar acceso'; b.classList.remove('confirmar'); }, 4000) };
+      return;
+    }
+    clearTimeout(confirmarQuitar.t); confirmarQuitar = null;
+    const nombre = (personasCache[id] && personasCache[id].nombre) || 'Esa persona';
+    b.disabled = true; b.textContent = 'Quitando…';
+    try {
+      await Auth.quitarAcceso(id);
+      showToast(nombre + ' ya no tiene acceso');
+    } catch (err) {
+      showToast(err.message || 'No se pudo quitar el acceso');
+    }
+    await cargarPersonas();
+  });
 
   document.getElementById('inviteSend').addEventListener('click', async () => {
     const email = document.getElementById('inviteEmail').value.trim();

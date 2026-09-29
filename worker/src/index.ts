@@ -256,6 +256,7 @@ export default {
       'PUT /api/juego-minutos': juego.guardarJuegoMinutos,
 
       'GET /api/personas': cuenta.listarPersonas,
+      'DELETE /api/personas': cuenta.eliminarPersona,
       'PATCH /api/me': cuenta.actualizarMiNombre,
       'POST /api/invitar': cuenta.invitarPersona,
       'POST /api/canjear-codigo': cuenta.canjearCodigo,
