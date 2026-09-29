@@ -636,44 +636,50 @@
     <p class="juego-ayuda">Arrastra la ropa hasta el personaje, o tócala 👆</p>
   </div>
 
-  <!-- Cámara: foto con el personaje (js/camara.js). Las fotos quedan solo en este celular. -->
+  <!-- Cámara estilo Snapchat (js/camara.js + js/ar.js). Fotos y videos quedan solo en este celular. -->
   <div class="camara hidden" id="camara">
     <div class="cam-vista" id="camVista">
-      <video id="camVideo" playsinline autoplay muted></video>
-      <canvas id="camRA" class="cam-ra hidden"></canvas>
+      <video id="camVideo" class="cam-fuente" playsinline autoplay muted></video>
+      <canvas id="camRA" class="cam-ra" aria-label="Vista de la cámara con el personaje"></canvas>
       <div class="cam-sin hidden" id="camSin">
         <p>No se pudo abrir la cámara 📷<br><small>Igual puedes sacar la foto con este fondo de colores. Para usar la cámara, da permiso en los ajustes del celular.</small></p>
       </div>
-      <div class="cam-personaje" id="camPersonaje">
-        <svg id="camPersonajeSvg" viewBox="0 0 320 440" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
-      </div>
       <div class="cam-flash" id="camFlash"></div>
       <div class="cam-cuenta hidden" id="camCuenta" aria-live="assertive"></div>
-    </div>
-    <div class="cam-top">
-      <button class="cam-btn" id="camCerrar" aria-label="Cerrar la cámara">✕</button>
-      <span class="cam-ayuda" id="camAyuda">Mueve al personaje con el dedo</span>
-      <button class="cam-btn" id="camGirar" aria-label="Cambiar de cámara">🔄</button>
+      <div class="cam-rec hidden" id="camRec" aria-live="polite">● 0 s</div>
+      <div class="cam-aviso hidden" id="camAviso" aria-live="polite"></div>
+      <div class="cam-top">
+        <button class="cam-btn" id="camCerrar" aria-label="Cerrar la cámara">✕</button>
+        <span class="cam-ayuda" id="camAyuda">Mueve al personaje con el dedo</span>
+        <button class="cam-btn" id="camGirar" aria-label="Cambiar de cámara">🔄</button>
+      </div>
+      <div class="cam-lado" aria-label="Herramientas">
+        <button class="cam-btn" id="camCuentaBtn" aria-label="Esperar 3 segundos antes de la foto">⏱</button>
+        <button class="cam-btn" id="camFiltroBtn" aria-label="Cambiar el color de la imagen">🎨</button>
+        <button class="cam-btn hidden" id="camParche" aria-label="Parche">🩹</button>
+        <button class="cam-btn" id="camEspejo" aria-label="Voltear al personaje">↔️</button>
+        <button class="cam-btn" id="camMas" aria-label="Agrandar al personaje">➕</button>
+        <button class="cam-btn" id="camMenos" aria-label="Achicar al personaje">➖</button>
+      </div>
     </div>
     <div class="cam-abajo">
-      <div class="cam-poses" id="camPoses" aria-label="Poses"></div>
-      <div class="cam-poses cam-efectos" id="camEfectos" aria-label="Efectos con IA"></div>
-      <div class="cam-extras">
-        <button class="cam-chip" id="camCuentaBtn" aria-label="Esperar 3 segundos antes de sacar la foto">⏱ Al tiro</button>
-        <button class="cam-chip hidden" id="camParche" aria-label="Ponerle o sacarle el parche">🩹 Sin parche</button>
+      <div class="cam-tabs" id="camTabs" role="tablist">
+        <button data-tab="avatar" role="tab" class="activo">🧸 Personaje</button>
+        <button data-tab="ia" role="tab">✨ Con IA</button>
+        <button data-tab="lentes" role="tab">🎭 Filtros</button>
       </div>
-      <label class="cam-tamano"><span>🔍</span><input type="range" id="camTamano" min="25" max="95" value="45" aria-label="Tamaño del personaje"></label>
+      <div class="cam-carrusel" id="camCarrusel"></div>
       <div class="cam-controles">
-        <button class="cam-galeria" id="camGaleriaBtn" aria-label="Mis fotos"><img id="camUltima" class="hidden" alt=""><span>🖼️</span></button>
-        <button class="cam-disparo" id="camDisparo" aria-label="Sacar foto"></button>
-        <button class="cam-btn" id="camEspejo" aria-label="Voltear al personaje">↔️</button>
+        <button class="cam-galeria" id="camGaleriaBtn" aria-label="Mis fotos"><img id="camUltima" class="hidden" alt=""><span id="camUltimaIcono">🖼️</span></button>
+        <button class="cam-disparo" id="camDisparo" aria-label="Sacar foto (mantén apretado para grabar video)"></button>
+        <span class="cam-pista">Toca: foto<br>Mantén: video</span>
       </div>
     </div>
-    <div class="cam-flash-full" aria-hidden="true"></div>
     <div class="cam-resultado hidden" id="camResultado">
       <img id="camFoto" alt="La foto que sacaste">
+      <video id="camFotoVideo" class="hidden" playsinline loop controls></video>
       <div class="cam-res-botones">
-        <button id="camOtra">📸 Otra foto</button>
+        <button id="camOtra">📸 Otra</button>
         <button id="camCompartir" class="btn-save">💾 Guardar o compartir</button>
       </div>
       <button class="cam-borrar hidden" id="camBorrar">🗑 Borrar</button>
@@ -681,7 +687,7 @@
     <div class="cam-galeria-vista hidden" id="camGaleria">
       <div class="cam-gal-top"><button class="cam-btn" id="camGalCerrar" aria-label="Volver a la cámara">←</button><strong>Mis fotos</strong></div>
       <div class="cam-gal-grid" id="camGalGrid"></div>
-      <p class="cam-gal-nota">Las fotos quedan guardadas solo en este celular. Para guardarlas en la galería, ábrela y toca "Guardar o compartir".</p>
+      <p class="cam-gal-nota">Las fotos y videos quedan guardados solo en este celular. Para guardarlos en la galería, ábrelos y toca "Guardar o compartir".</p>
     </div>
   </div>
 

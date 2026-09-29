@@ -1355,7 +1355,7 @@ const Juego = (function () {
     const abajo = st.vestido ? null : st.abajo;
     const largo = (!!abajo && PANTALONES.includes(abajo.t)) || (!!st.vestido && st.vestido.t === 'overol');
     return {
-      piel, contorno: oscurecer(piel, 0.14),
+      piel, contorno: oscurecer(piel, 0.14), mano: esRaton(id) ? '#ffffff' : null, // Mickey y Minnie: guantes blancos
       manga: m ? { tipo: m.tipo, c: String(m.c) } : null,
       pierna: { c: largo ? (st.vestido || abajo).c : piel, zapato: st.zapatos ? st.zapatos.c : null },
     };

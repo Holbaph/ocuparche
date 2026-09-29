@@ -1,104 +1,140 @@
-// camara.js — "Sacarse una foto" con el personaje del juego de vestir.
-// Portado de Ojitos de Mili (mismo comportamiento).
+// camara.js — la cámara "estilo Snapchat" con el personaje del juego de vestir
+// (o el avatar de un hij@). Portado de Ojitos de Mili.
 //
-// Abre la cámara del celular (la de adelante por defecto, para que el niño o
-// la niña se vea a sí mismo) y pone encima al personaje (o al avatar de un
-// hij@): se puede mover con el dedo, cambiar de tamaño, voltear, elegir una
-// pose animada (saludo, abrazo…) y, con el avatar de un hij@, ponerle o sacarle
-// el parche. Con los efectos "✨ Con IA" (realidad aumentada, js/ar.js) el
-// personaje interactúa con la persona: la abraza (el brazo pasa por detrás),
-// le hace orejas de conejo, se asoma y se esconde, etc. MediaPipe corre en el
-// mismo celular: la imagen de la cámara no se envía a ningún lado. Al sacar
-// la foto se junta todo en una imagen (canvas) que se puede guardar o compartir.
+// Todo se ve en un solo canvas que pinta js/ar.js: el video, el personaje y
+// los efectos. Abajo hay un carrusel con tres pestañas:
+//   🧸 Personaje — el personaje quieto con una pose; se mueve con el dedo y se
+//                  agranda pellizcando (o con ➕/➖);
+//   ✨ Con IA    — el personaje juega con quien sale en la foto (abrazo,
+//                  escondidas, copión, choca los cinco, baile…);
+//   🎭 Filtros   — filtros de cara (perrito, conejita, corona…), que se
+//                  pueden combinar con el personaje.
+// El botón grande: tocar = foto (a la resolución completa de la cámara);
+// mantener apretado = video (hasta 15 s). 🎨 cambia el color de la imagen.
 //
-// Las fotos se guardan SOLO en este dispositivo (IndexedDB, "Mis fotos"): no
-// se suben al servidor ni a ningún otro lado, porque son fotos de niños.
-// Si no hay cámara (o no se dio permiso), igual se puede sacar la foto sobre
-// un fondo de colores.
+// La IA (MediaPipe) corre en el mismo celular: la imagen de la cámara no se
+// envía a ningún lado. Las fotos y videos se guardan SOLO en este dispositivo
+// (IndexedDB, "Mis fotos"): no se suben al servidor ni a ningún otro lado,
+// porque son de niños. Sin cámara (o sin permiso) igual se puede sacar la
+// foto sobre un fondo de colores.
 
 const Camara = (function () {
   const $ = (id) => document.getElementById(id);
   const MAX_FOTOS = 60;
+  const MAX_VIDEO_S = 15;
+  const ESPERA_VIDEO_MS = 380;   // cuánto hay que mantener apretado para grabar
 
   let stream = null;
   let frontal = true;            // cámara de adelante (selfie)
-  let espejo = false;            // personaje volteado
-  let pos = { x: 0.68, y: 0.64 }; // centro del personaje, en fracción de la vista (a un lado, para que se vea quien está atrás)
-  let tamano = 0.45;              // alto del personaje, en fracción de la vista
-  let figuraActual = '';
-  let dibujante = null;           // (o: { pose, parche, sinBrazo }) => SVG del personaje
-  let pose = 'normal';
-  let conParche = false;          // si el personaje puede llevar el parche (el avatar de un hij@)
-  let parche = 'ninguno';         // 'ninguno' | 'derecho' | 'izquierdo'
-  let fotoActual = null;          // { id, blob, url }
+  let dibujante = null;          // (o: { pose, parche, sinBrazo }) => SVG del personaje
+  let brazoInfo = null;
+  let limitado = false;          // personaje sin poses (Olaf, Stitch…): menos acciones
+  let manoGlobos = null;
+  let conParche = false;         // si el personaje puede llevar el parche (el avatar de un hij@)
+  let parche = 'ninguno';        // 'ninguno' | 'derecho' | 'izquierdo'
+  let pestana = 'avatar';        // 'avatar' | 'ia' | 'lentes'
+  let sel = { avatar: 'normal', ia: null, lente: null }; // lo elegido en cada pestaña
+  let fotoActual = null;         // { id, blob, url }
   let urlsGaleria = [];
   let cableado = false;
+  let conCuenta = false, contando = false;
+  let grabacion = null;          // { rec, timer }
 
   // ---------- cámara ----------
-  async function iniciar() {
-    detener();
+  async function iniciarCamara() {
+    detenerCamara();
     const video = $('camVideo');
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('sin cámara');
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: frontal ? 'user' : 'environment', width: { ideal: 1280 }, height: { ideal: 1280 } },
+        video: { facingMode: frontal ? 'user' : 'environment', width: { ideal: 1920 }, height: { ideal: 1920 } },
         audio: false,
       });
       video.srcObject = stream;
-      video.classList.toggle('selfie', frontal);
       await video.play().catch(() => {});
       $('camSin').classList.add('hidden');
     } catch (e) {
       stream = null;
       $('camSin').classList.remove('hidden');
     }
+    RA.cambiar({ fuente: video, espejo: frontal });
   }
-  function detener() {
+  function detenerCamara() {
     if (stream) stream.getTracks().forEach((t) => t.stop());
     stream = null;
     const video = $('camVideo');
     if (video) video.srcObject = null;
   }
 
-  // ---------- personaje encima ----------
-  function posicionar() {
-    const vista = $('camVista').getBoundingClientRect();
-    const el = $('camPersonaje');
-    const alto = vista.height * tamano, ancho = alto * 320 / 440;
-    el.style.width = ancho + 'px';
-    el.style.height = alto + 'px';
-    el.style.left = (pos.x * vista.width - ancho / 2) + 'px';
-    el.style.top = (pos.y * vista.height - alto / 2) + 'px';
-    el.style.transform = espejo ? 'scaleX(-1)' : '';
+  function ayuda(texto) { $('camAyuda').textContent = texto; }
+  let avisoT = null;
+  function aviso(texto) {
+    const el = $('camAviso');
+    el.textContent = texto;
+    el.classList.remove('hidden', 'sale'); void el.offsetWidth; el.classList.add('sale');
+    clearTimeout(avisoT); avisoT = setTimeout(() => el.classList.add('hidden'), 1400);
   }
 
-  // redibuja al personaje con la pose y el parche elegidos
-  function redibujar() {
-    figuraActual = dibujante({ pose, parche });
-    $('camPersonajeSvg').innerHTML = figuraActual;
-    $('camPersonaje').className = 'cam-personaje pose-' + pose;
-    $('camPoses').querySelectorAll('button').forEach((b) => b.classList.toggle('activo', !efecto && b.dataset.pose === pose));
+  // ---------- carrusel ----------
+  function itemsDe(tab) {
+    if (tab === 'avatar') {
+      const poses = limitado ? RA.POSES.filter((p) => p.v === 'normal') : RA.POSES;
+      return [{ v: 'nada', e: '🚫', n: 'Sin personaje' }, ...poses];
+    }
+    if (tab === 'ia') return RA.ACCIONES.filter((a) => !limitado || RA.SIN_POSES.includes(a.v));
+    return [{ v: 'nada', e: '🚫', n: 'Sin filtro' }, ...RA.LENTES];
+  }
+  function elegido(tab) {
+    if (tab === 'avatar') return sel.ia ? null : sel.avatar;
+    if (tab === 'ia') return sel.ia;
+    return sel.lente || 'nada';
+  }
+  function pintarCarrusel() {
+    document.querySelectorAll('#camTabs button').forEach((b) => {
+      const on = b.dataset.tab === pestana;
+      b.classList.toggle('activo', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    const actual = elegido(pestana);
+    $('camCarrusel').innerHTML = itemsDe(pestana).map((it) =>
+      `<button class="cam-item${it.v === actual ? ' activo' : ''}" data-v="${it.v}" aria-label="${it.n}"><span class="cam-item-e">${it.e}</span><span class="cam-item-n">${it.n}</span></button>`).join('');
+    const act = $('camCarrusel').querySelector('.activo');
+    if (act) act.scrollIntoView({ block: 'nearest', inline: 'center' });
+    // herramientas que solo sirven con el personaje quieto
+    const manual = !sel.ia && sel.avatar !== 'nada';
+    ['camEspejo', 'camMas', 'camMenos'].forEach((id) => $(id).classList.toggle('hidden', !manual));
+  }
+  async function elegir(v) {
+    if (pestana === 'avatar') {
+      sel.avatar = v; sel.ia = null;
+      await RA.setAvatar(v === 'nada' ? { modo: null } : { modo: 'manual', pose: v });
+    } else if (pestana === 'ia') {
+      if (sel.ia === v) { // tocar otra vez la misma acción la apaga
+        sel.ia = null;
+        await RA.setAvatar(sel.avatar === 'nada' ? { modo: null } : { modo: 'manual', pose: sel.avatar });
+      } else {
+        sel.ia = v;
+        if (!stream) ayuda('Para esto hace falta la cámara encendida 📷');
+        pintarCarrusel();
+        try { await RA.setAvatar({ modo: 'ia', accion: v }); } catch (e) { sel.ia = null; ayuda('No se pudo cargar la IA (revisa el internet)'); RA.setAvatar({ modo: 'manual', pose: sel.avatar === 'nada' ? 'normal' : sel.avatar }); }
+      }
+    } else {
+      sel.lente = v === 'nada' ? null : v;
+      pintarCarrusel();
+      try { await RA.setLente(sel.lente); } catch (e) { sel.lente = null; RA.setLente(null); ayuda('No se pudo cargar el filtro (revisa el internet)'); }
+    }
+    pintarCarrusel();
+  }
+
+  function pintarParche() {
     const bp = $('camParche');
     bp.classList.toggle('hidden', !conParche);
-    bp.textContent = { ninguno: '🩹 Sin parche', derecho: '🩹 Ojo derecho', izquierdo: '🩹 Ojo izquierdo' }[parche];
+    bp.classList.toggle('activo', parche !== 'ninguno');
+    bp.setAttribute('aria-label', { ninguno: 'Parche: sin parche', derecho: 'Parche: ojo derecho', izquierdo: 'Parche: ojo izquierdo' }[parche]);
   }
 
-  // ================= ✨ REALIDAD AUMENTADA (js/ar.js) =================
-  // Con un efecto elegido, la vista pasa a un canvas donde el avatar
-  // interactúa con la persona (el brazo pasa por detrás, etc.).
-  let efecto = null;
-  let brazoInfo = null;
-  let limitado = false;      // personaje sin poses (Olaf, Stitch…): menos efectos
-  let manoGlobos = null;
-  const SOLO_SIN_POSES = ['sorpresa', 'escondidas', 'corona', 'besito', 'globos', 'saludo'];
-  let conCuenta = false;   // ⏱ esperar 3 segundos antes de sacar la foto
-  let contando = false;
-
-  // cuenta regresiva 3, 2, 1 (para alcanzar a posar) y después la foto
-  async function dispararConCuenta() {
-    if (contando) return;
-    if (!conCuenta) { await disparar(); return; }
-    contando = true;
+  // ---------- foto ----------
+  async function cuentaRegresiva() {
     const el = $('camCuenta');
     for (const n of [3, 2, 1]) {
       el.textContent = n;
@@ -106,151 +142,127 @@ const Camara = (function () {
       await new Promise((r) => setTimeout(r, 1000));
     }
     el.classList.add('hidden');
-    contando = false;
-    await disparar();
+  }
+  async function foto() {
+    if (contando) return;
+    if (conCuenta) { contando = true; await cuentaRegresiva(); contando = false; }
+    const c = RA.capturar();
+    flash();
+    RA.celebrar(); // chispitas en la vista (la foto ya salió)
+    const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.92));
+    if (blob) guardarYMostrar(blob);
+  }
+  function flash() {
+    const f = $('camFlash');
+    f.classList.remove('activo'); void f.offsetWidth; f.classList.add('activo');
   }
 
-  function ayuda(texto) { $('camAyuda').textContent = texto; }
-
-  function pintarEfectos() {
-    $('camEfectos').querySelectorAll('button').forEach((b) => b.classList.toggle('activo', b.dataset.efecto === efecto));
-    $('camPoses').querySelectorAll('button').forEach((b) => b.classList.toggle('activo', !efecto && b.dataset.pose === pose));
-    const conRA = !!efecto;
-    $('camRA').classList.toggle('hidden', !conRA);
-    $('camPersonaje').classList.toggle('hidden', conRA);
-    $('camVideo').classList.toggle('oculto', conRA);
-    document.querySelector('.cam-tamano').classList.toggle('hidden', conRA);
-    $('camEspejo').classList.toggle('invisible', conRA);
+  // ---------- video (mantener apretado) ----------
+  function empezarVideo() {
+    if (grabacion || !RA.puedeGrabar()) return false;
+    let rec;
+    try { rec = RA.grabar(); } catch (e) { return false; }
+    const inicio = performance.now();
+    const btn = $('camDisparo');
+    btn.classList.add('grabando');
+    $('camRec').classList.remove('hidden');
+    const tic = () => {
+      const s = (performance.now() - inicio) / 1000;
+      btn.style.setProperty('--p', Math.min(1, s / MAX_VIDEO_S).toFixed(3));
+      $('camRec').textContent = '● ' + Math.floor(s) + ' s';
+      if (s >= MAX_VIDEO_S) terminarVideo();
+    };
+    grabacion = { rec, timer: setInterval(tic, 100) };
+    tic();
+    return true;
+  }
+  function limpiarGrabacion() {
+    const btn = $('camDisparo');
+    btn.classList.remove('grabando', 'apretado'); btn.style.removeProperty('--p');
+    $('camRec').classList.add('hidden');
+  }
+  async function terminarVideo() {
+    if (!grabacion) return;
+    const g = grabacion; grabacion = null;
+    clearInterval(g.timer);
+    limpiarGrabacion();
+    const blob = await g.rec.detener();
+    if (blob && blob.size) guardarYMostrar(blob);
   }
 
-  function tamanoCanvas() {
-    const v = $('camVista').getBoundingClientRect();
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const cv = $('camRA');
-    cv.width = Math.round(v.width * dpr); cv.height = Math.round(v.height * dpr);
-  }
-
-  async function usarEfecto(e) {
-    if (!stream) { ayuda('Para esto hace falta la cámara encendida 📷'); return; }
-    efecto = e;
-    pintarEfectos();
-    if (RA.activo) { RA.cambiar({ efecto: e }); return; }
-    tamanoCanvas();
-    try {
-      await RA.iniciar({
-        fuente: $('camVideo'), canvas: $('camRA'), espejo: frontal, efecto: e,
-        dibujar: dibujante, parche, brazo: brazoInfo, alEstado: ayuda,
-        acciones: limitado ? SOLO_SIN_POSES.filter((v) => v !== 'sorpresa') : null, manoGlobos,
-      });
-    } catch (err) {
-      salirEfecto();
-      ayuda('No se pudo cargar la IA (revisa el internet)');
-    }
-  }
-  function salirEfecto() {
-    RA.detener();
-    efecto = null;
-    pintarEfectos();
-    ayuda('Mueve al personaje con el dedo');
-  }
-
-  // ---------- sacar la foto ----------
-  function firma(ctx, W, H) {
-    const fs = Math.round(W / 26);
-    ctx.font = `700 ${fs}px Figtree, system-ui, sans-serif`;
-    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = fs / 3;
-    ctx.fillStyle = '#fff';
-    ctx.fillText('Ocuparche ✨ ' + new Date().toLocaleDateString('es-CL'), W - fs * 0.7, H - fs * 0.6);
-  }
-
-  function svgComoImagen(ancho, alto) {
-    const xml = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 440" width="${ancho}" height="${alto}">${figuraActual}</svg>`;
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(new Blob([xml], { type: 'image/svg+xml' }));
-      const img = new Image();
-      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
-      img.src = url;
+  function cablearDisparo() {
+    const btn = $('camDisparo');
+    let apretado = null;
+    btn.addEventListener('pointerdown', (e) => {
+      if (contando || grabacion) return;
+      try { btn.setPointerCapture(e.pointerId); } catch (err) { /* igual funciona */ }
+      apretado = { t: setTimeout(() => { if (apretado) apretado.video = empezarVideo(); }, ESPERA_VIDEO_MS), video: false };
+      btn.classList.add('apretado');
     });
+    const soltar = (cancelado) => {
+      btn.classList.remove('apretado');
+      if (grabacion) { terminarVideo(); apretado = null; return; }
+      if (!apretado) return;
+      clearTimeout(apretado.t);
+      const eraVideo = apretado.video;
+      apretado = null;
+      if (!eraVideo && !cancelado) foto();
+    };
+    btn.addEventListener('pointerup', () => soltar(false));
+    btn.addEventListener('pointercancel', () => soltar(true));
+    // con teclado (Enter / espacio) = foto
+    btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); foto(); } });
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
-  function fondoSinCamara(ctx, W, H) {
-    const g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, '#f9c5d9'); g.addColorStop(0.5, '#d9c8f5'); g.addColorStop(1, '#bfe3f7');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(255,255,255,.7)';
-    for (let i = 0; i < 40; i++) {
-      const x = (Math.sin(i * 12.9898) * 43758.5453 % 1 + 1) % 1 * W;
-      const y = (Math.sin(i * 78.233) * 12345.678 % 1 + 1) % 1 * H;
-      ctx.beginPath(); ctx.arc(x, y, (i % 3 + 1) * W / 320, 0, Math.PI * 2); ctx.fill();
-    }
+  // ---------- mover y agrandar al personaje (dedo, pellizco, rueda) ----------
+  function cablearGestos() {
+    const cv = $('camRA');
+    const dedos = new Map();
+    let arrastre = false, distInicial = 0;
+    const frac = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; };
+    const separacion = () => { const [a, b] = [...dedos.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    cv.addEventListener('pointerdown', (e) => {
+      const p = frac(e);
+      dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { cv.setPointerCapture(e.pointerId); } catch (err) { /* sigue igual */ }
+      if (dedos.size === 1) arrastre = RA.enAvatar(p.x, p.y);
+      if (dedos.size === 2) { distInicial = separacion(); arrastre = false; }
+    });
+    cv.addEventListener('pointermove', (e) => {
+      const antes = dedos.get(e.pointerId);
+      if (!antes) return;
+      const r = cv.getBoundingClientRect();
+      if (dedos.size === 1 && arrastre) RA.moverAvatar((e.clientX - antes.x) / r.width, (e.clientY - antes.y) / r.height);
+      dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (dedos.size === 2 && distInicial > 0) {
+        const d = separacion();
+        RA.escalarAvatar(d / distInicial);
+        distInicial = d;
+      }
+    });
+    const fin = (e) => { dedos.delete(e.pointerId); if (dedos.size < 2) distInicial = 0; if (!dedos.size) arrastre = false; };
+    cv.addEventListener('pointerup', fin);
+    cv.addEventListener('pointercancel', fin);
+    cv.addEventListener('wheel', (e) => { e.preventDefault(); RA.escalarAvatar(e.deltaY < 0 ? 1.08 : 1 / 1.08); }, { passive: false });
   }
 
-  async function disparar() {
-    if (efecto && RA.activo) {
-      const ra = $('camRA');
-      const c = document.createElement('canvas');
-      c.width = ra.width; c.height = ra.height;
-      const cx = c.getContext('2d');
-      cx.drawImage(ra, 0, 0);
-      firma(cx, c.width, c.height);
-      RA.celebrar(); // chispitas en la vista (la foto ya salió)
-      return guardarYMostrar(c);
-    }
-    const vista = $('camVista').getBoundingClientRect();
-    const escala = Math.min(2, 1600 / vista.width);
-    const W = Math.round(vista.width * escala), H = Math.round(vista.height * escala);
-    const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d');
-
-    // fondo: lo que ve la cámara (recortado igual que en pantalla) o colores
-    const video = $('camVideo');
-    if (stream && video.videoWidth) {
-      const k = Math.max(W / video.videoWidth, H / video.videoHeight);
-      const dw = video.videoWidth * k, dh = video.videoHeight * k;
-      ctx.save();
-      if (frontal) { ctx.translate(W, 0); ctx.scale(-1, 1); } // igual que el espejo de la pantalla
-      ctx.drawImage(video, (W - dw) / 2, (H - dh) / 2, dw, dh);
-      ctx.restore();
-    } else {
-      fondoSinCamara(ctx, W, H);
-    }
-
-    // el personaje, donde está en pantalla
-    const r = $('camPersonaje').getBoundingClientRect();
-    const x = (r.left - vista.left) * escala, y = (r.top - vista.top) * escala;
-    const w = r.width * escala, h = r.height * escala;
-    try {
-      const img = await svgComoImagen(Math.round(w), Math.round(h));
-      ctx.save();
-      if (espejo) { ctx.translate(x + w, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, h); }
-      else ctx.drawImage(img, x, y, w, h);
-      ctx.restore();
-    } catch (e) { /* si no se pudo dibujar el personaje, queda la foto sola */ }
-
-    firma(ctx, W, H);
-    return guardarYMostrar(canvas);
-  }
-
-  async function guardarYMostrar(canvas) {
-    const flash = $('camFlash');
-    flash.classList.remove('activo'); void flash.offsetWidth; flash.classList.add('activo');
-
-    const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.9));
-    if (!blob) return;
+  // ---------- guardar / ver / compartir / borrar ----------
+  async function guardarYMostrar(blob) {
     let id = null;
     try { id = await guardarFoto(blob); } catch (e) { /* sin IndexedDB: igual se muestra y se puede compartir */ }
     mostrarFoto({ id, blob });
     actualizarMiniatura();
   }
-
-  // ---------- ver / compartir / borrar una foto ----------
+  const esVideo = (blob) => !!blob && /^video\//.test(blob.type);
   function mostrarFoto(f) {
     if (fotoActual && fotoActual.url) URL.revokeObjectURL(fotoActual.url);
     fotoActual = { ...f, url: URL.createObjectURL(f.blob) };
-    $('camFoto').src = fotoActual.url;
+    const vid = esVideo(f.blob);
+    const img = $('camFoto'), video = $('camFotoVideo');
+    img.classList.toggle('hidden', vid); video.classList.toggle('hidden', !vid);
+    if (vid) { img.removeAttribute('src'); video.src = fotoActual.url; video.play().catch(() => {}); }
+    else { video.pause(); video.removeAttribute('src'); img.src = fotoActual.url; }
     $('camBorrar').classList.toggle('hidden', fotoActual.id == null);
     $('camResultado').classList.remove('hidden');
   }
@@ -260,14 +272,22 @@ const Camara = (function () {
     if (fotoActual && fotoActual.url) URL.revokeObjectURL(fotoActual.url);
     fotoActual = null;
     $('camFoto').removeAttribute('src');
+    const v = $('camFotoVideo'); v.pause(); v.removeAttribute('src'); v.load();
     $('camResultado').classList.add('hidden');
     reiniciarBorrar();
   }
 
+  function extension(tipo) {
+    if (/mp4/.test(tipo)) return 'mp4';
+    if (/webm/.test(tipo)) return 'webm';
+    if (/png/.test(tipo)) return 'png';
+    return 'jpg';
+  }
   async function compartir() {
     if (!fotoActual) return;
-    const nombre = 'ocuparche-' + Date.now() + '.jpg';
-    const archivo = new File([fotoActual.blob], nombre, { type: 'image/jpeg' });
+    const tipo = fotoActual.blob.type || 'image/jpeg';
+    const nombre = 'ocuparche-' + Date.now() + '.' + extension(tipo);
+    const archivo = new File([fotoActual.blob], nombre, { type: tipo });
     try {
       if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
         await navigator.share({ files: [archivo], title: 'Mi foto con mi personaje' });
@@ -335,15 +355,19 @@ const Camara = (function () {
   function borrarFoto(id) { return tx('readwrite', (s) => s.delete(id)); }
 
   async function actualizarMiniatura() {
-    const img = $('camUltima');
+    const img = $('camUltima'), icono = $('camUltimaIcono');
     try {
       const [ultima] = await listarFotos();
-      if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
-      if (ultima) {
+      if (img.dataset.url) { URL.revokeObjectURL(img.dataset.url); delete img.dataset.url; }
+      if (ultima && !esVideo(ultima.blob)) {
         img.dataset.url = URL.createObjectURL(ultima.blob);
         img.src = img.dataset.url;
         img.classList.remove('hidden');
-      } else { img.removeAttribute('src'); img.classList.add('hidden'); delete img.dataset.url; }
+        icono.textContent = '🖼️';
+      } else {
+        img.removeAttribute('src'); img.classList.add('hidden');
+        icono.textContent = ultima ? '🎬' : '🖼️';
+      }
     } catch (e) { img.classList.add('hidden'); }
   }
 
@@ -363,10 +387,20 @@ const Camara = (function () {
       urlsGaleria.push(url);
       const b = document.createElement('button');
       b.className = 'cam-gal-item';
-      b.setAttribute('aria-label', 'Ver foto');
-      const img = document.createElement('img');
-      img.src = url; img.alt = '';
-      b.appendChild(img);
+      const vid = esVideo(f.blob);
+      b.setAttribute('aria-label', vid ? 'Ver video' : 'Ver foto');
+      let m;
+      if (vid) {
+        m = document.createElement('video');
+        m.muted = true; m.playsInline = true; m.preload = 'metadata'; m.src = url + '#t=0.1';
+        const marca = document.createElement('span');
+        marca.className = 'cam-gal-play'; marca.textContent = '▶';
+        b.appendChild(marca);
+      } else {
+        m = document.createElement('img');
+        m.src = url; m.alt = '';
+      }
+      b.prepend(m);
       b.addEventListener('click', () => mostrarFoto(f));
       grid.appendChild(b);
     });
@@ -374,101 +408,88 @@ const Camara = (function () {
   }
   function cerrarGaleria() { $('camGaleria').classList.add('hidden'); limpiarGaleria(); }
 
-  // ---------- mover al personaje con el dedo ----------
-  function cablearArrastre() {
-    const el = $('camPersonaje');
-    let inicio = null;
-    el.addEventListener('pointerdown', (e) => {
-      try { el.setPointerCapture(e.pointerId); } catch (err) { /* sigue funcionando sin captura */ }
-      inicio = { x: e.clientX, y: e.clientY, pos: { ...pos } };
-    });
-    el.addEventListener('pointermove', (e) => {
-      if (!inicio) return;
-      const v = $('camVista').getBoundingClientRect();
-      pos.x = Math.min(1, Math.max(0, inicio.pos.x + (e.clientX - inicio.x) / v.width));
-      pos.y = Math.min(1, Math.max(0, inicio.pos.y + (e.clientY - inicio.y) / v.height));
-      posicionar();
-    });
-    const fin = () => { inicio = null; };
-    el.addEventListener('pointerup', fin);
-    el.addEventListener('pointercancel', fin);
-  }
-
   function cablear() {
-    cablearArrastre();
+    cablearDisparo();
+    cablearGestos();
     $('camCerrar').addEventListener('click', cerrar);
     $('camGirar').addEventListener('click', async () => {
       frontal = !frontal;
-      await iniciar();
-      if (efecto) { RA.cambiar({ espejo: frontal }); if (!stream) salirEfecto(); }
+      await iniciarCamara();
     });
-    $('camEspejo').addEventListener('click', () => { espejo = !espejo; posicionar(); });
-    $('camTamano').addEventListener('input', (e) => { tamano = Number(e.target.value) / 100; posicionar(); });
-    $('camPoses').addEventListener('click', (e) => {
-      const b = e.target.closest('button[data-pose]');
-      if (b) { pose = b.dataset.pose; if (efecto) salirEfecto(); redibujar(); }
+    $('camTabs').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-tab]');
+      if (b) { pestana = b.dataset.tab; pintarCarrusel(); }
     });
-    $('camEfectos').innerHTML = '<span class="cam-efectos-titulo">✨ Con IA:</span>' +
-      RA.EFECTOS.map((e) => `<button data-efecto="${e.v}">${e.n}</button>`).join('');
-    $('camEfectos').addEventListener('click', (ev) => {
-      const b = ev.target.closest('button[data-efecto]');
-      if (!b) return;
-      if (efecto === b.dataset.efecto) salirEfecto(); else usarEfecto(b.dataset.efecto);
+    $('camCarrusel').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-v]');
+      if (b) elegir(b.dataset.v);
+    });
+    $('camEspejo').addEventListener('click', () => RA.voltearAvatar());
+    $('camMas').addEventListener('click', () => RA.escalarAvatar(1.12));
+    $('camMenos').addEventListener('click', () => RA.escalarAvatar(1 / 1.12));
+    $('camFiltroBtn').addEventListener('click', () => {
+      const f = RA.siguienteFiltro();
+      $('camFiltroBtn').classList.toggle('activo', f.v !== 'normal');
+      aviso('🎨 ' + f.n);
     });
     $('camParche').addEventListener('click', () => {
       parche = { ninguno: 'derecho', derecho: 'izquierdo', izquierdo: 'ninguno' }[parche];
-      redibujar();
-      if (efecto) RA.cambiar({ parche });
+      pintarParche();
+      RA.cambiar({ parche });
+      aviso({ ninguno: '🩹 Sin parche', derecho: '🩹 Ojo derecho', izquierdo: '🩹 Ojo izquierdo' }[parche]);
     });
-    $('camDisparo').addEventListener('click', dispararConCuenta);
     $('camCuentaBtn').addEventListener('click', () => {
       conCuenta = !conCuenta;
       $('camCuentaBtn').classList.toggle('activo', conCuenta);
-      $('camCuentaBtn').textContent = conCuenta ? '⏱ Espera 3 s' : '⏱ Al tiro';
+      aviso(conCuenta ? '⏱ Espera 3 segundos' : '⏱ Foto al tiro');
     });
     $('camOtra').addEventListener('click', cerrarFoto);
     $('camCompartir').addEventListener('click', compartir);
     $('camBorrar').addEventListener('click', borrar);
     $('camGaleriaBtn').addEventListener('click', abrirGaleria);
     $('camGalCerrar').addEventListener('click', cerrarGaleria);
-    window.addEventListener('resize', () => { if (!$('camara').classList.contains('hidden')) { posicionar(); if (efecto) tamanoCanvas(); } });
+    document.addEventListener('visibilitychange', () => { if (document.hidden && grabacion) terminarVideo(); });
   }
 
   // ================= API =================
-  // cfg = { dibujar(o: { pose, parche, sinBrazo }) -> SVG, poses, brazo() -> { piel, contorno, manga, pierna },
+  // cfg = { dibujar(o: { pose, parche, sinBrazo }) -> SVG, brazo() -> { piel, contorno, manga },
   //         conParche, parche, limitado, manoGlobos }
-  // dibujar() arma el SVG desde estados ya validados (Juego.figura: solo
-  // colores #rrggbb y opciones de listas cerradas).
+  // dibujar() arma el SVG desde estados ya validados (Juego.figura /
+  // solo colores #rrggbb y opciones de listas cerradas).
   function abrir(cfg) {
     if (!cableado) { cablear(); cableado = true; }
     dibujante = cfg.dibujar;
     brazoInfo = cfg.brazo ? cfg.brazo() : null;
     limitado = !!cfg.limitado;
     manoGlobos = cfg.manoGlobos || null;
-    $('camPoses').classList.toggle('hidden', limitado);
-    $('camEfectos').querySelectorAll('button[data-efecto]').forEach((b) => b.classList.toggle('hidden', limitado && !SOLO_SIN_POSES.includes(b.dataset.efecto)));
-    $('camPoses').innerHTML = (cfg.poses || []).map((p) => `<button data-pose="${p.v}">${p.n}</button>`).join('');
     conParche = !!cfg.conParche;
     parche = conParche && cfg.parche ? cfg.parche : 'ninguno';
-    pose = 'normal';
-    efecto = null;
-    redibujar();
-    pintarEfectos();
-    $('camEfectos').classList.toggle('hidden', !brazoInfo);
-    ayuda('Mueve al personaje con el dedo');
-    $('camTamano').value = Math.round(tamano * 100);
+    pestana = 'avatar';
+    sel = { avatar: 'normal', ia: null, lente: null };
+    conCuenta = false;
+    $('camCuentaBtn').classList.remove('activo');
+    $('camFiltroBtn').classList.remove('activo');
+    $('camTabs').querySelector('[data-tab="ia"]').classList.toggle('hidden', !brazoInfo);
+    pintarParche();
     $('camResultado').classList.add('hidden');
     $('camGaleria').classList.add('hidden');
     $('camara').classList.remove('hidden');
     document.body.classList.add('con-camara');
-    posicionar();
-    iniciar();
+    ayuda('Mueve al personaje con el dedo · pellizca para agrandarlo');
+    RA.iniciar({
+      fuente: $('camVideo'), canvas: $('camRA'), espejo: frontal,
+      dibujar: dibujante, parche, brazo: brazoInfo, alEstado: ayuda,
+      acciones: limitado ? RA.SIN_POSES.filter((v) => v !== 'sorpresa') : null, manoGlobos,
+    }).catch(() => ayuda('No se pudo dibujar el personaje 😕'));
+    pintarCarrusel();
+    iniciarCamara();
     actualizarMiniatura();
   }
 
   function cerrar() {
-    if (efecto) salirEfecto();
-    detener();
+    if (grabacion) { clearInterval(grabacion.timer); grabacion.rec.detener(); grabacion = null; limpiarGrabacion(); }
+    RA.detener();
+    detenerCamara();
     cerrarGaleria();
     cerrarFoto();
     const c = $('camara');
