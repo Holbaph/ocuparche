@@ -249,6 +249,10 @@ section.block{ margin-bottom:20px; }
   padding:10px 18px; border-radius:12px; text-decoration:none; border:none; cursor:pointer;
 }
 
+.plan-lista{ list-style:none; margin:0 0 4px; padding:0; display:flex; flex-direction:column; gap:7px; }
+.plan-lista li{ display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:var(--ink-soft); line-height:1.4; }
+.plan-lista .ico{ flex-shrink:0; }
+
 .redeem-row{ display:flex; gap:8px; }
 .redeem-row input{ flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-size:13.5px; text-transform:uppercase; letter-spacing:.05em; }
 
