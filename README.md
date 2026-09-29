@@ -22,7 +22,7 @@ contraseña (Cloudflare no ofrece envío de correo de propósito general).
 Completo y probado de punta a punta (con clientes reales — WebSocket, fetch,
 firma criptográfica de verdad — no solo con curl):
 
-- [x] Landing, Privacidad, Términos — precio ($3.500 CLP) y correo
+- [x] Landing, Privacidad, Términos — precio ($4.000 CLP) y correo
       (`ocuparche@gmail.com`) reales.
 - [x] Base de datos D1 multi-cuenta, sin RLS (cada ruta comprueba a mano la
       pertenencia a la cuenta — probado que una cuenta no puede tocar los
