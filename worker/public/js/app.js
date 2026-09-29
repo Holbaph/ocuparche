@@ -132,6 +132,7 @@
       pararRealtime();
       if (timerTick) { clearInterval(timerTick); timerTick = null; }
       Juego.cerrar();
+      JuegosParche.cerrar();
       await Auth.logout();
       perfil = null; cuenta = null; pacientes = []; entries = {};
       showOverlay('authLogin');
@@ -540,6 +541,8 @@
     document.getElementById('juegoBloque').classList.toggle('hidden', !completo);
     document.getElementById('juegoUpsell').classList.toggle('hidden', completo);
     document.getElementById('openJuego').classList.toggle('hidden', !completo);
+    document.getElementById('openJuegosParche').classList.toggle('hidden', !completo);
+    document.getElementById('jpUpsellPrincipal').classList.toggle('hidden', completo);
     document.getElementById('juegoUpsellPrincipal').classList.toggle('hidden', completo);
 
     const puedeInvitar = completo && perfil.role === 'admin';
@@ -792,6 +795,11 @@
   });
 
   // ================= JUEGO DE VESTIR (js/juego.js) — plan completo =================
+  document.getElementById('openJuegosParche').addEventListener('click', () => {
+    if (!pacienteActualId) return;
+    JuegosParche.abrir({ minutosDia: juegoMinutos, pacienteId: pacienteActualId });
+  });
+
   document.getElementById('openJuego').addEventListener('click', () => {
     if (!pacienteActualId) return;
     Juego.abrir({

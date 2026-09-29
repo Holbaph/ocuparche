@@ -526,6 +526,9 @@ const Juego = (function () {
 
   function personaje(id) { return PERSONAJES.find((p) => p.id === id) || PERSONAJES[0]; }
 
+  // lista liviana para los "Juegos con el parche" (busca, diferencias, cocinita…)
+  function personajes() { return PERSONAJES.map((p) => ({ id: p.id, nombre: p.nombre, especie: p.especie || null, raton: !!p.raton, g: p.g })); }
+
   // "En blanco": sin ropa ni accesorios, con su peinado y ojos originales.
   function enBlanco(id) {
     const p = personaje(id);
@@ -1884,5 +1887,5 @@ const Juego = (function () {
     await guardarRemoto();
   }
 
-  return { abrir, cerrar, minutosRestantesHoy, darMasTiempo, restablecerTodos, figura, inicial };
+  return { abrir, cerrar, minutosRestantesHoy, darMasTiempo, restablecerTodos, figura, inicial, personajes };
 })();

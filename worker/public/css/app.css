@@ -660,3 +660,164 @@ body.con-informe{ overflow:hidden; }
 
 /* sin cámara: el fondo de colores lo pinta ar.js en el canvas (con el personaje encima); acá solo va el aviso */
 .cam-sin{ background:none; pointer-events:none; z-index:2; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.55); padding-top:108px; }
+/* ---------- juegos con el parche ---------- */
+.jp-entrar{ background:linear-gradient(120deg,#3fb8b0,#4a78c2 60%,#7e57c2); }
+
+.jp{
+  position:fixed; inset:0; z-index:70; display:flex; flex-direction:column;
+  height:100vh; height:100dvh; max-width:560px; margin:0 auto;
+  background:linear-gradient(180deg,var(--brand-soft),var(--bg) 40%);
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+}
+.jp-top{ display:flex; align-items:center; gap:10px; padding:10px 12px 6px; }
+.jp-titulo{ flex:1; min-width:0; line-height:1.15; }
+.jp-titulo strong{ display:block; font-family:'Baloo 2'; font-size:20px; color:var(--ink); }
+.jp-titulo small{ font-size:12px; font-weight:700; color:var(--ink-faint); }
+.jp-estrellas{ font-weight:800; font-size:14px; color:var(--warn); background:var(--surface); border:1px solid var(--line); padding:5px 11px; border-radius:99px; }
+.jp-cuerpo{ flex:1; min-height:0; overflow-y:auto; padding:6px 14px 14px; display:flex; flex-direction:column; }
+
+.jp-menu{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.jp-tarjeta{
+  display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; cursor:pointer;
+  padding:14px; border-radius:20px; border:1px solid var(--line); background:var(--surface); box-shadow:var(--shadow-sm); color:var(--ink);
+}
+.jp-tarjeta:first-child{ grid-column:1 / -1; }
+.jp-tarjeta .jp-emoji{ font-size:30px; }
+.jp-tarjeta strong{ font-family:'Baloo 2'; font-size:17px; }
+.jp-tarjeta small{ font-size:12.5px; color:var(--ink-soft); }
+.jp-nivel{ margin-top:6px; font-size:11px; font-weight:800; color:var(--teal); background:var(--teal-soft); padding:2px 8px; border-radius:99px; }
+.jp-nota{ font-size:12px; color:var(--ink-faint); line-height:1.5; text-align:center; margin:16px 6px 0; }
+
+.jp-aviso{ margin:auto; text-align:center; max-width:320px; }
+.jp-aviso .big{ font-size:56px; }
+.jp-aviso h2{ font-family:'Baloo 2'; color:var(--ink); margin:6px 0; }
+.jp-aviso p{ color:var(--ink-soft); line-height:1.5; }
+
+.jp-area{ flex:1; min-height:0; display:flex; flex-direction:column; }
+.jp-consigna{ font-size:14px; color:var(--ink-soft); text-align:center; margin:0 0 10px; line-height:1.4; }
+.jp-consigna strong{ color:var(--ink); }
+.jp-cuenta{ display:inline-block; margin-left:6px; font-weight:800; color:var(--brand); background:var(--brand-soft); padding:1px 8px; border-radius:99px; }
+
+/* diferencias */
+.jp-dif{ flex:1; min-height:0; display:flex; gap:8px; }
+.jp-dif-caja{ flex:1; min-width:0; display:flex; align-items:center; justify-content:center; background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:6px; }
+.jp-dif-caja svg{ width:100%; height:100%; max-height:100%; touch-action:manipulation; }
+@media (max-aspect-ratio: 4/5){ .jp-dif{ flex-direction:column; } .jp-dif-caja{ min-height:0; } }
+.jp-marca{ fill:none; stroke:#e8578a; stroke-width:5; animation:jp-aparece .3s ease; }
+.jp-fallo{ fill:#c85a4a; font-size:34px; font-weight:800; text-anchor:middle; dominant-baseline:middle; animation:jp-desaparece .7s ease forwards; }
+@keyframes jp-aparece{ from{ opacity:0; transform:scale(.6); transform-origin:center; } }
+@keyframes jp-desaparece{ to{ opacity:0; } }
+
+/* busca a… */
+.jp-busca-obj{ display:flex; align-items:center; justify-content:center; gap:10px; font-weight:800; color:var(--ink-soft); margin-bottom:8px; }
+.jp-busca-obj #jpObjetivo{ width:64px; height:64px; background:var(--surface); border:2px solid var(--brand); border-radius:16px; padding:3px; }
+.jp-busca-obj svg{ width:100%; height:100%; }
+.jp-busca{ position:relative; flex:1; min-height:0; background:var(--surface); border:1px solid var(--line); border-radius:18px; overflow:hidden; }
+.jp-busca-item{ position:absolute; padding:0; border:none; background:none; cursor:pointer; border-radius:50%; }
+.jp-busca-item svg{ width:100%; height:100%; pointer-events:none; }
+.jp-busca-item.bien{ box-shadow:0 0 0 4px var(--success); background:var(--success-soft); }
+.jp-busca-item.mal{ animation:jp-no .35s ease; }
+@keyframes jp-no{ 25%{ transform:translateX(-5px); } 75%{ transform:translateX(5px); } }
+
+/* une los puntos */
+.jp-puntos{ flex:1; min-height:0; display:flex; align-items:center; justify-content:center; background:var(--surface); border:1px solid var(--line); border-radius:18px; }
+.jp-puntos svg{ width:100%; height:100%; max-width:520px; touch-action:manipulation; }
+.jp-relleno{ opacity:0; transition:opacity .5s ease; }
+.jp-puntos svg.completa .jp-relleno{ opacity:.85; }
+.jp-lineas line{ stroke:var(--ink); stroke-width:1.2; stroke-linecap:round; }
+.jp-dot .v{ fill:var(--ink-faint); }
+.jp-dot text{ fill:var(--ink); font-weight:800; }
+.jp-dot.siguiente .v{ fill:#e8578a; animation:jp-late 1s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+.jp-dot.hecho .v{ fill:var(--success); }
+.jp-dot.hecho text{ fill:var(--ink-faint); }
+@keyframes jp-late{ 50%{ transform:scale(1.5); } }
+
+/* caminito */
+.jp-camino{ position:relative; flex:1; min-height:0; background:var(--surface); border:1px solid var(--line); border-radius:18px; overflow:hidden; touch-action:none; }
+.jp-camino canvas{ position:absolute; inset:0; }
+.jp-viajero{ position:absolute; pointer-events:none; filter:drop-shadow(0 3px 5px rgba(0,0,0,.25)); }
+
+/* burbujas */
+.jp-burbujas{ position:relative; flex:1; min-height:0; border-radius:18px; overflow:hidden; background:linear-gradient(180deg,#cfeaf7,#e9f6fb); }
+.jp-burbuja{
+  position:absolute; bottom:0; padding:0; border-radius:50%; cursor:pointer; font-size:16px;
+  border:2px solid rgba(255,255,255,.9);
+  background:radial-gradient(circle at 32% 30%, rgba(255,255,255,.95) 0 12%, rgba(173,216,255,.55) 13% 60%, rgba(186,160,255,.5));
+  box-shadow:inset -4px -6px 10px rgba(120,140,255,.25);
+  animation:jp-subir linear forwards;
+}
+.jp-burbuja.estrella{ background:radial-gradient(circle at 32% 30%, #fff 0 12%, rgba(255,224,130,.75) 13% 65%, rgba(255,190,90,.6)); }
+.jp-burbuja.pop{ animation:jp-pop .22s ease-out forwards; }
+@keyframes jp-subir{ from{ transform:translateY(100%); } to{ transform:translateY(calc(-1 * var(--alto))); } }
+@keyframes jp-pop{ to{ transform:scale(1.6); opacity:0; } }
+@media (prefers-reduced-motion: reduce){ .jp-dot.siguiente .v{ animation:none; } }
+
+/* mensaje breve y premio */
+.jp-mensaje{
+  position:absolute; left:50%; bottom:calc(env(safe-area-inset-bottom) + 26px); transform:translateX(-50%);
+  background:var(--ink); color:var(--bg); font-weight:700; font-size:13.5px; padding:9px 14px; border-radius:14px;
+  opacity:0; pointer-events:none; white-space:nowrap; max-width:92%;
+}
+.jp-mensaje.ver{ animation:jp-msj 2.2s ease forwards; }
+@keyframes jp-msj{ 10%,80%{ opacity:1; } 100%{ opacity:0; } }
+.jp-premio{ position:absolute; inset:0; z-index:5; background:rgba(20,18,35,.5); display:flex; align-items:center; justify-content:center; padding:24px; }
+.jp-premio-box{ background:var(--surface); border-radius:26px; padding:24px 20px; text-align:center; width:100%; max-width:320px; box-shadow:var(--shadow); }
+.jp-premio-box .big{ font-size:40px; letter-spacing:4px; animation:jp-aparece .4s ease; }
+.jp-premio-box h2{ font-family:'Baloo 2'; margin:6px 0 2px; color:var(--ink); }
+.jp-premio-box p{ color:var(--ink-soft); margin:0 0 14px; }
+.jp-premio-box button{ width:100%; padding:12px; border:none; border-radius:14px; font-weight:700; font-size:15px; cursor:pointer; margin-top:6px; }
+
+.jp .juego-reloj{ flex-shrink:0; }
+/* ---------- 🍰 cocinita (js/cocina.js) ---------- */
+.coc{ flex:1; min-height:0; display:flex; flex-direction:column; gap:8px; position:relative; }
+.coc-pedido{ display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:7px 9px; }
+.coc-cliente{ width:50px; height:50px; flex-shrink:0; border-radius:50%; background:var(--surface-2); border:2px solid var(--line); }
+.coc-pedido-txt{ flex:1; min-width:0; }
+.coc-pedido-txt small{ display:block; font-size:11.5px; font-weight:700; color:var(--ink-faint); }
+.coc-pedido-txt strong{ display:block; font-family:'Baloo 2'; font-size:16px; line-height:1.15; color:var(--ink); }
+.coc-lista{ display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.coc-chip{ display:inline-flex; align-items:center; gap:2px; font-size:11.5px; font-weight:800; color:var(--ink-soft); background:var(--surface-2); border:1px solid var(--line); border-radius:99px; padding:1px 7px 1px 3px; white-space:nowrap; }
+.coc-chip svg{ width:20px; height:20px; }
+.coc-chip b{ font-size:10px; color:var(--brand); margin-left:3px; }
+.coc-verlista{ font-size:11.5px; font-weight:800; color:var(--teal); background:var(--teal-soft); border:none; border-radius:99px; padding:3px 10px; cursor:pointer; }
+.coc-meta{ position:relative; width:96px; height:90px; flex-shrink:0; padding:0; cursor:zoom-in; background:linear-gradient(#fdf6ec,#f6e7d2); border:2px solid var(--brand); border-radius:14px; }
+.coc-meta svg{ width:100%; height:100%; }
+.coc-meta span{ position:absolute; right:-6px; bottom:-6px; font-size:13px; background:var(--surface); border-radius:50%; padding:2px; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+.coc-mesa{ flex:1; min-height:140px; background:linear-gradient(#fdf6ec,#f3e2c8); border:1px solid var(--line); border-radius:18px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.coc-mesa svg{ width:100%; height:100%; touch-action:manipulation; }
+.coc-mesa svg.coc-no{ animation:jp-no .35s ease; }
+.coc-mesa svg.coc-si{ animation:coc-si .6s ease; }
+@keyframes coc-si{ 40%{ transform:scale(1.06); } }
+.coc-pz{ cursor:pointer; }
+.coc-pop{ animation:coc-pop .28s cubic-bezier(.3,1.6,.5,1); transform-box:fill-box; transform-origin:center; }
+@keyframes coc-pop{ from{ transform:scale(.3); opacity:.4; } }
+.coc-acciones{ display:flex; gap:6px; }
+.coc-acciones button{ flex:1; padding:9px 4px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); font-weight:800; font-size:13px; cursor:pointer; }
+.coc-acciones .coc-listo{ flex:1.3; background:var(--success); border-color:var(--success); color:#fff; }
+.coc-bandeja{ max-height:40vh; overflow-y:auto; background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:4px 8px 8px; }
+.coc-sec{ font-size:10.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; margin:6px 2px 4px; }
+.coc-fila{ display:grid; grid-template-columns:repeat(auto-fill,minmax(56px,1fr)); gap:5px; }
+.coc-ing{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:4px 2px 3px; border-radius:12px; border:2px solid transparent; background:var(--surface-2); cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+.coc-ing svg{ width:34px; height:34px; pointer-events:none; }
+.coc-ing span{ font-size:9.5px; font-weight:700; color:var(--ink-soft); line-height:1.1; text-align:center; pointer-events:none; }
+.coc-ing:active{ transform:scale(.94); }
+.coc-ing.activo{ border-color:var(--brand); background:var(--brand-soft); }
+.coc-fantasma{ position:fixed; width:56px; height:56px; margin:-28px 0 0 -28px; pointer-events:none; z-index:200; filter:drop-shadow(0 6px 8px rgba(0,0,0,.3)); }
+.coc-fantasma svg{ width:100%; height:100%; }
+.coc-grande{ position:absolute; inset:0; z-index:5; background:rgba(253,246,236,.97); display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:18px; cursor:zoom-out; padding:10px; }
+.coc-grande svg{ width:100%; flex:1; min-height:0; }
+.coc-grande p{ font-weight:800; color:#6b5a48; margin:6px 0 0; text-align:center; }
+@media (prefers-reduced-motion: reduce){ .coc-pop, .coc-mesa svg.coc-si, .coc-mesa svg.coc-no{ animation:none; } }
+
+/* piano mágico (js/juegos-parche.js) */
+.jp-piano{ position:relative; flex:1; min-height:0; display:grid; grid-template-columns:repeat(4,1fr); border-radius:18px; overflow:hidden; background:#2a2740; touch-action:manipulation; }
+.jp-carril{ position:relative; border-right:2px solid rgba(255,255,255,.08); background:linear-gradient(180deg, transparent 70%, color-mix(in srgb, var(--c) 35%, transparent)); }
+.jp-carril span{ position:absolute; left:0; right:0; bottom:8px; text-align:center; font-size:26px; opacity:.8; }
+.jp-tecla{
+  position:absolute; top:0; width:21%; height:100px; border:none; border-radius:18px; cursor:pointer; padding:0;
+  background:var(--c); box-shadow:inset 0 -8px 0 rgba(0,0,0,.18), 0 4px 10px rgba(0,0,0,.3); font-size:34px;
+  -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; will-change:transform;
+}
+.jp-tecla.pop{ animation:jp-tecla-pop .26s ease forwards; }
+@keyframes jp-tecla-pop{ to{ opacity:0; filter:brightness(1.6); scale:1.25; } }

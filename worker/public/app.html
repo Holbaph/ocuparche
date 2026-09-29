@@ -270,6 +270,16 @@
       <p>🎮 El juego de vestir es parte del <b>plan completo</b>.</p>
       <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
     </div>
+
+    <button class="juego-entrar jp-entrar hidden" id="openJuegosParche">
+      <span class="je-emoji">🎯</span>
+      <span><strong>Juegos con el parche</strong><small>Diferencias, burbujas, caminitos y más</small></span>
+      <span class="je-flecha">›</span>
+    </button>
+    <div id="jpUpsellPrincipal" class="upsell-box hidden">
+      <p>🎯 Los juegos con el parche son parte del <b>plan completo</b>.</p>
+      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+    </div>
   </div>
 
   <footer class="note">Ocuparche — hecho desde la experiencia real de un tratamiento 🩹</footer>
@@ -701,6 +711,36 @@
   </div>
 </div>
 
+<!-- ============ Juegos con el parche (js/juegos-parche.js) — pantalla aparte, no
+     dentro de "Jugar a vestir" ============ -->
+<div class="jp hidden" id="jp" role="dialog" aria-label="Juegos con el parche">
+  <div class="jp-top">
+    <button class="icon-btn" id="jpVolver" aria-label="Volver">←</button>
+    <div class="jp-titulo"><strong id="jpTitulo">Juegos con el parche</strong><small id="jpSub"></small></div>
+    <div class="juego-reloj" id="jpReloj">⏱ 20:00</div>
+    <div class="jp-estrellas" id="jpEstrellas">⭐ 0</div>
+  </div>
+  <div class="jp-cuerpo" id="jpCuerpo"></div>
+  <div class="jp-mensaje" id="jpMensaje" aria-live="polite"></div>
+  <div class="juego-fin hidden" id="jpFin">
+    <div class="juego-fin-box">
+      <div class="big">⏰</div>
+      <h2>¡Se acabó el tiempo de juego!</h2>
+      <p>Por hoy ya jugó todo el tiempo. Mañana puede seguir jugando 💖</p>
+      <button class="btn-save" id="jpFinOk">Salir</button>
+    </div>
+  </div>
+  <div class="jp-premio hidden" id="jpPremio">
+    <div class="jp-premio-box">
+      <div class="big">⭐⭐⭐</div>
+      <h2>¡Muy bien!</h2>
+      <p id="jpPremioTexto"></p>
+      <button class="btn-save" id="jpSiguiente">Siguiente nivel ▶</button>
+      <button class="btn-cancel" id="jpOtro">Elegir otro juego</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="js/config.js"></script>
@@ -710,9 +750,12 @@
 <script src="js/tratamiento.js"></script>
 <script src="js/avatar.js"></script>
 <script src="js/juego-piezas.js"></script>
+<script src="js/tiempo-juego.js"></script>
 <script src="js/ar.js"></script>
 <script src="js/camara.js"></script>
 <script src="js/juego.js"></script>
+<script src="js/cocina.js"></script>
+<script src="js/juegos-parche.js"></script>
 <script src="js/app.js"></script>
 <script src="js/sw-register.js"></script>
 </body>
