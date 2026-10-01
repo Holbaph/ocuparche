@@ -127,35 +127,37 @@ section{ padding:64px 0; }
 .phone-notch{ position:absolute; top:14px; left:50%; transform:translateX(-50%); width:90px; height:20px; background:#1a1420; border-radius:0 0 14px 14px; z-index:2; }
 .phone-screen{ position:relative; width:100%; height:100%; border-radius:26px; overflow:hidden; background:var(--bg); }
 .demo-frame{ position:absolute; inset:0; opacity:0; display:flex; flex-direction:column; }
-.demo-frame svg{ width:100%; flex:1; min-height:0; display:block; }
+.demo-frame img{ width:100%; flex:1; min-height:0; display:block; object-fit:cover; }
 .demo-caption{
   margin:0; padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 12px); font-size:12px; line-height:1.4;
   color:var(--ink-soft); background:var(--surface); border-top:1px solid var(--line); text-align:center;
 }
 .demo-caption b{ color:var(--ink); }
-#f1{ animation:demoShow 24s infinite; }
-#f2{ animation:demoShow 24s infinite; animation-delay:-4s; }
-#f3{ animation:demoShow 24s infinite; animation-delay:-8s; }
-#f4{ animation:demoShow 24s infinite; animation-delay:-12s; }
-#f5{ animation:demoShow 24s infinite; animation-delay:-16s; }
-#f6{ animation:demoShow 24s infinite; animation-delay:-20s; }
+#f1{ animation:demoShow 28s infinite; }
+#f2{ animation:demoShow 28s infinite; animation-delay:-4s; }
+#f3{ animation:demoShow 28s infinite; animation-delay:-8s; }
+#f4{ animation:demoShow 28s infinite; animation-delay:-12s; }
+#f5{ animation:demoShow 28s infinite; animation-delay:-16s; }
+#f6{ animation:demoShow 28s infinite; animation-delay:-20s; }
+#f7{ animation:demoShow 28s infinite; animation-delay:-24s; }
 @keyframes demoShow{
-  0%, 98.5%, 100%{ opacity:0; }
-  1.5%, 15.2%{ opacity:1; }
-  16.7%{ opacity:0; }
+  0%, 98.7%, 100%{ opacity:0; }
+  1.3%, 13%{ opacity:1; }
+  14.3%{ opacity:0; }
 }
 .demo-dots{ display:flex; gap:8px; }
-.demo-dots span{ width:7px; height:7px; border-radius:50%; background:var(--line); animation:demoDot 24s infinite; }
+.demo-dots span{ width:7px; height:7px; border-radius:50%; background:var(--line); animation:demoDot 28s infinite; }
 .demo-dots span:nth-child(1){ animation-delay:-4s; }
 .demo-dots span:nth-child(2){ animation-delay:-8s; }
 .demo-dots span:nth-child(3){ animation-delay:-12s; }
 .demo-dots span:nth-child(4){ animation-delay:-16s; }
 .demo-dots span:nth-child(5){ animation-delay:-20s; }
-.demo-dots span:nth-child(6){ animation-delay:0s; }
+.demo-dots span:nth-child(6){ animation-delay:-24s; }
+.demo-dots span:nth-child(7){ animation-delay:0s; }
 @keyframes demoDot{
-  0%, 98.5%, 100%{ background:var(--line); transform:scale(1); }
-  1.5%, 15.2%{ background:var(--brand); transform:scale(1.3); }
-  16.7%{ background:var(--line); transform:scale(1); }
+  0%, 98.7%, 100%{ background:var(--line); transform:scale(1); }
+  1.3%, 13%{ background:var(--brand); transform:scale(1.3); }
+  14.3%{ background:var(--line); transform:scale(1); }
 }
 @media (prefers-reduced-motion: reduce){
   .demo-frame, .demo-dots span{ animation:none; }
