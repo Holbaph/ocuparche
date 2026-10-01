@@ -721,7 +721,7 @@ body.con-informe{ overflow:hidden; }
 
 /* busca a… */
 .jp-busca-obj{ display:flex; align-items:center; justify-content:center; gap:10px; font-weight:800; color:var(--ink-soft); margin-bottom:8px; }
-.jp-busca-obj #jpObjetivo{ width:64px; height:64px; background:var(--surface); border:2px solid var(--brand); border-radius:16px; padding:3px; }
+.jp-busca-obj #jpObjetivo{ width:90px; height:90px; background:var(--surface); border:2px solid var(--brand); border-radius:16px; padding:3px; }
 .jp-busca-obj svg{ width:100%; height:100%; }
 .jp-busca{ position:relative; flex:1; min-height:0; background:var(--surface); border:1px solid var(--line); border-radius:18px; overflow:hidden; }
 .jp-busca-item{ position:absolute; padding:0; border:none; background:none; cursor:pointer; border-radius:50%; }
@@ -836,3 +836,63 @@ body.con-informe{ overflow:hidden; }
 .p-quitar{ font-size:11.5px; font-weight:800; color:var(--danger); background:transparent; border:1px solid var(--danger); padding:4px 10px; border-radius:99px; cursor:pointer; }
 .p-quitar.confirmar{ background:var(--danger); color:#fff; }
 .p-quitar:disabled{ opacity:.6; cursor:default; }
+/* ---------- juegos para peques (js/juegos-peques.js) ---------- */
+.pq-no{ animation:jp-no .35s ease; }
+.pq-fantasma{ position:fixed; z-index:200; pointer-events:none; transform:translate(-50%,-50%) scale(1.08); filter:drop-shadow(0 8px 10px rgba(0,0,0,.3)); margin:0; }
+.pq-levantada{ opacity:.3; }
+/* rompecabezas */
+.pz{ flex:1; min-height:0; display:flex; flex-direction:column; gap:10px; align-items:center; }
+.pz-tablero{ position:relative; display:grid; height:52%; aspect-ratio:320/440; background:var(--surface); border:3px solid var(--line); border-radius:14px; overflow:hidden; }
+.pz-guia{ position:absolute; inset:0; width:100%; height:100%; opacity:.16; pointer-events:none; filter:grayscale(1); }
+.pz-hueco{ position:relative; border:1.5px dashed var(--line); }
+.pz-hueco svg{ position:absolute; inset:0; width:100%; height:100%; animation:jp-aparece .25s ease; }
+.pz-tablero.listo .pz-hueco{ border-color:transparent; }
+.pz-bandeja{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+.pz-pieza{ width:78px; padding:0; border:2px solid var(--line); border-radius:8px; background:var(--surface); cursor:grab; touch-action:none; overflow:hidden; }
+.pz-pieza svg{ width:100%; height:100%; display:block; pointer-events:none; }
+.pz-pieza.elegida{ border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft); }
+/* memoria */
+.mem{ flex:1; min-height:0; display:grid; gap:10px; align-content:center; max-width:460px; margin:0 auto; width:100%; }
+.mem-carta{ aspect-ratio:3/4; border:none; border-radius:14px; cursor:pointer; padding:4px; position:relative; background:linear-gradient(135deg,#b392d6,#f28bb0); box-shadow:0 3px 8px rgba(0,0,0,.2); transition:transform .25s ease; }
+.mem-dorso{ font-size:34px; color:#fff; }
+.mem-cara{ display:none; width:100%; height:100%; }
+.mem-carta.abierta{ background:var(--surface); transform:rotateY(180deg) scaleX(-1); }
+.mem-carta.abierta .mem-dorso{ display:none; }
+.mem-carta.abierta .mem-cara{ display:block; }
+.mem-carta.pareja{ box-shadow:0 0 0 4px var(--success); }
+/* pintar */
+.pin-hoja{ flex:1; min-height:0; background:#fff; border-radius:18px; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; padding:8px; }
+.pin-hoja svg{ width:100%; height:100%; touch-action:manipulation; }
+.pin-zona{ cursor:pointer; transition:fill .15s ease; }
+.pin-pop{ animation:jp-aparece .25s ease; }
+.pin-paleta{ display:grid; grid-template-columns:repeat(9,1fr); gap:6px; margin-top:10px; }
+.pin-color{ aspect-ratio:1; border-radius:50%; border:2px solid rgba(0,0,0,.15); background:var(--c); cursor:pointer; padding:0; }
+.pin-color.activo{ border-color:var(--ink); transform:scale(1.12); box-shadow:0 0 0 3px var(--surface); }
+/* encaja la forma */
+.fo-huecos{ flex:1; min-height:0; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; align-content:center; background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:12px; }
+.fo-hueco{ aspect-ratio:1; display:flex; align-items:center; justify-content:center; background:var(--surface-2); border-radius:14px; }
+.fo-hueco svg, .fo-pieza svg{ width:86%; height:86%; pointer-events:none; }
+.fo-hueco.lleno{ animation:jp-aparece .25s ease; }
+.fo-bandeja{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:10px; }
+.fo-pieza{ width:78px; height:78px; padding:0; border:none; background:none; cursor:grab; touch-action:none; }
+.fo-pieza.elegida{ background:var(--brand-soft); border-radius:14px; }
+/* encuentra el color */
+.co-escena{ flex:1; min-height:0; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(4,1fr); gap:6px; background:linear-gradient(#e6f4fb,#fdf6ec); border-radius:18px; padding:8px; }
+.co-cosa{ padding:0; border:none; background:none; cursor:pointer; border-radius:50%; }
+.co-cosa svg{ width:100%; height:100%; pointer-events:none; }
+.co-cosa.bien{ background:rgba(111,191,115,.3); animation:jp-aparece .3s ease; }
+/* sombras */
+.so-sombra{ flex:1; min-height:0; display:flex; justify-content:center; background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:8px; }
+.so-sombra svg{ height:100%; filter:brightness(0); opacity:.85; transition:filter .5s ease, opacity .5s ease; }
+.so-sombra.revelada svg{ filter:none; opacity:1; }
+.so-ops{ display:grid; grid-template-columns:repeat(auto-fit,minmax(80px,1fr)); gap:8px; margin-top:10px; }
+.so-op{ display:flex; flex-direction:column; align-items:center; padding:6px 4px; border-radius:14px; border:2px solid var(--line); background:var(--surface); cursor:pointer; }
+.so-op svg{ width:70px; height:96px; pointer-events:none; }
+.so-op span{ font-size:11.5px; font-weight:800; color:var(--ink-soft); }
+.so-op.bien{ border-color:var(--success); background:var(--success-soft); }
+
+/* elegir cuántas cartas / piezas */
+.pq-elegir{ display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; margin:0 0 8px; }
+.pq-elegir span{ font-size:12.5px; font-weight:800; color:var(--ink-soft); }
+.pq-elegir button{ min-width:40px; padding:6px 10px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); font-weight:800; font-size:13px; cursor:pointer; }
+.pq-elegir button.activo{ background:var(--brand); border-color:var(--brand); color:#fff; }
