@@ -282,6 +282,17 @@
       <p>🎯 <b>13 juegos</b> hechos para el ojito destapado: cocinita, piano mágico, rompecabezas, memoria, pintar y más, para todas las edades.</p>
       <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
     </div>
+
+    <button class="juego-entrar fi-entrar hidden" id="openFiesta">
+      <span class="je-emoji">💃</span>
+      <span><strong>Fiesta de baile</strong><small>Sus personajes bailan sus canciones favoritas</small></span>
+      <span class="je-flecha">›</span>
+    </button>
+    <div id="fiUpsellPrincipal" class="upsell-box hidden">
+      <span class="upsell-badge">✨ Plan completo</span>
+      <p>💃 <b>Fiesta de baile:</b> sus personajes bailan al ritmo de la música del celular o de un video de YouTube.</p>
+      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+    </div>
   </div>
 
   <footer class="note">Ocuparche — hecho desde la experiencia real de un tratamiento 🩹</footer>
@@ -616,6 +627,7 @@
         <li><span class="ico">👗</span> Jugar a vestir, con más de 85 personajes</li>
         <li><span class="ico">📸</span> Fotos y video con el personaje, con filtros y realidad aumentada</li>
         <li><span class="ico">🎯</span> Juegos con el parche: 13 juegos para el ojito destapado</li>
+        <li><span class="ico">💃</span> Fiesta de baile: sus personajes bailan al ritmo de la música o de un video de YouTube</li>
         <li><span class="ico">👨‍👩‍👧</span> Hij@s ilimitados e invitar hasta 3 personas más de la familia</li>
       </ul>
       <p style="font-size:12.5px;color:var(--ink-faint);margin:12px 0 10px">
@@ -762,6 +774,37 @@
   </div>
 </div>
 
+<!-- ============ Fiesta de baile (js/fiesta.js) ============ -->
+<div class="fi hidden" id="fiesta" role="dialog" aria-label="Fiesta de baile">
+  <div class="jp-top">
+    <button class="icon-btn" id="fiCerrar" aria-label="Salir">←</button>
+    <div class="jp-titulo"><strong>💃 Fiesta de baile</strong><small>Elige quién baila y de dónde sale la música</small></div>
+    <div class="juego-reloj" id="fiReloj">⏱ 20:00</div>
+  </div>
+  <div class="fi-cuerpo">
+    <div class="fi-escenario" id="fiEscenario">
+      <div class="fi-luces" id="fiLuces"></div>
+      <div class="fi-bailarines" id="fiBailarines"></div>
+      <button class="fi-pausa" id="fiPausa">⏸ Parar el baile</button>
+    </div>
+    <div class="seg fi-modo" id="fiModo">
+      <button type="button" data-m="micro">🎤 Música del celular</button>
+      <button type="button" data-m="youtube">▶️ Video de YouTube</button>
+    </div>
+    <div class="fi-panel" id="fiPanel"></div>
+    <p class="fi-sec">Bailarines (toca hasta 4)</p>
+    <div class="fi-personajes" id="fiPersonajes"></div>
+  </div>
+  <div class="juego-fin hidden" id="fiFin">
+    <div class="juego-fin-box">
+      <div class="big">⏰</div>
+      <h2>¡Se acabó el tiempo de juego!</h2>
+      <p>Por hoy ya jugó todo el tiempo. Mañana seguimos bailando 💃</p>
+      <button class="btn-save" id="fiFinOk">Salir</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="js/config.js"></script>
@@ -778,6 +821,7 @@
 <script src="js/cocina.js"></script>
 <script src="js/juegos-peques.js"></script>
 <script src="js/juegos-parche.js"></script>
+<script src="js/fiesta.js"></script>
 <script src="js/app.js"></script>
 <script src="js/sw-register.js"></script>
 </body>

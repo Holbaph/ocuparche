@@ -2141,5 +2141,14 @@ const Juego = (function () {
     await guardarRemoto();
   }
 
-  return { abrir, cerrar, minutosRestantesHoy, darMasTiempo, restablecerTodos, figura, inicial, personajes };
+  // la ropa con que quedó cada personaje de ese hij@ (para la Fiesta de baile),
+  // aunque el juego de vestir no se haya abierto todavía en esta sesión
+  function vestido(id, pid) {
+    if (estados[id] && pid === pacienteId) return JSON.parse(JSON.stringify(estados[id]));
+    let j = null;
+    try { j = JSON.parse(localStorage.getItem('ocuparche-juego-' + pid)); } catch (e) {}
+    return normalizar(id, j && j.personajes && j.personajes[id]);
+  }
+
+  return { abrir, cerrar, minutosRestantesHoy, darMasTiempo, restablecerTodos, figura, inicial, personajes, vestido, cargarHijos };
 })();

@@ -896,3 +896,74 @@ body.con-informe{ overflow:hidden; }
 .pq-elegir span{ font-size:12.5px; font-weight:800; color:var(--ink-soft); }
 .pq-elegir button{ min-width:40px; padding:6px 10px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); font-weight:800; font-size:13px; cursor:pointer; }
 .pq-elegir button.activo{ background:var(--brand); border-color:var(--brand); color:#fff; }
+
+/* ---------- 💃 fiesta de baile (js/fiesta.js) ---------- */
+.fi-entrar{ background:linear-gradient(120deg,#f28bb0,#b392d6 55%,#4a78c2); }
+.fi{ position:fixed; inset:0; z-index:70; display:flex; flex-direction:column; height:100vh; height:100dvh; max-width:560px; margin:0 auto;
+  background:linear-gradient(180deg,var(--brand-soft),var(--bg) 40%); padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+.fi-cuerpo{ flex:1; min-height:0; overflow-y:auto; padding:4px 14px 18px; display:flex; flex-direction:column; gap:10px; }
+.fi-escenario{ position:relative; flex-shrink:0; height:46vh; min-height:260px; border-radius:22px; overflow:hidden;
+  background:radial-gradient(ellipse at 50% 110%, #5b3f8f 0%, #2a1f4a 45%, #150f28 100%); }
+.fi-luces{ position:absolute; inset:0; pointer-events:none; opacity:.55;
+  background:
+    radial-gradient(circle at 20% 0%, hsl(var(--h, 320) 90% 65% / .7), transparent 45%),
+    radial-gradient(circle at 80% 0%, hsl(calc(var(--h, 320) + 120) 90% 65% / .7), transparent 45%),
+    radial-gradient(circle at 50% 0%, hsl(calc(var(--h, 320) + 240) 90% 70% / .5), transparent 40%); }
+.fi-luces.pulso{ animation:fi-pulso .35s ease-out; }
+@keyframes fi-pulso{ from{ opacity:1; } to{ opacity:.55; } }
+.fi-bailarines{ position:absolute; left:0; right:0; bottom:0; top:22px; display:flex; align-items:flex-end; justify-content:center; gap:2%; padding:0 3% 14px; }
+.fi-vacio{ color:#fff; font-weight:800; margin:auto; }
+.fi-bailarin{ position:relative; flex:1; max-width:34%; height:100%; display:flex; align-items:flex-end; justify-content:center; transform-origin:50% 100%; }
+.fi-bailarin svg{ width:100%; max-height:100%; filter:drop-shadow(0 6px 10px rgba(0,0,0,.4)); }
+.fi-sombra{ position:absolute; bottom:-4px; left:18%; right:18%; height:10px; border-radius:50%; background:rgba(0,0,0,.35); }
+.fi-bailarin.paso-brinco{ animation:fi-brinco var(--dur,450ms) ease-out; }
+.fi-bailarin.paso-lado-izq{ animation:fi-lado-izq var(--dur,450ms) ease-in-out; }
+.fi-bailarin.paso-lado-der{ animation:fi-lado-der var(--dur,450ms) ease-in-out; }
+.fi-bailarin.paso-giro{ animation:fi-giro var(--dur,450ms) ease-in-out; }
+.fi-bailarin.paso-inclina{ animation:fi-inclina var(--dur,450ms) ease-in-out; }
+.fi-bailarin.paso-agacha{ animation:fi-agacha var(--dur,450ms) ease-in-out; }
+.fi-bailarin.paso-aplauso{ animation:fi-aplauso var(--dur,450ms) ease-in-out; }
+@keyframes fi-brinco{ 40%{ transform:translateY(-14%) scale(1.02,.98); } 70%{ transform:translateY(0) scale(1.04,.94); } }
+@keyframes fi-lado-izq{ 50%{ transform:translateX(-12%) rotate(-6deg); } }
+@keyframes fi-lado-der{ 50%{ transform:translateX(12%) rotate(6deg); } }
+@keyframes fi-giro{ 50%{ transform:scaleX(-1); } }
+@keyframes fi-inclina{ 30%{ transform:rotate(-10deg); } 70%{ transform:rotate(10deg); } }
+@keyframes fi-agacha{ 50%{ transform:scale(1.06,.86); } }
+@keyframes fi-aplauso{ 25%{ transform:scale(1.08); } 50%{ transform:scale(.98); } 75%{ transform:scale(1.08); } }
+.fi-confeti{ position:absolute; top:-10px; width:8px; height:12px; border-radius:2px; animation:fi-cae 1.6s linear forwards; pointer-events:none; }
+@keyframes fi-cae{ to{ transform:translateY(46vh) rotate(540deg); opacity:.2; } }
+.fi-pausa{ position:absolute; right:10px; top:10px; z-index:2; border:none; border-radius:99px; padding:6px 12px; font-weight:800; font-size:12px; background:rgba(255,255,255,.85); color:#2a2740; cursor:pointer; }
+.fi-modo button.active{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.fi-panel{ background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:12px; }
+.fi-ayuda, .fi-nota, .fi-estado{ font-size:12.5px; color:var(--ink-soft); line-height:1.45; margin:0 0 8px; }
+.fi-nota{ font-size:11.5px; color:var(--ink-faint); }
+.fi-estado{ font-weight:800; color:var(--ink); }
+.fi-grande{ width:100%; padding:12px; border-radius:14px; border:none; font-weight:800; font-size:15px; cursor:pointer; margin-bottom:8px; }
+.fi-medidor{ height:8px; border-radius:99px; background:var(--surface-2); overflow:hidden; margin-bottom:8px; }
+.fi-medidor span{ display:block; height:100%; width:0; background:linear-gradient(90deg,#8fd48f,#f2cf5b,#f28bb0); transition:width .08s linear; }
+.fi-lista{ display:flex; flex-direction:column; gap:6px; }
+.fi-cancion{ display:flex; align-items:center; gap:6px; justify-content:space-between; font-size:13px; font-weight:700; color:var(--ink); padding:6px 0; border-top:1px solid var(--line); }
+.fi-cancion div{ display:flex; gap:4px; flex-shrink:0; }
+.fi-cancion button{ border:1px solid var(--line); background:var(--surface-2); color:var(--ink-soft); border-radius:99px; padding:4px 8px; font-size:11px; font-weight:800; cursor:pointer; }
+.fi-video{ aspect-ratio:16/9; border-radius:12px; overflow:hidden; background:#000; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; margin-bottom:10px; }
+.fi-video iframe{ width:100%; height:100%; border:0; }
+.fi-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.fi-chips button{ border:1px solid var(--line); background:var(--surface-2); color:var(--ink); border-radius:99px; padding:7px 11px; font-size:12.5px; font-weight:700; cursor:pointer; }
+.fi-chips button.activo{ background:var(--brand); border-color:var(--brand); color:#fff; }
+.fi-pegar{ display:flex; gap:8px; align-items:center; }
+.fi-input{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); font-size:14px; user-select:text; -webkit-user-select:text; }
+.fi-input.error{ border-color:var(--danger); }
+.fi-sec{ font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); margin:4px 0 0; }
+.fi-personajes{ display:grid; grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); gap:6px; }
+.fi-pj{ position:relative; display:flex; flex-direction:column; align-items:center; padding:4px 2px; border-radius:14px; border:2px solid transparent; background:var(--surface); cursor:pointer; }
+.fi-pj svg{ width:48px; height:48px; pointer-events:none; }
+.fi-pj span{ font-size:10.5px; font-weight:700; color:var(--ink-soft); text-align:center; line-height:1.1; }
+.fi-pj.activo{ border-color:var(--brand); background:var(--brand-soft); }
+.fi-pj b{ position:absolute; top:2px; right:4px; font-size:11px; color:#fff; background:var(--brand); border-radius:99px; min-width:18px; line-height:18px; text-align:center; }
+@media (prefers-reduced-motion: reduce){ .fi-bailarin[class*="paso-"], .fi-confeti, .fi-luces.pulso{ animation:none; } }
+/* elegir cuántas cartas / piezas */
+.pq-elegir{ display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; margin:0 0 8px; }
+.pq-elegir span{ font-size:12.5px; font-weight:800; color:var(--ink-soft); }
+.pq-elegir button{ min-width:40px; padding:6px 10px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); font-weight:800; font-size:13px; cursor:pointer; }
+.pq-elegir button.activo{ background:var(--brand); border-color:var(--brand); color:#fff; }

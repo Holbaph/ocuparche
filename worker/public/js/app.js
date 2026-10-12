@@ -542,6 +542,8 @@
     document.getElementById('juegoUpsell').classList.toggle('hidden', completo);
     document.getElementById('openJuego').classList.toggle('hidden', !completo);
     document.getElementById('openJuegosParche').classList.toggle('hidden', !completo);
+    document.getElementById('openFiesta').classList.toggle('hidden', !completo);
+    document.getElementById('fiUpsellPrincipal').classList.toggle('hidden', completo);
     document.getElementById('jpUpsellPrincipal').classList.toggle('hidden', completo);
     document.getElementById('juegoUpsellPrincipal').classList.toggle('hidden', completo);
 
@@ -798,6 +800,14 @@
   document.getElementById('openJuegosParche').addEventListener('click', () => {
     if (!pacienteActualId) return;
     JuegosParche.abrir({ minutosDia: juegoMinutos, pacienteId: pacienteActualId });
+  });
+
+  document.getElementById('openFiesta').addEventListener('click', () => {
+    if (!pacienteActualId) return;
+    Fiesta.abrir({
+      minutosDia: juegoMinutos, pacienteId: pacienteActualId,
+      hijos: pacientes.map(p => ({ id: p.id, nombre: p.nombre, avatar: p.avatar })),
+    });
   });
 
   document.getElementById('openJuego').addEventListener('click', () => {
