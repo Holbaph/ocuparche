@@ -967,3 +967,27 @@ body.con-informe{ overflow:hidden; }
 .pq-elegir span{ font-size:12.5px; font-weight:800; color:var(--ink-soft); }
 .pq-elegir button{ min-width:40px; padding:6px 10px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); font-weight:800; font-size:13px; cursor:pointer; }
 .pq-elegir button.activo{ background:var(--brand); border-color:var(--brand); color:#fff; }
+
+/* ---------- botones Historial · Configuración ---------- */
+.action-row-2 .history-btn{ flex-direction:column; gap:2px; padding:10px 6px; font-size:13.5px; line-height:1.15; }
+.action-row-2 .history-btn span{ font-size:20px; }
+
+/* ---------- Configuración (grupos que se abren y cierran) ---------- */
+.cfg-intro{ font-size:12.5px; color:var(--ink-faint); margin:-6px 0 12px; }
+details.cfg{ border:1px solid var(--line); border-radius:16px; background:var(--surface); margin-bottom:10px; overflow:hidden; }
+details.cfg[open]{ background:var(--surface-2); }
+details.cfg > summary{
+  list-style:none; display:flex; align-items:center; gap:12px; padding:13px 14px; cursor:pointer;
+  -webkit-user-select:none; user-select:none;
+}
+details.cfg > summary::-webkit-details-marker{ display:none; }
+details.cfg > summary::after{ content:'›'; margin-left:auto; font-size:22px; line-height:1; color:var(--ink-faint); transition:transform .2s ease; }
+details.cfg[open] > summary::after{ transform:rotate(90deg); }
+.cfg-ico{ width:38px; height:38px; flex-shrink:0; border-radius:12px; display:grid; place-items:center; font-size:19px; background:var(--surface-2); border:1px solid var(--line); }
+details.cfg[open] .cfg-ico{ background:var(--surface); }
+.cfg-txt{ min-width:0; display:flex; flex-direction:column; }
+.cfg-txt strong{ font-family:'Baloo 2'; font-size:15.5px; color:var(--ink); line-height:1.2; }
+.cfg-txt small{ font-size:12px; font-weight:600; color:var(--ink-faint); line-height:1.3; }
+.cfg-txt small:empty{ display:none; }
+.cfg-cuerpo{ border-top:1px solid var(--line); padding:14px 14px 16px; }
+.sheet-config .upsell-box{ margin-top:0; }

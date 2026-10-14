@@ -257,8 +257,9 @@
       <div class="stat"><div class="num" id="statConst">0%</div><div class="lbl">constancia</div></div>
     </div>
 
-    <div class="action-row">
-      <button class="history-btn" id="openHistory">📋 Ver historial</button>
+    <div class="action-row action-row-2">
+      <button class="history-btn" id="openHistory"><span aria-hidden="true">📋</span>Historial</button>
+      <button class="history-btn ghost" id="openConfig"><span aria-hidden="true">⚙️</span>Configuración</button>
     </div>
 
     <button class="juego-entrar hidden" id="openJuego">
@@ -470,26 +471,6 @@
     </div>
   </section>
 
-  <section class="block">
-    <p class="block-title">Duración del parche y avisos</p>
-    <div id="duracionBloque">
-      <label for="duracionInput" style="font-size:12.5px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px">Cuánto tiempo dura el parche puesto</label>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input type="number" id="duracionInput" min="1" step="1" inputmode="numeric" style="width:80px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:14px">
-        <span style="font-size:13px;color:var(--ink-soft)">minutos</span>
-        <button class="btn-save small" id="duracionSave">Guardar</button>
-      </div>
-      <p style="font-size:12px;color:var(--ink-faint);margin:8px 0 0" id="duracionHint"></p>
-      <button class="history-btn ghost" id="pushToggle" style="margin-top:14px">🔔 Activar avisos en este dispositivo</button>
-      <p style="font-size:12px;color:var(--ink-faint);margin:8px 0 0" id="pushHint"></p>
-    </div>
-    <div id="duracionUpsell" class="upsell-box hidden">
-      <span class="upsell-badge">✨ Plan completo</span>
-      <p>⏳ <b>Reloj de arena con avisos automáticos:</b> se avisa a toda la familia apenas se cumple el tiempo, aunque la app esté cerrada.</p>
-      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
-    </div>
-  </section>
-
   <section class="block" id="informeSeccion">
     <p class="block-title">Informe para el doctor</p>
     <div id="informeBloque">
@@ -511,27 +492,89 @@
     </div>
   </section>
 
-  <section class="block" id="tratamientoSeccion">
-    <p class="block-title">Tratamiento y controles</p>
-    <div id="tratamientoBloque">
-      <p class="trat-sub">Lo que indicó el oftalmólogo, el premio por constancia y el próximo control.</p>
+  <!-- El panel de administrador de plataforma (estadísticas, clientes,
+       solicitudes y generador de códigos) vive aparte, en panel.html — no
+       mezclado con la app familiar. Ver panel.html / panel.js. -->
+</div>
 
-      <label class="trat-label">¿Qué ojo se tapa?</label>
-      <div class="seg" id="indOjoSeg">
-        <button type="button" data-val="alternar">Alternar</button>
-        <button type="button" data-val="derecho">Derecho</button>
-        <button type="button" data-val="izquierdo">Izquierdo</button>
+<!-- ============ Configuración (todo lo que se ajusta, en grupos que se abren y cierran) ============ -->
+<div class="sheet sheet-config" id="sheetConfig" role="dialog" aria-label="Configuración">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h2>Configuración</h2>
+    <button class="icon-btn" id="closeConfig" aria-label="Cerrar">✕</button>
+  </div>
+  <p class="cfg-intro">Toca cada tema para ver y cambiar sus ajustes.</p>
+
+  <details class="cfg" id="cfgTratamiento">
+    <summary><span class="cfg-ico" aria-hidden="true">🩺</span><span class="cfg-txt"><strong>Tratamiento indicado</strong><small id="cfgTratamientoRes"></small></span></summary>
+    <div class="cfg-cuerpo">
+      <div id="tratamientoBloque">
+        <label class="trat-label" style="margin-top:0">¿Qué ojo se tapa?</label>
+        <div class="seg" id="indOjoSeg">
+          <button type="button" data-val="alternar">Alternar</button>
+          <button type="button" data-val="derecho">Derecho</button>
+          <button type="button" data-val="izquierdo">Izquierdo</button>
+        </div>
+        <label class="trat-label">¿Qué días va el parche?</label>
+        <div class="seg wrap" id="indDiasSeg">
+          <button type="button" data-dia="1">Lu</button><button type="button" data-dia="2">Ma</button><button type="button" data-dia="3">Mi</button>
+          <button type="button" data-dia="4">Ju</button><button type="button" data-dia="5">Vi</button><button type="button" data-dia="6">Sá</button>
+          <button type="button" data-dia="0">Do</button>
+        </div>
+        <p class="trat-sub" style="margin:6px 0 0">Los días sin marcar son de descanso: no cuentan como falta.</p>
+      <button class="btn-save small cfg-guardar" style="margin-top:12px">Guardar</button>
       </div>
-
-      <label class="trat-label">¿Qué días va el parche?</label>
-      <div class="seg wrap" id="indDiasSeg">
-        <button type="button" data-dia="1">Lu</button><button type="button" data-dia="2">Ma</button><button type="button" data-dia="3">Mi</button>
-        <button type="button" data-dia="4">Ju</button><button type="button" data-dia="5">Vi</button><button type="button" data-dia="6">Sá</button>
-        <button type="button" data-dia="0">Do</button>
+      <div id="duracionBloque" style="margin-top:16px">
+        <label for="duracionInput" class="trat-label" style="margin-top:0">Cuánto tiempo dura el parche puesto</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="number" id="duracionInput" min="1" step="1" inputmode="numeric" style="width:80px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:14px">
+          <span style="font-size:13px;color:var(--ink-soft)">minutos</span>
+          <button class="btn-save small" id="duracionSave">Guardar</button>
+        </div>
+        <p style="font-size:12px;color:var(--ink-faint);margin:8px 0 0" id="duracionHint"></p>
       </div>
-      <p class="trat-sub" style="margin:6px 0 0">Los días sin marcar son de descanso: no cuentan como falta.</p>
-
-      <label class="trat-label">🎁 Premio por constancia</label>
+    <div id="tratamientoUpsell" class="upsell-box hidden">
+      <span class="upsell-badge">✨ Plan completo</span>
+      <p>🩺 <b>Indicación del oftalmólogo, premio por constancia, próximo control</b> y resumen semanal — todo en un solo lugar.</p>
+      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+    </div>
+    </div>
+  </details>
+  <details class="cfg" id="cfgAvisos">
+    <summary><span class="cfg-ico" aria-hidden="true">🔔</span><span class="cfg-txt"><strong>Avisos y resumen semanal</strong><small id="cfgAvisosRes"></small></span></summary>
+    <div class="cfg-cuerpo">
+      <div id="avisosBloque">
+        <button class="history-btn ghost" id="pushToggle">🔔 Activar avisos en este dispositivo</button>
+        <p style="font-size:12px;color:var(--ink-faint);margin:8px 0 0" id="pushHint"></p>
+        <label class="trat-check"><input type="checkbox" id="resumenActivo"> Resumen semanal por aviso los domingos a las 7 de la tarde</label>
+      <button class="btn-save small cfg-guardar" style="margin-top:12px">Guardar</button>
+      </div>
+    <div id="duracionUpsell" class="upsell-box hidden">
+      <span class="upsell-badge">✨ Plan completo</span>
+      <p>⏳ <b>Reloj de arena con avisos automáticos:</b> se avisa a toda la familia apenas se cumple el tiempo, aunque la app esté cerrada.</p>
+      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
+    </div>
+    </div>
+  </details>
+  <details class="cfg" id="cfgControl">
+    <summary><span class="cfg-ico" aria-hidden="true">👁️</span><span class="cfg-txt"><strong>Próximo control</strong><small id="cfgControlRes"></small></span></summary>
+    <div class="cfg-cuerpo">
+      <label class="trat-label" style="margin-top:0">🩺 Fecha y hora del control con el oftalmólogo</label>
+      <div style="display:flex;gap:8px">
+        <input type="date" id="controlFechaInput" class="trat-input">
+        <input type="time" id="controlHoraInput" class="trat-input" style="width:120px">
+      </div>
+      <input type="text" id="controlDetalleInput" class="trat-input" maxlength="80" placeholder="Con quién / dónde (ej: Dra. Pérez, Clínica…)" style="margin-top:8px">
+      <textarea id="controlPreguntasInput" class="trat-input" rows="4" maxlength="1500" placeholder="Preguntas para llevar al control, cambios que notaste, dudas…" style="margin-top:8px;resize:vertical"></textarea>
+      <p class="trat-sub" style="margin:4px 0 0">El día antes, a las 7 de la tarde, llega un aviso a los dispositivos con avisos activados.</p>
+      <button class="btn-save small cfg-guardar" style="margin-top:12px">Guardar</button>
+    </div>
+  </details>
+  <details class="cfg" id="cfgPremio">
+    <summary><span class="cfg-ico" aria-hidden="true">🏆</span><span class="cfg-txt"><strong>Premio por constancia</strong><small id="cfgPremioRes"></small></span></summary>
+    <div class="cfg-cuerpo">
+      <label class="trat-label" style="margin-top:0">🎁 Días con parche en la semana para ganar</label>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span style="font-size:13px;color:var(--ink-soft)">Meta:</span>
         <select id="premioMeta" class="trat-input" style="width:auto">
@@ -542,29 +585,13 @@
         <span style="font-size:13px;color:var(--ink-soft)">a la semana</span>
       </div>
       <input type="text" id="premioTextoInput" class="trat-input" maxlength="60" placeholder="Premio (ej: helado, salir al parque)" style="margin-top:8px">
-
-      <label class="trat-label">🩺 Próximo control con el oftalmólogo</label>
-      <div style="display:flex;gap:8px">
-        <input type="date" id="controlFechaInput" class="trat-input">
-        <input type="time" id="controlHoraInput" class="trat-input" style="width:120px">
-      </div>
-      <input type="text" id="controlDetalleInput" class="trat-input" maxlength="80" placeholder="Con quién / dónde (ej: Dra. Pérez, Clínica…)" style="margin-top:8px">
-      <textarea id="controlPreguntasInput" class="trat-input" rows="4" maxlength="1500" placeholder="Preguntas para llevar al control, cambios que notaste, dudas…" style="margin-top:8px;resize:vertical"></textarea>
-      <p class="trat-sub" style="margin:4px 0 0">El día antes, a las 7 de la tarde, llega un aviso a los dispositivos con avisos activados.</p>
-
-      <label class="trat-check"><input type="checkbox" id="resumenActivo"> Resumen semanal por aviso los domingos a las 7 de la tarde</label>
-
-      <button class="btn-save small" id="tratamientoGuardar" style="margin-top:12px">Guardar</button>
+      <p class="trat-sub" style="margin:4px 0 0">Tu hij@ ve su avance en la pantalla principal: una estrellita por cada día con parche. La semana va de lunes a domingo.</p>
+      <button class="btn-save small cfg-guardar" style="margin-top:12px">Guardar</button>
     </div>
-    <div id="tratamientoUpsell" class="upsell-box hidden">
-      <span class="upsell-badge">✨ Plan completo</span>
-      <p>🩺 <b>Indicación del oftalmólogo, premio por constancia, próximo control</b> y resumen semanal — todo en un solo lugar.</p>
-      <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
-    </div>
-  </section>
-
-  <section class="block">
-    <p class="block-title">Juego de vestir</p>
+  </details>
+  <details class="cfg" id="cfgJuegos">
+    <summary><span class="cfg-ico" aria-hidden="true">🎮</span><span class="cfg-txt"><strong>Juegos</strong><small id="cfgJuegosRes"></small></span></summary>
+    <div class="cfg-cuerpo">
     <div id="juegoBloque">
       <label for="juegoMinutosInput" style="font-size:12.5px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px">Tiempo de juego por día</label>
       <div style="display:flex;align-items:center;gap:8px">
@@ -583,10 +610,11 @@
       <p>👗 <b>Jugar a vestir:</b> más de 85 personajes para elegir, con el mismo tiempo de juego que definas aquí.</p>
       <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
     </div>
-  </section>
-
-  <section class="block">
-    <p class="block-title">Personas con acceso</p>
+    </div>
+  </details>
+  <details class="cfg" id="cfgPersonas">
+    <summary><span class="cfg-ico" aria-hidden="true">👥</span><span class="cfg-txt"><strong>Personas con acceso</strong><small id="cfgPersonasRes"></small></span></summary>
+    <div class="cfg-cuerpo">
     <div class="people-list" id="peopleList"></div>
     <div class="addform show hidden" id="inviteForm">
       <p style="margin:0 0 2px;font-size:12.5px;color:var(--ink-soft)">
@@ -611,10 +639,11 @@
       <p>👨‍👩‍👧 <b>Invita hasta 3 personas más</b> de la familia — todos ven y registran en el mismo historial, en tiempo real.</p>
       <a href="https://holbaph.github.io/ocuparche/#precios" class="btn-brand" target="_blank" rel="noopener">Ver cómo activarlo</a>
     </div>
-  </section>
-
-  <section class="block">
-    <p class="block-title">Tu cuenta</p>
+    </div>
+  </details>
+  <details class="cfg" id="cfgCuenta">
+    <summary><span class="cfg-ico" aria-hidden="true">💎</span><span class="cfg-txt"><strong>Tu cuenta y plan</strong><small id="cfgCuentaRes"></small></span></summary>
+    <div class="cfg-cuerpo">
     <div id="cuentaFreeBloque" class="hidden">
       <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 10px">
         Estás en el <b>plan gratis</b>: 1 hij@, registro diario, historial, y el
@@ -643,11 +672,8 @@
     <div id="cuentaCompletoBloque" class="hidden">
       <p style="font-size:13.5px;color:var(--success)">✓ Tienes el plan completo — gracias por tu apoyo 🩹</p>
     </div>
-  </section>
-
-  <!-- El panel de administrador de plataforma (estadísticas, clientes,
-       solicitudes y generador de códigos) vive aparte, en panel.html — no
-       mezclado con la app familiar. Ver panel.html / panel.js. -->
+    </div>
+  </details>
 </div>
 
 <!-- ============ Juego de vestir (js/juego.js) — plan completo ============ -->

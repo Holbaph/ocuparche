@@ -10,6 +10,7 @@
   let pacienteActualId = null;
   let entries = {};          // fecha -> registro (del paciente actual)
   let personasCache = {};
+  let avisosEstado = '';   // para el resumen de "Avisos" en Configuración
   let pendingDelete = null;
   let realtimeConn = null;   // { cerrar() }
   let duracionMinutos = 120;
@@ -534,6 +535,9 @@
     document.getElementById('duracionUpsell').classList.toggle('hidden', completo);
 
     document.getElementById('tratamientoBloque').classList.toggle('hidden', !completo);
+    document.getElementById('avisosBloque').classList.toggle('hidden', !completo);
+    document.getElementById('cfgControl').classList.toggle('hidden', !completo);
+    document.getElementById('cfgPremio').classList.toggle('hidden', !completo);
     document.getElementById('tratamientoUpsell').classList.toggle('hidden', completo);
     document.getElementById('addFinBloque').classList.toggle('hidden', !completo);
     document.getElementById('informeBloque').classList.toggle('hidden', !completo);
@@ -555,6 +559,7 @@
     document.getElementById('cuentaCompletoBloque').classList.toggle('hidden', !completo);
 
     renderTimer();
+    renderResumenesConfig();
   }
 
   // ================= TOQUE DE OJOS =================
@@ -707,7 +712,7 @@
     });
   }
 
-  function renderAll() { renderToday(); renderStats(); renderCalendar(); renderList(); renderTimer(); renderTratamiento(); }
+  function renderAll() { renderToday(); renderStats(); renderCalendar(); renderList(); renderTimer(); renderTratamiento(); renderResumenesConfig(); }
 
   // ================= TEMPORIZADOR =================
   function actualizarDuracionHint(minutos) {
@@ -822,6 +827,7 @@
   });
 
   function renderJuegoHint() {
+    renderResumenesConfig();
     const quedan = Juego.minutosRestantesHoy(juegoMinutos);
     document.getElementById('juegoMinutosHint').textContent = quedan === Infinity
       ? 'Sin límite (0 minutos = se puede jugar todo lo que quiera).'
@@ -875,17 +881,21 @@
     if (!Push.soportado()) {
       btn.classList.add('hidden');
       hint.textContent = 'Los avisos automáticos todavía no están configurados en esta app.';
+      avisosEstado = 'sin configurar'; renderResumenesConfig();
       return;
     }
     if (!Push.instalada()) {
       btn.classList.add('hidden');
       hint.textContent = 'Para recibir avisos, primero agrega esta app a tu pantalla de inicio (Compartir → Agregar a inicio) y ábrela desde ese ícono.';
+      avisosEstado = 'pendientes (primero instala la app)'; renderResumenesConfig();
       return;
     }
     btn.classList.remove('hidden');
     const suscrito = await Push.estaSuscrito();
     btn.classList.toggle('active', suscrito);
     btn.textContent = suscrito ? '🔔 Avisos activados en este dispositivo' : '🔔 Activar avisos en este dispositivo';
+    avisosEstado = suscrito ? 'activados en este celular' : 'apagados en este celular';
+    renderResumenesConfig();
     hint.textContent = suscrito ? 'Toca el botón para desactivarlos en este dispositivo.' : '';
   }
   document.getElementById('pushToggle').addEventListener('click', async () => {
@@ -1016,9 +1026,41 @@
   const sheet = document.getElementById('sheet'), scrim = document.getElementById('scrim');
   function openSheet() { sheet.classList.add('show'); scrim.classList.add('show'); }
   function closeSheet() { sheet.classList.remove('show'); scrim.classList.remove('show'); }
-  document.getElementById('openHistory').addEventListener('click', () => { openSheet(); refrescarEstadoAvisos(); });
+  document.getElementById('openHistory').addEventListener('click', openSheet);
   document.getElementById('closeHistory').addEventListener('click', closeSheet);
   scrim.addEventListener('click', closeSheet);
+
+  // ================= CONFIGURACIÓN =================
+  // Todo lo que se ajusta (tratamiento, avisos, control, premio, juegos, personas
+  // y la cuenta), en grupos que se abren y cierran; cada uno muestra un resumen.
+  const sheetConfig = document.getElementById('sheetConfig');
+  function abrirConfig(grupo) {
+    refrescarEstadoAvisos(); renderJuegoHint(); renderResumenesConfig();
+    sheetConfig.classList.add('show'); scrim.classList.add('show');
+    if (grupo) {
+      const g = document.getElementById(grupo);
+      g.open = true;
+      setTimeout(() => g.scrollIntoView({ behavior: 'smooth', block: 'start' }), 260);
+    }
+  }
+  function cerrarConfig() { sheetConfig.classList.remove('show'); scrim.classList.remove('show'); }
+  document.getElementById('openConfig').addEventListener('click', () => abrirConfig());
+  document.getElementById('closeConfig').addEventListener('click', cerrarConfig);
+  scrim.addEventListener('click', cerrarConfig);
+  function renderResumenesConfig() {
+    const pon = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+    const completo = esPlanCompleto();
+    const conf = confT();
+    pon('cfgTratamientoRes', completo ? Tratamiento.textoIndicacion(conf) + ' · ' + Tratamiento.fmtDur(conf.duracion) : 'Plan completo');
+    pon('cfgAvisosRes', completo ? (avisosEstado ? 'Avisos ' + avisosEstado : 'Avisos') : 'Plan completo');
+    const c = completo ? Tratamiento.control(conf) : null;
+    pon('cfgControlRes', c ? c.fecha + ' (' + c.cuando + ')' : 'Sin fecha anotada');
+    pon('cfgPremioRes', trat && trat.premio_meta ? trat.premio_meta + ' días a la semana → ' + (trat.premio_texto || 'premio') : 'Sin premio');
+    pon('cfgJuegosRes', completo ? (juegoMinutos ? juegoMinutos + ' min de juego al día' : 'Sin límite de juego') : 'Plan completo');
+    const n = Object.keys(personasCache).length;
+    pon('cfgPersonasRes', n ? n + (n === 1 ? ' persona' : ' personas') + (perfil && perfil.role === 'admin' ? ' · tú eres admin' : '') : '');
+    pon('cfgCuentaRes', completo ? 'Plan completo ✓' : 'Plan gratis');
+  }
 
   const addForm = document.getElementById('addForm'), addToggle = document.getElementById('addToggle');
   let chosenSide = 'derecho';
@@ -1157,7 +1199,7 @@
     const b = e.target.closest('button[data-dia]');
     if (b) b.classList.toggle('active');
   });
-  document.getElementById('tratamientoGuardar').addEventListener('click', async () => {
+  async function guardarTratamiento() {
     if (!pacienteActualId) return;
     const $ = (id) => document.getElementById(id);
     const ojoBtn = document.querySelector('#indOjoSeg button.active');
@@ -1180,7 +1222,8 @@
       renderAll();
       showToast('Tratamiento guardado');
     } catch (e) { showToast(e.message || 'No se pudo guardar, intenta de nuevo'); }
-  });
+  }
+  document.querySelectorAll('.cfg-guardar').forEach(b => b.addEventListener('click', guardarTratamiento));
 
   document.getElementById('sacarBtn').addEventListener('click', async () => {
     const id = Utils.todayId();
@@ -1195,10 +1238,7 @@
     } catch (e) { showToast(e.message || 'No se pudo guardar, intenta de nuevo'); }
   });
 
-  document.getElementById('controlCard').addEventListener('click', () => {
-    openSheet(); refrescarEstadoAvisos();
-    setTimeout(() => document.getElementById('tratamientoSeccion').scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
-  });
+  document.getElementById('controlCard').addEventListener('click', () => abrirConfig('cfgControl'));
 
   // --- informe para el doctor ---
   let informeActual = null;
